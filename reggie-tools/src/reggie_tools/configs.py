@@ -7,7 +7,7 @@ import subprocess
 import threading
 from builtins import Exception, ValueError
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
@@ -20,20 +20,6 @@ LOG = logs.logger(__file__)
 
 _config_default_lock = threading.Lock()
 _config_default: Config | None = None
-
-
-class ConfigValueSource(Enum):
-    """Enumerates supported config sources in order of discovery precedence."""
-
-    WIDGETS = 1
-    SPARK_CONF = 2
-    OS_ENVIRON = 3
-    SECRETS = 4
-
-    @classmethod
-    def without(cls, *excluded):
-        """Return members excluding any provided in ``excluded`` while preserving order."""
-        return [member for member in cls if member not in excluded]
 
 
 def get(profile: str | None = None) -> Config:
@@ -106,7 +92,7 @@ def config_value(
     name: str,
     default: Any = None,
     spark: SparkSession = None,
-    config_value_sources: List[ConfigValueSource] = None,
+    config_value_sources: List["ConfigValueSource"] = None,
 ) -> Any:
     """Fetch a configuration value by checking the configured sources in order."""
     if not name:
@@ -239,5 +225,15 @@ def _cli_auth_login(profile: str):
     _cli_run("auth", "login", profile=profile)
 
 
-if __name__ == "__main__":
-    pass
+class ConfigValueSource(Enum):
+    """Enumerates supported config sources in order of discovery precedence."""
+
+    WIDGETS = 1
+    SPARK_CONF = 2
+    OS_ENVIRON = 3
+    SECRETS = 4
+
+    @classmethod
+    def without(cls, *excluded):
+        """Return members excluding any provided in ``excluded`` while preserving order."""
+        return [member for member in cls if member not in excluded]
