@@ -56,7 +56,3 @@ def _databricks_session_default() -> SparkSession:
     elapsed = (datetime.now() - start_time).total_seconds()
     log.info(f"databricks connect session created in {elapsed:.2f}s")
     return sess
-
-
-if __name__ == "__main__":
-    pass
