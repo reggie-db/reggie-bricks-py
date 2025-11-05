@@ -13,7 +13,9 @@ from reggie_tools import configs, runtimes
 
 
 def workspace_client(config: Config = None) -> WorkspaceClient:
-    """Create a Databricks ``WorkspaceClient`` using the provided or cached config."""
+    """Create a Databricks ``WorkspaceClient`` using the provided or cached config.
+    Uses the default cached config when none is supplied.
+    """
     if not config:
         config = configs.get()
     return WorkspaceClient(config=config)
@@ -21,23 +23,23 @@ def workspace_client(config: Config = None) -> WorkspaceClient:
 
 def spark(config: Config | None = None) -> SparkSession:
     """Return a Spark session sourced from the runtime or Databricks Connect."""
-    # Fast paths when no explicit config is provided
+    # Fast path when no explicit config is provided
     if config is None:
-        # Existing session injected in IPython user namespace
+        # Prefer an existing session injected in the IPython user namespace
         sess = runtimes.ipython_user_ns("spark")
         if sess:
             return sess
 
-        # Any active local Spark session
+        # Fallback to any active local Spark session
         sess = SparkSession.getActiveSession()
         if sess:
             return sess
 
-        # Local Spark available via runtime
+        # Use a local Spark session when running inside a Databricks runtime
         if runtimes.version():
             return SparkSession.builder.getOrCreate()
 
-        # Databricks Connect default session
+        # Create a Databricks Connect session using default settings
         return _databricks_session_default()
 
     # Config provided or resolved above

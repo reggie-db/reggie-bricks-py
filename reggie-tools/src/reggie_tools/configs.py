@@ -7,7 +7,7 @@ import subprocess
 import threading
 from builtins import Exception, ValueError
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Tuple
+from typing import Any, Callable, Iterable
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
@@ -23,7 +23,9 @@ _config_default: Config | None = None
 
 
 def get(profile: str | None = None) -> Config:
-    """Return a cached or freshly created Databricks ``Config`` for the given profile."""
+    """Return a cached or freshly created Databricks ``Config`` for the given profile.
+    When a profile is not provided this function returns a process wide default. A lock is used to avoid concurrent initialization of the default object.
+    """
     global _config_default
     if not profile:
         profile = None
@@ -40,29 +42,30 @@ def get(profile: str | None = None) -> Config:
         auth_profiles = _cli_auth_profiles()
         profiles = auth_profiles.get("profiles", [])
         if profiles:
-            if False and len(profiles) == 1:
-                return profiles[0].get("name")
-            else:
-                for profile in profiles:
-                    profile_name = profile.get("name")
-                    if "DEFAULT" == profile_name:
-                        return profile_name
-                return inputs.select_choice(
-                    "Select a profile", [p["name"] for p in profiles]
-                )
+            for profile in profiles:
+                profile_name = profile.get("name")
+                if "DEFAULT" == profile_name:
+                    return profile_name
+            profile_names = [p["name"] for p in profiles]
+            if len(profile_names) > 1:
+                return inputs.select_choice("Select a profile", profile_names)
+            elif profile_names:
+                return profile_names[0]
         return None
 
-    def _config(profile, auth_login=True) -> Config:
+    def _config(profile: str | None, auth_login: bool = True) -> Config:
         try:
             cfg = Config(profile=profile)
             if not cfg.cluster_id:
                 cfg.serverless_compute_id = "auto"
             return cfg
         except Exception as e:
+            # If profile is empty, try to discover a default profile
             if not profile:
                 profile = _default_profile()
                 if profile:
                     return _config(profile, auth_login)
+            # Attempt a one time login then retry config creation
             if auth_login and profile:
                 _cli_auth_login(profile)
                 return _config(profile, False)
@@ -94,7 +97,9 @@ def config_value(
     spark: SparkSession = None,
     config_value_sources: list["ConfigValueSource"] = None,
 ) -> Any:
-    """Fetch a configuration value by checking the configured sources in order."""
+    """Fetch a configuration value by checking the configured sources in order.
+    The first loader that returns a truthy value wins. Callers can pass a subset of sources to control resolution order.
+    """
     if not name:
         raise ValueError("name cannot be empty")
     if not config_value_sources:
@@ -116,10 +121,12 @@ def config_value(
                 widgets_get = getattr(widgets, "get", None)
                 if callable(widgets_get):
                     yield widgets.get
+                # Provide a dict like fallback when widgets is present
                 yield _get_all(widgets).get
             elif config_value_source is ConfigValueSource.SPARK_CONF:
                 config_spark = spark or clients.spark()
                 yield config_spark.conf.get
+                # Provide a dict like fallback when Spark conf is present
                 yield _get_all(config_spark, "conf").get
             elif config_value_source is ConfigValueSource.OS_ENVIRON:
                 yield os.environ.get
@@ -144,33 +151,6 @@ def config_value(
         except Exception:
             pass
     return default
-
-
-def _get_all(obj: Any, *attribues: str) -> dict[str, Any]:
-    data = {}
-
-    for i in range(len(attribues) + 1):
-        if i > 0:
-            obj = getattr(obj, attribues[i - 1], None)
-        if callable(obj):
-            obj = obj()
-        if obj is None:
-            return data
-    getAll = getattr(obj, "getAll", None)
-    if isinstance(getAll, dict):
-        return getAll
-    elif callable(getAll):
-        try:
-            conf_all = getAll()
-        except Exception:
-            return data
-    else:
-        return data
-    if isinstance(conf_all, Iterable):
-        for value in conf_all:
-            if isinstance(value, tuple) and len(value) == 2:
-                data[value[0]] = value[1]
-    return data
 
 
 def _cli_run(
@@ -198,6 +178,35 @@ def _cli_run(
     return json.loads(
         completed_process.stdout
     ) if completed_process.stdout else None, completed_process
+
+
+def _get_all(obj: Any, *attribues: str) -> dict[str, Any]:
+    """Safely traverse attributes and callables to a final object with getAll then normalize the result to a dict.
+    This supports Spark and DBUtils objects that expose nested accessors and return either a dict or an iterable of pairs.
+    """
+    data = {}
+    for i in range(len(attribues) + 1):
+        if i > 0:
+            obj = getattr(obj, attribues[i - 1], None)
+        if callable(obj):
+            obj = obj()
+        if obj is None:
+            return data
+    getAll = getattr(obj, "getAll", None)
+    if isinstance(getAll, dict):
+        return getAll
+    elif callable(getAll):
+        try:
+            conf_all = getAll()
+        except Exception:
+            return data
+    else:
+        return data
+    if isinstance(conf_all, Iterable):
+        for value in conf_all:
+            if isinstance(value, tuple) and len(value) == 2:
+                data[value[0]] = value[1]
+    return data
 
 
 @functools.cache

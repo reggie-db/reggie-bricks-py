@@ -12,6 +12,7 @@ from urllib.request import urlretrieve
 
 import sh
 import yaml
+from filelock import FileLock
 from reggie_core import logs, paths
 
 from reggie_app_runner import docker
@@ -93,6 +94,21 @@ def _install_conda(dir: Path) -> Path:
     """Download and run the Miniforge installer into the given directory, cached by URL."""
     url = _install_url()
     log = logs.logger("conda_install")
+    installer_file_name = "installer.sh"
+    installer_path = dir / installer_file_name
+
+    def _installer_path_valid():
+        return installer_path.is_file() and os.access(installer_path, os.X_OK)
+
+    installer_lock_path = dir / f"{installer_file_name}.lock"
+    if not _installer_path_valid():
+        with FileLock(installer_lock_path):
+            if not _installer_path_valid():
+                log.info(f"Downloading Conda - url:{url} path:{installer_path}")
+                urlretrieve(url, installer_path)
+                installer_path.chmod(0o755)
+                log.info(f"Installing Conda - path:{installer_path}")
+                subprocess.run([installer_path, "-b", "-p", dir], check=True, text=True)
 
     def _run_installer(path: Path):
         installer_path = path / "installer.sh"

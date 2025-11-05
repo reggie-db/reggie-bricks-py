@@ -9,14 +9,12 @@ def _as_col(c: Column | str) -> Column:
 
 def infer_json_schema(c: Column | str) -> Column:
     """
-    Produce a schema string describing a JSON string column:
-    - array of objects -> array<struct<...>>
-    - object           -> struct<...>
-    - other            -> variant
+    Create a schema string that describes the shape of a JSON string column.
+    Returns array<struct<...>> when the value looks like a JSON array of objects. Returns struct<...> when the value looks like a JSON object. Returns variant for any other input.
     """
     col = _as_col(c)
 
-    # array branch: collect distinct keys across all elements, sort, then render "key variant"
+    # Collect keys for array values then format each key as key variant
     array_keys = F.when(
         col.rlike(r"^\s*\["),
         F.array_sort(
@@ -42,7 +40,7 @@ def infer_json_schema(c: Column | str) -> Column:
         ),
     )
 
-    # object branch: extract keys, sort, render "key variant"
+    # Extract, sort, and format keys for object values
     object_keys = F.when(
         col.rlike(r"^\s*\{"),
         F.array_sort(F.json_object_keys(col)),
@@ -66,8 +64,7 @@ def infer_json_schema(c: Column | str) -> Column:
 
 def infer_json_type(c: Column | str) -> Column:
     """
-    Lightweight type hint from the first non whitespace character.
-    Returns one of: array, object, string, number, boolean, null, or null when unknown.
+    Infer a simple JSON type name using the first significant character. Returns array, object, string, number, boolean, or null. Returns null when a type cannot be detected.
     """
     col = _as_col(c)
     return (
@@ -91,36 +88,33 @@ def infer_json(
     include_type: bool = False,
 ) -> Column:
     """
-    Build a JSON string with any combination of fields:
-      {"value": ... , "schema": "...", "type": ...}
-
-    Notes:
-    - schema is rendered as struct<value ...> where ... is inferred
-    - type is quoted when known, or null when undetected
-    - returns null when all include flags are false
+    Build a JSON string that includes any requested fields among value, schema, and type. The schema is rendered as struct<value ...> where the inner part is inferred by infer_json_schema. The type is quoted when detected or null when unknown. Returns null when no fields are requested.
     """
     col = _as_col(c)
     if not (include_value or include_schema or include_type):
         return F.lit(None)
 
+    # Accumulate fragments to avoid repeated string concatenations
     parts = [F.lit("{")]
 
     def _append(*frag_cols: Column) -> None:
+        # Insert a comma when another field was already added
         if len(parts) > 1:
             parts.append(F.lit(","))
         parts.append(F.concat(*frag_cols))
 
     if include_value:
+        # Write the raw column value without quoting
         _append(F.lit('"value":'), col)
 
     if include_schema:
+        # Wrap the inferred schema under struct<value ...>
         _append(F.lit('"schema":"struct<value '), infer_json_schema(col), F.lit('>"'))
 
     if include_type:
         t = infer_json_type(col)
-        t_json = F.when(t.isNull(), F.lit("null")).otherwise(
-            F.concat(F.lit('"'), t, F.lit('"'))
-        )
+        # Quote the type string when present otherwise emit null
+        t_json = F.when(t.isNull(), F.lit("null")).otherwise(F.concat(F.lit('"'), t, F.lit('"')))
         _append(F.lit('"type":'), t_json)
 
     parts.append(F.lit("}"))

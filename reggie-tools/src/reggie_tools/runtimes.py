@@ -44,6 +44,7 @@ def dbutils(spark: SparkSession = None):
         spark = clients.spark()
     dbutils_class = _dbutils_class()
     if dbutils_class:
+        # Construct DBUtils using the detected class for the current session
         dbutils = dbutils_class(spark)
         if dbutils:
             return dbutils
@@ -79,6 +80,7 @@ def context(spark: SparkSession = None) -> dict[str, Any]:
             return obj
 
     def _deep_merge(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
+        # Apply updates from b into a while recursing into sub dicts
         for k, v in b.items():
             if not v:  # skip falsy
                 continue

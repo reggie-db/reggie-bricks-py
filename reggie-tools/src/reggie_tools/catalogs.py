@@ -51,7 +51,7 @@ def _catalog_schema_config() -> CatalogSchema | None:
     if runtimes.is_pipeline():
         catalog_schemas: set[CatalogSchema] = set()
         try:
-            # Intentionally reference a non existent table to surface fully qualified path in error
+            # Reference a nonexistent table to surface a fully qualified path in the error message
             clients.spark().sql(
                 f"SELECT * FROM table_{uuid.uuid4().hex} LIMIT 1"
             ).count()
@@ -80,6 +80,7 @@ def catalog_schema(spark: SparkSession = None) -> CatalogSchema | None:
             and hasattr(spark_catalog, "currentCatalog")
             and hasattr(spark_catalog, "currentDatabase")
         ):
+            # Use high level Spark API when available
             current_catalog = spark_catalog.currentCatalog()
             current_schema = spark_catalog.currentDatabase()
             if current_catalog and current_schema:
@@ -89,6 +90,7 @@ def catalog_schema(spark: SparkSession = None) -> CatalogSchema | None:
         .sql("SELECT current_catalog() AS catalog, current_schema() AS schema")
         .first()
     )
+    # Fallback to SQL when the API path did not return values
     if catalog_schema_row.catalog and catalog_schema_row.schema:
         return CatalogSchema(catalog_schema_row.catalog, catalog_schema_row.schema)
     return None
