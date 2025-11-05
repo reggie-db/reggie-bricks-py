@@ -10,7 +10,6 @@ import os
 from reggie_tools import clients
 from reggie_tools.funcs import infer_json
 
-
 if __name__ == "__main__":
     os.environ["DATABRICKS_CONFIG_PROFILE"] = "FIELD-ENG-EAST"
 
@@ -41,5 +40,3 @@ if __name__ == "__main__":
     df.withColumn("wrapped_with_type", infer_json("json_col", include_type=True)).show(
         truncate=False
     )
-
-

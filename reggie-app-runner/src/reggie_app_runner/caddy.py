@@ -58,14 +58,11 @@ def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.Running
 
         LOG.log(levelno, line)
 
-    args = list(args)
-
+    run_args = ["run", "--config", config_file]
+    run_args.extend(args)
     # Launch Caddy with the materialized config file; wire stdout/stderr/done hooks
     proc = command()(
-        "run",
-        "--config",
-        config_file,
-        *args,
+        *run_args,
         _out=lambda x: _out(False, x),
         _err=lambda x: _out(True, x),
         _done=_done,

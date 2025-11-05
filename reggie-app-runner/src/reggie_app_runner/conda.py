@@ -70,7 +70,7 @@ def update(
         "dependencies": dependencies,
     }
 
-    with NamedTemporaryFile(mode="w", suffix=".yml") as f:
+    with NamedTemporaryFile(mode="w", suffix=f".{env_name}.yml") as f:
         conda_env_content = yaml.dump(conda_env)
         f.write(conda_env_content)
         f.flush()

@@ -4,22 +4,30 @@ import json
 import platform
 import shutil
 
+import sh
+from reggie_core import paths
+
 from reggie_app_runner import conda
 
 _CONDA_ENV_NAME = "_docker"
+_UDOCKER_NAME = "udocker"
 
 
-def path():
+@functools.cache
+def runtime_path():
     """Return the path to a container runtime (docker or podman) if available."""
     for name in ["docker", "podman"]:
         if path := shutil.which(name):
-            return path
+            return paths.path(path, absolute=True)
     return None
 
 
 def command():
     """Return a baked command for the runtime or fallback to ``udocker``."""
-    return conda.run(_conda_env_name()).bake(path() or "udocker")
+    command = runtime_path()
+    if command:
+        return sh.Command(command)
+    return conda.run(_conda_env_name()).bake(_UDOCKER_NAME)
 
 
 def image_hash(image_name: str):
@@ -44,7 +52,7 @@ def _conda_env_name():
     dependencies = ["skopeo"]
     pip_dependencies = []
     linux = platform.system().casefold() == "linux"
-    (dependencies if linux else pip_dependencies).append("udocker")
+    (dependencies if linux else pip_dependencies).append(_UDOCKER_NAME)
     conda.update(
         _CONDA_ENV_NAME,
         *dependencies,

@@ -1,9 +1,12 @@
 """Serialization helpers for dataclasses, objects, and JSON encoding."""
 
+import hashlib
 import inspect
 import json
 from dataclasses import asdict, is_dataclass
-from typing import Any
+from typing import Any, Callable, TypeVar
+
+T = TypeVar("T")
 
 
 def to_dict(
@@ -48,6 +51,11 @@ def to_json(obj: Any, encode_properties: bool = False, **kwargs) -> Any:
         "cls", _JSONEncoderProperties if encode_properties else _JSONEncoder
     )
     return json.dumps(obj, **kwargs)
+
+
+def hash(obj: Any, hash_fn: Callable[[bytes], T] = hashlib.sha256) -> T:
+    json = to_json(obj, sort_keys=True, separators=(",", ":"))
+    return hash_fn(json.encode())
 
 
 def _object_properties(o: Any) -> dict[str, Any]:

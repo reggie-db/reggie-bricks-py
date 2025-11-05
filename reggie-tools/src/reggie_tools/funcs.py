@@ -2,11 +2,6 @@ from pyspark.sql import functions as F
 from pyspark.sql.column import Column
 
 
-def _as_col(c: Column | str) -> Column:
-    """Return a Column whether input is a Column or a column name."""
-    return c if isinstance(c, Column) else F.col(c)
-
-
 def infer_json_schema(c: Column | str) -> Column:
     """
     Create a schema string that describes the shape of a JSON string column.
@@ -114,7 +109,9 @@ def infer_json(
     if include_type:
         t = infer_json_type(col)
         # Quote the type string when present otherwise emit null
-        t_json = F.when(t.isNull(), F.lit("null")).otherwise(F.concat(F.lit('"'), t, F.lit('"')))
+        t_json = F.when(t.isNull(), F.lit("null")).otherwise(
+            F.concat(F.lit('"'), t, F.lit('"'))
+        )
         _append(F.lit('"type":'), t_json)
 
     parts.append(F.lit("}"))
@@ -129,3 +126,6 @@ def infer_json_parse(c: Column | str) -> Column:
     return F.from_json(infer_json(col), None, {"schemaLocationKey": "schema"})
 
 
+def _as_col(c: Column | str) -> Column:
+    """Return a Column whether input is a Column or a column name."""
+    return c if isinstance(c, Column) else F.col(c)

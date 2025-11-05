@@ -13,7 +13,7 @@ import platform
 import sys
 from collections.abc import Callable, Iterable
 
-from reggie_core import parsers, paths
+from reggie_core import inputs, parsers, paths
 
 _LOGGING_AUTO_CONFIG = parsers.parse_bool(os.getenv("LOGGING_AUTO_CONFIG", True))
 _LOGGING_SERVER = parsers.parse_bool(os.getenv("LOGGING_SERVER"))
@@ -187,17 +187,6 @@ def _is_system_account() -> int:
     return False
 
 
-def _isatty(stream=None) -> bool:
-    """
-    Return True if the given stream is a TTY.
-
-    If stream is None, sys.stdout is used. Missing isatty attribute returns False.
-    """
-    if not stream:
-        stream = sys.stdout
-    return getattr(stream, "isatty", None) or False
-
-
 def _is_server(stream=None) -> bool:
     """
     Return True if this process looks like a server or non interactive runtime.
@@ -212,7 +201,7 @@ def _is_server(stream=None) -> bool:
     if parsers.parse_bool(os.getenv("ENABLE_REPL_LOGGING")):
         return False
     # If stdout/stderr is not attached to a TTY, assume non-interactive (daemon, cron, etc.).
-    if not _isatty(stream):
+    if not inputs.is_interactive(stream):
         return True
     # Lack of DISPLAY or WAYLAND_DISPLAY means no GUI session; likely a headless server.
     if not (os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY")):
@@ -281,7 +270,7 @@ class Handler(logging.StreamHandler):
         TTY and TERM are checked on Unix.
         On Windows, colorama presence or known terminals enable ANSI.
         """
-        if not _isatty(self.stream):
+        if not inputs.is_interactive(self.stream):
             return False
         term = os.getenv("TERM", "")
         for dumb_term in ("dumb", "", "unknown"):

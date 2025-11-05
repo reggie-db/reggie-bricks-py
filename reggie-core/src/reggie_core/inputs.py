@@ -4,9 +4,13 @@ import os
 import sys
 
 
-def is_interactive() -> bool:
+def is_interactive(stream=None) -> bool:
     """Return ``True`` when the current process can safely prompt the user."""
-    return sys.stdin.isatty() or "PYCHARM_HOSTED" in os.environ
+    if stream is None:
+        if "PYCHARM_HOSTED" in os.environ:
+            return True
+        stream = sys.stdin
+    return getattr(stream, "isatty", None) or False
 
 
 def select_choice(

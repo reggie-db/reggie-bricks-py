@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Synchronize project versions across workspace members based on git revision."""
 
 import logging

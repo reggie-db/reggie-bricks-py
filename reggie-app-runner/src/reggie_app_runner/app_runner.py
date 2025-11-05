@@ -1,11 +1,15 @@
 import enum
+import functools
+import hashlib
 import os
 import re
 import socket
 from typing import Iterable
 
 import dynaconf
-from reggie_core import logs, parsers, strs
+from reggie_core import logs, objects, parsers, strs
+
+from reggie_app_runner import docker, git
 
 LOG = logs.logger(__file__)
 
@@ -85,6 +89,32 @@ class AppRunnerConfig:
     @property
     def name(self) -> str:
         return self._name or self.ROOT_NAME
+
+    @property
+    def type(self) -> AppRunnerSource:
+        source = self.source.strip() if self.source else None
+        if source:
+            if git.is_url(self.source):
+                return AppRunnerSource.GITHUB
+            else:
+                return AppRunnerSource.DOCKER
+        return AppRunnerSource.LOCAL
+
+    @functools.cached_property
+    def hash(self) -> str:
+        config_type = self.type
+        if config_type == AppRunnerSource.GITHUB:
+            return git.remote_commit_hash(self.source, self.github_token)
+        elif config_type == AppRunnerSource.DOCKER:
+            return docker.image_hash(self.source)
+        else:
+            data = {
+                "type": config_type,
+                "source": self.source,
+                "dependencies": self.dependencies,
+                "pip_dependencies": self.pip_dependencies,
+            }
+            return objects.hash(data, hash_fn=hashlib.md5).hexdigest()
 
     @property
     def path(self) -> str:
