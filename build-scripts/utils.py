@@ -4,6 +4,11 @@ import pathlib
 import subprocess
 from typing import Iterable
 
+# Common file name constants used across scripts
+PY_PROJECT_FILE_NAME = "pyproject.toml"
+# Alias used by member_project.py; keep both for compatibility
+PYPROJECT_FILE_NAME = PY_PROJECT_FILE_NAME
+
 
 def repo_root() -> pathlib.Path:
     """Return the repository root using git when available, else fall back to parent."""
@@ -17,12 +22,6 @@ def repo_root() -> pathlib.Path:
         pass
     # When git is unavailable or the file is outside a repo, use the parent dir
     return pathlib.Path(__file__).resolve().parents[1]
-
-
-# Common file name constants used across scripts
-PY_PROJECT_FILE_NAME = "pyproject.toml"
-# Alias used by member_project.py; keep both for compatibility
-PYPROJECT_FILE_NAME = PY_PROJECT_FILE_NAME
 
 
 def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.Path]:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """Create or update a workspace member project with proper dependencies and sources."""
 
 import pathlib
@@ -91,6 +92,10 @@ project_tbl.setdefault("name", name_dash)
 project_tbl.setdefault("version", "0.0.1")
 project_tbl.setdefault("requires-python", ">=3.12")
 deps_list = project_tbl.setdefault("dependencies", [])
+
+# project.optional-dependencies.dev = ["pytest"]
+optional_deps_tbl = project_tbl.setdefault("optional-dependencies", {})
+optional_deps_tbl.setdefault("dev", []).append("pytest")
 
 # merge dependencies of form "dep @ file://${PROJECT_ROOT}/../dep"
 want_deps = [f"{dep} @ file://${{PROJECT_ROOT}}/../{dep}" for dep in member_deps]

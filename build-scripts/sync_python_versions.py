@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Synchronize requires-python specifiers across workspace member projects."""
+
 import argparse
 import logging
 import pathlib
-from typing import Optional
 
 import tomli_w
 import tomllib
@@ -13,6 +13,7 @@ from packaging.version import InvalidVersion, Version
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger("python_version")
+
 
 def load_workspace_members(root: pathlib.Path) -> list[str]:
     """Read workspace members from the root pyproject.toml."""
@@ -47,9 +48,7 @@ def update_requires_python(current: str, new_min: str, new_max: str | None) -> s
     return ",".join(new_spec_parts)
 
 
-def process_project(
-    py_path: pathlib.Path, min_ver: str, max_ver: str | None
-) -> None:
+def process_project(py_path: pathlib.Path, min_ver: str, max_ver: str | None) -> None:
     """Load a project's pyproject.toml and update its requires-python field if needed."""
     data = tomllib.loads(py_path.read_text())
     proj = data.setdefault("project", {})

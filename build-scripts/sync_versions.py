@@ -1,3 +1,5 @@
+"""Synchronize project versions across workspace members based on git revision."""
+
 import logging
 import pathlib
 import subprocess
@@ -11,9 +13,6 @@ LOG = logging.getLogger(__name__)
 
 DEFAULT_VERSION = "0.0.1"
 VERSION_KEY = "version"
-
-
-"""Synchronize project versions across workspace members based on git revision."""
 
 
 def version() -> str:
