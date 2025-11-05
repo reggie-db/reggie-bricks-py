@@ -1,9 +1,11 @@
 import asyncio
+import hashlib
 import json
 import os
 import shutil
 import signal
 import socket
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -22,14 +24,17 @@ async def run():
     configs = list(app_runner.read_configs())
     procs: list[RunningCommand] = []
     try:
+        start_tasks = []
         for config in configs:
             app_dir = _app_dir(config)
-            proc = await start(app_dir, config)
-            if not proc.is_alive():
-                raise RuntimeError(
-                    f"failed to start process - pid:{proc.pid} name:{config.name}"
-                )
-            procs.append(proc)
+            start_tasks.append(asyncio.create_task(start(app_dir, config)))
+        results = await asyncio.gather(*start_tasks, return_exceptions=True)
+        for result in results:
+            if isinstance(result, RunningCommand):
+                procs.append(result)
+        for result in results:
+            if isinstance(result, Exception):
+                raise result
         caddy_proc = _caddy_run(configs)
         procs.append(caddy_proc)
         LOG.info(f"all processes started: {list(p.pid for p in procs)}")
@@ -41,10 +46,13 @@ async def run():
 
 
 async def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
-    source_dir = prepare(app_dir, config)
+    source_dir = await asyncio.to_thread(prepare, app_dir, config)
     env_name = f"app_{config.name}"
-    conda.update(
-        env_name, *_dependencies(config), pip_dependencies=config.pip_dependencies
+    await asyncio.to_thread(
+        conda.update,
+        env_name,
+        *_dependencies(config),
+        pip_dependencies=config.pip_dependencies,
     )
 
     def _build_env(env: dict):
@@ -58,7 +66,7 @@ async def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
         env_args = []
         for key, value in docker_env.items():
             env_args.append("-e")
-            env_args.append(f'{key}="{value.replace('"', '\\"')}"')
+            env_args.append(f"{key}={value}")
         docker_commands = _commands(config)
         if docker.runtime_path():
             docker_commands = docker_commands + [
@@ -68,7 +76,7 @@ async def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
             ]
         docker_commands = docker_commands + env_args + [config.source]
         proc_env = os.environ.copy()
-        command = docker.command().bake(*docker_commands)
+        command = conda.run(env_name).bake(docker.command().bake(*docker_commands))
     else:
         proc_env = config.env(databricks=True, os_environ=True)
         command = conda.run(env_name).bake(*_commands(config))
@@ -90,8 +98,7 @@ def prepare(app_dir: Path, config: AppRunnerConfig) -> Path:
     if config.type == AppRunnerSource.GITHUB:
         git.clone(config.source, source_dir, token=config.github_token)
     elif config.type == AppRunnerSource.DOCKER:
-        docker.pull(config.source)
-        pass
+        _docker_pull(config)
     return source_dir
 
 
@@ -114,9 +121,26 @@ def _commands(config: AppRunnerConfig) -> list[str]:
 def _dependencies(config: AppRunnerConfig) -> list[str]:
     commands = _commands(config)
     dependencies = config.dependencies
-    if commands and commands[0] == "uv" and "uv" not in dependencies:
+    if commands and commands[0] == "uv" and not config.has_dependency("uv"):
         dependencies = ["uv", *dependencies]
     return dependencies
+
+
+def _docker_pull(config: AppRunnerConfig, force: bool = False) -> RunningCommand:
+    last_pull = (
+        _app_dir(config)
+        / f".last_pull_{objects.hash(config.source, hash_fn=hashlib.md5)}"
+    )
+    if not force and last_pull.is_file():
+        last_pull_time = last_pull.read_text()
+        if (
+            last_pull_time
+            and last_pull_time.isdigit
+            and int(last_pull_time) > datetime.now() - datetime.timedelta(hours=1)
+        ):
+            return
+    docker.pull(config.source)
+    last_pull.write_text(str(int(datetime.now().timestamp())))
 
 
 def _caddy_run(configs: Sequence[AppRunnerConfig]) -> RunningCommand:
@@ -298,8 +322,7 @@ if __name__ == "__main__":
         os.environ[f"DATABRICKS_APP_RUNNER__{name}__SOURCE"] = (
             "https://github.com/reggie-db/test-app"
         )
-        os.environ[f"DATABRICKS_APP_RUNNER__{name}__COMMANDS"] = "['app.py']"
-        os.environ[f"DATABRICKS_APP_RUNNER__{name}__DEPENDENCIES"] = "uv"
+        os.environ[f"DATABRICKS_APP_RUNNER__{name}__COMMANDS"] = "app.py cool"
         env = {"PORT": "@format {this.databricks_app_port}"}
         os.environ[f"DATABRICKS_APP_RUNNER__{name}__ENV"] = f"@json {json.dumps(env)}"
     if True:

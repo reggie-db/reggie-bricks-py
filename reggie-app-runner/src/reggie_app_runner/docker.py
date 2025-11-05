@@ -72,14 +72,30 @@ def _inspect(image_name: str):
     image_arch = (
         "amd64" if platform.machine().lower() in ("arm64", "aarch64") else "amd64"
     )
+    image_names = [image_name]
+    image_name_mirror = _image_name_mirror(image_name)
+    if image_name_mirror != image_name:
+        image_names.append(image_name_mirror)
     # Query the registry using a transport qualified image reference
-    output = _skopeo()(
-        "inspect",
-        f"--override-os={image_os}",
-        f"--override-arch={image_arch}",
-        f"docker://{image_name}",
-    )
-    try:
-        return json.loads(output)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"failed to inspect image {image_name}: {output} error:{e}")
+    error = None
+    for inspect_image_name in image_names:
+        output = _skopeo()(
+            "inspect",
+            f"--override-os={image_os}",
+            f"--override-arch={image_arch}",
+            f"docker://{inspect_image_name}",
+        )
+        try:
+            return json.loads(output)
+        except Exception as e:
+            error = e
+    raise error
+
+
+def _image_name_mirror(image_name: str):
+    image_registry = image_name.split("/", 1)[0]
+    if not (
+        "." in image_registry or ":" in image_registry or image_registry == "localhost"
+    ):
+        image_name = f"mirror.gcr.io/library/{image_name}"
+    return image_name

@@ -3,13 +3,14 @@ import functools
 import hashlib
 import os
 import re
+import shlex
 import socket
 from typing import Iterable
 
 import dynaconf
 from reggie_core import logs, objects, parsers, strs
 
-from reggie_app_runner import docker, git
+from reggie_app_runner import conda, docker, git
 
 LOG = logs.logger(__file__)
 
@@ -135,8 +136,11 @@ class AppRunnerConfig:
         return self.settings.get("source", None)
 
     @property
-    def commands(self) -> Iterable[str]:
-        return self._iter("commands")
+    def commands(self) -> list[str]:
+        commands = list(self._iter("commands"))
+        if len(commands) == 1:
+            commands = shlex.split(commands[0])
+        return commands
 
     @property
     def github_token(self) -> str:
@@ -153,6 +157,12 @@ class AppRunnerConfig:
     @property
     def port(self) -> int:
         return int(self.settings.get(DATABRICKS_APP_PORT_ENV_VAR, 0))
+
+    def has_dependency(self, dependency: str) -> bool:
+        for dep in self.dependencies:
+            if conda.dependency_name(dep) == dependency:
+                return True
+        return False
 
     def env(self, databricks: bool = False, os_environ: bool = False) -> dict:
         env = {}
