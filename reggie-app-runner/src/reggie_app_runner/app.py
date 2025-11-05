@@ -9,7 +9,7 @@ from typing import Any, Sequence
 
 import psutil
 import sh
-from reggie_core import logs, objects, paths, strs
+from reggie_core import logs, objects, paths
 from sh import RunningCommand
 
 from reggie_app_runner import app_runner, caddy, conda, docker, git
@@ -18,13 +18,13 @@ from reggie_app_runner.app_runner import AppRunnerConfig, AppRunnerSource
 LOG = logs.logger(__file__)
 
 
-def run():
+async def run():
     configs = list(app_runner.read_configs())
     procs: list[RunningCommand] = []
     try:
         for config in configs:
             app_dir = _app_dir(config)
-            proc = start(app_dir, config)
+            proc = await start(app_dir, config)
             if not proc.is_alive():
                 raise RuntimeError(
                     f"failed to start process - pid:{proc.pid} name:{config.name}"
@@ -33,15 +33,19 @@ def run():
         caddy_proc = _caddy_run(configs)
         procs.append(caddy_proc)
         LOG.info(f"all processes started: {list(p.pid for p in procs)}")
-        caddy_proc.wait()
+        await caddy_proc
     finally:
         for proc in procs:
             LOG.info(f"shutting down process {proc.pid}")
             _shutdown_process(proc)
 
 
-def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
+async def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
     source_dir = prepare(app_dir, config)
+    env_name = f"app_{config.name}"
+    conda.update(
+        env_name, *_dependencies(config), pip_dependencies=config.pip_dependencies
+    )
 
     def _build_env(env: dict):
         home_dir = app_dir / "home"
@@ -55,7 +59,7 @@ def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
         for key, value in docker_env.items():
             env_args.append("-e")
             env_args.append(f'{key}="{value.replace('"', '\\"')}"')
-        docker_commands = ["run"]
+        docker_commands = _commands(config)
         if docker.runtime_path():
             docker_commands = docker_commands + [
                 "--rm",
@@ -66,25 +70,20 @@ def start(app_dir: Path, config: AppRunnerConfig) -> RunningCommand:
         proc_env = os.environ.copy()
         command = docker.command().bake(*docker_commands)
     else:
-        env_name = f"app_{config.name}"
-        conda.update(
-            env_name, *config.dependencies, pip_dependencies=config.pip_dependencies
-        )
-        proc_env = _build_env(config.env(databricks=True, os_environ=True))
-        command = conda.run(env_name)
-
+        proc_env = config.env(databricks=True, os_environ=True)
+        command = conda.run(env_name).bake(*_commands(config))
     proc = command(
-        *config.commands,
         _bg=True,
         _bg_exc=False,
         _cwd=source_dir,
         _env=proc_env,
+        _async=True,
     )
     return proc
 
 
 def prepare(app_dir: Path, config: AppRunnerConfig) -> Path:
-    source_dir = app_dir / f"source_{config.type}_{config.hash}"
+    source_dir = app_dir / f"source_{config.type.name}_{config.hash}"
     if source_dir.exists():
         shutil.rmtree(source_dir)
     source_dir.mkdir(parents=True, exist_ok=True)
@@ -105,8 +104,25 @@ def _app_dir(config: AppRunnerConfig):
     return root_dir / config.name
 
 
+def _commands(config: AppRunnerConfig) -> list[str]:
+    commands = config.commands
+    if commands and commands[0].endswith(".py"):
+        commands = ["uv", "run", *commands]
+    return commands
+
+
+def _dependencies(config: AppRunnerConfig) -> list[str]:
+    commands = _commands(config)
+    dependencies = config.dependencies
+    if commands and commands[0] == "uv" and "uv" not in dependencies:
+        dependencies = ["uv", *dependencies]
+    return dependencies
+
+
 def _caddy_run(configs: Sequence[AppRunnerConfig]) -> RunningCommand:
-    caddy_listen_port = int(os.environ[app_runner.DATABRICKS_APP_PORT_ENV_VAR])
+    caddy_listen_port = int(
+        os.environ.get(app_runner.DATABRICKS_APP_PORT_ENV_VAR, 8000)
+    )
     LOG.info(f"caddy_listen_port: {caddy_listen_port}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(0.5)
@@ -122,7 +138,7 @@ def _caddy_run(configs: Sequence[AppRunnerConfig]) -> RunningCommand:
         caddy_listen_port, configs, log_level=caddy_log_level
     )
     LOG.info(f"caddy_config: {objects.to_json(caddy_config)}")
-    return caddy.run(caddy_config, _bg=True, _bg_exc=False)
+    return caddy.run(caddy_config, _bg=True, _bg_exc=False, _async=True)
 
 
 def _build_caddy_config(
@@ -278,6 +294,14 @@ if __name__ == "__main__":
     os.environ["DATABRICKS_APP_NAME"] = "reggie_guy"
     os.environ["DATABRICKS_APP_RUNNER__DEFAULT__GITHUB_TOKEN"] = "default_token"
     os.environ["TEST"] = "root_replaced"
+    for name in ["TEST_123"]:
+        os.environ[f"DATABRICKS_APP_RUNNER__{name}__SOURCE"] = (
+            "https://github.com/reggie-db/test-app"
+        )
+        os.environ[f"DATABRICKS_APP_RUNNER__{name}__COMMANDS"] = "['app.py']"
+        os.environ[f"DATABRICKS_APP_RUNNER__{name}__DEPENDENCIES"] = "uv"
+        env = {"PORT": "@format {this.databricks_app_port}"}
+        os.environ[f"DATABRICKS_APP_RUNNER__{name}__ENV"] = f"@json {json.dumps(env)}"
     if True:
         os.environ["DATABRICKS_APP_RUNNER_TEST"] = "nested_replaced"
         os.environ["DATABRICKS_APP_RUNNER_ENV__PYTHONUNBUFFERED"] = (
@@ -298,11 +322,12 @@ if __name__ == "__main__":
             shell,
         ]
         os.environ["DATABRICKS_APP_RUNNER_COMMANDS"] = f"@json {json.dumps(commands)}"
+
     for name in ["APP_FUN", "APP_ABC_COOL0_1"]:
-        tokenized_name = "_".join(strs.tokenize(name))
         os.environ[f"DATABRICKS_APP_RUNNER__{name}__SOURCE"] = "ealen/echo-server"
         os.environ[f"DATABRICKS_APP_RUNNER__{name}__COMMANDS"] = ""
         os.environ[f"DATABRICKS_APP_RUNNER__{name}__TEST"] = "app_replaced"
         env = {"test": "test", "PORT": "@format {this.databricks_app_port}"}
         os.environ[f"DATABRICKS_APP_RUNNER__{name}__ENV"] = f"@json {json.dumps(env)}"
+
     asyncio.run(run())

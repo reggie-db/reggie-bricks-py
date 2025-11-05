@@ -79,4 +79,7 @@ def _inspect(image_name: str):
         f"--override-arch={image_arch}",
         f"docker://{image_name}",
     )
-    return json.loads(output)
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"failed to inspect image {image_name}: {output} error:{e}")

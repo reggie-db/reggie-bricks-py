@@ -39,13 +39,11 @@ def exec() -> Path:
     return bin_path
 
 
-def run(env_name: str) -> sh.Command:
+def run(env_name: str, **kwargs) -> sh.Command:
     """Return a baked ``conda run -n <env>`` command with arg preprocessing."""
+    args = ["run", "-n", env_name, "--no-capture-output"]
     return sh.Command(exec()).bake(
-        "run",
-        "-n",
-        env_name,
-        "--no-capture-output",
+        *args,
         _arg_preprocess=lambda a, k: _run_arg_preprocess(env_name, a, k),
     )
 
@@ -55,7 +53,6 @@ def update(
     *dependencies: str,
     pip_dependencies: Iterable[str] = None,
 ):
-    """Create or update a conda environment with dependencies and optional pip deps."""
     dependencies = list(dependencies)
     if pip_dependencies:
         # Represent pip dependencies using the conda env YAML structure
