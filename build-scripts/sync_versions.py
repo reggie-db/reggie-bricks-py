@@ -44,7 +44,7 @@ def main():
     if not members:
         raise SystemExit("No workspace members found under [tool.uv.workspace].")
 
-    projects = utils.enumerate_workspace_projects(root, members)
+    projects = utils.workspace_projects(root, members)
 
     for proj in projects:
         py_path = proj / utils.PY_PROJECT_FILE_NAME

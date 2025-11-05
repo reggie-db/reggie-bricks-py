@@ -40,7 +40,7 @@ def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.
     return paths
 
 
-def enumerate_workspace_projects(
+def workspace_projects(
     root: pathlib.Path, members: Iterable[str]
 ) -> list[pathlib.Path]:
     """Return a de-duplicated list of project directories for all workspace members."""

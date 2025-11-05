@@ -62,7 +62,7 @@ def process_project(py_path: pathlib.Path, min_ver: str, max_ver: str | None) ->
         LOG.info(f"{py_path.parent.name}: unchanged ({current or '<none>'})")
 
 
-def main() -> None:
+if __name__ == "__main__":
     """Entry point: parse args, enumerate members, and update each project."""
     parser = argparse.ArgumentParser(
         description="Update requires-python range for workspace members."
@@ -78,12 +78,8 @@ def main() -> None:
     if not members:
         raise SystemExit("No workspace members found under [tool.uv.workspace].")
 
-    projects = utils.enumerate_workspace_projects(root, members)
+    projects = utils.workspace_projects(root, members)
 
     for proj in projects:
         py_path = proj / utils.PY_PROJECT_FILE_NAME
         process_project(py_path, args.min_version, args.max_version)
-
-
-if __name__ == "__main__":
-    main()
