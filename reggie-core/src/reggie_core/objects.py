@@ -1,3 +1,5 @@
+"""Serialization helpers for dataclasses, objects, and JSON encoding."""
+
 import inspect
 import json
 from dataclasses import asdict, is_dataclass
@@ -7,6 +9,11 @@ from typing import Any
 def to_dict(
     obj: Any, properties: bool = True, recursive: bool = True
 ) -> dict[Any, Any]:
+    """Convert an object into a dictionary with optional property extraction.
+    Dataclasses are expanded via asdict. Properties can be included by evaluating
+    @property getters. When recursive is True, nested values are converted too.
+    """
+
     def _try_to_dict(value: Any) -> dict[Any, Any]:
         if isinstance(value, dict):
             d = value
@@ -18,9 +25,11 @@ def to_dict(
                 return value
             d = d.copy()
         if properties:
+            # Merge computed properties onto the dict view
             for member_name, member_value in _object_properties(value).items():
                 d[member_name] = member_value
         if recursive:
+            # Convert nested values in-place for a consistent mapping output
             for k, v in d.items():
                 d[k] = _try_to_dict(v)
         return d
@@ -42,6 +51,7 @@ def to_json(obj: Any, encode_properties: bool = False, **kwargs) -> Any:
 
 
 def _object_properties(o: Any) -> dict[str, Any]:
+    """Return a mapping of property names to evaluated values for an object."""
     properties = {}
     if isinstance(o, object):
         for k, v in inspect.getmembers(o.__class__):
@@ -53,11 +63,13 @@ def _object_properties(o: Any) -> dict[str, Any]:
 def _json_encoder_default(
     self: json.JSONEncoder, o: Any, encode_properties: bool = False
 ) -> Any:
+    """Default JSON encoding strategy covering dataclasses and ISO-like values."""
     if o is None:
         return None
     elif hasattr(o, "isoformat") and callable(o.isoformat):
         return o.isoformat()
     elif is_dataclass(o) or isinstance(o, object):
+        # Build a shallow dict view and encode nested values via encoder recursion
         data = to_dict(o, properties=encode_properties, recursive=False)
         for k, v in data.items():
             data[k] = self.encode(v)

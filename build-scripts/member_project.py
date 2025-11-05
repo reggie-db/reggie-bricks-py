@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Create or update a workspace member project with proper dependencies and sources."""
+
 import pathlib
 import re
 import sys
@@ -10,11 +12,13 @@ PYPROJECT_FILE_NAME = "pyproject.toml"
 
 
 def die(msg: str, code: int = 1) -> None:
+    """Exit the script with a message and non-zero status."""
     print(msg, file=sys.stderr)
     raise SystemExit(code)
 
 
 def load_toml(path: pathlib.Path) -> dict:
+    """Load TOML content or exit if the file does not exist."""
     if not path.exists():
         die(f"Missing TOML: {path}")
     return tomllib.loads(path.read_text(encoding="utf-8"))

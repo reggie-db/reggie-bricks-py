@@ -1,3 +1,5 @@
+"""Quick checks for `reggie_core.strs.tokenize` behavior (moved from source)."""
+
 from reggie_core.strs import tokenize
 
 if __name__ == "__main__":

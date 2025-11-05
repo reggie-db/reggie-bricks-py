@@ -14,8 +14,11 @@ PY_PROJECT_FILE_NAME = "pyproject.toml"
 VERSION_KEY = "version"
 DYNAMIC_KEY = "dynamic"
 
+"""Synchronize project versions across workspace members based on git revision."""
+
 
 def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.Path]:
+    """Return project directories matching the member glob, including subdirs."""
     paths: list[pathlib.Path] = []
     for p in root.glob(member_pattern):
         if not p.is_dir():
@@ -31,6 +34,7 @@ def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.
 
 
 def version() -> str:
+    """Build a workspace version string of the form 0.0.1+g<rev> when git is available."""
     try:
         rev = subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
@@ -45,6 +49,7 @@ def version() -> str:
 
 
 def main():
+    """Entry point: compute version and write it into each member's pyproject."""
     root = utils.repo_root()
     pyproject_version = version()
     pyproject_root = tomllib.loads((root / PY_PROJECT_FILE_NAME).read_text())

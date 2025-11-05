@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Synchronize requires-python specifiers across workspace member projects."""
 import argparse
 import logging
 import pathlib
@@ -17,6 +18,7 @@ PY_PROJECT_FILE_NAME = "pyproject.toml"
 
 
 def load_workspace_members(root: pathlib.Path) -> list[str]:
+    """Read workspace members from the root pyproject.toml."""
     pyproject = tomllib.loads((root / PY_PROJECT_FILE_NAME).read_text())
     return (
         pyproject.get("tool", {}).get("uv", {}).get("workspace", {}).get("members", [])
@@ -24,6 +26,7 @@ def load_workspace_members(root: pathlib.Path) -> list[str]:
 
 
 def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.Path]:
+    """Return project directories matching a member pattern, scanning immediate children when the member path itself is not a project root."""
     paths: list[pathlib.Path] = []
     for p in root.glob(member_pattern):
         if not p.is_dir():
@@ -39,7 +42,9 @@ def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.
 
 
 def update_requires_python(current: str, new_min: str, new_max: str | None) -> str:
-    """Update requires-python spec using packaging library."""
+    """Compute a normalized requires-python string given new min/max constraints.
+    Preserves an existing upper bound when it is below the requested minimum.
+    """
     try:
         current_spec = SpecifierSet(current or "")
     except Exception:
@@ -49,7 +54,7 @@ def update_requires_python(current: str, new_min: str, new_max: str | None) -> s
     if new_max:
         new_spec_parts.append(f"<{new_max}")
     else:
-        # keep current max only if it's lower than min
+        # Keep the current max only if it's lower than the requested minimum
         for s in current_spec:
             if s.operator in ("<", "<="):
                 try:
@@ -64,6 +69,7 @@ def update_requires_python(current: str, new_min: str, new_max: str | None) -> s
 def process_project(
     py_path: pathlib.Path, min_ver: str, max_ver: str | None
 ) -> None:
+    """Load a project's pyproject.toml and update its requires-python field if needed."""
     data = tomllib.loads(py_path.read_text())
     proj = data.setdefault("project", {})
     current = proj.get("requires-python", "")
@@ -77,6 +83,7 @@ def process_project(
 
 
 def main() -> None:
+    """Entry point: parse args, enumerate members, and update each project."""
     parser = argparse.ArgumentParser(
         description="Update requires-python range for workspace members."
     )

@@ -1,3 +1,5 @@
+"""Project name discovery helpers for modules, paths, and git repos."""
+
 import functools
 import importlib
 import subprocess

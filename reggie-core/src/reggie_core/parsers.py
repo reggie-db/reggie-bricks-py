@@ -1,4 +1,7 @@
+"""Parsing helpers for common environment and config value coercions."""
+
 def parse_bool(value, default=False):
+    """Coerce various representations to a boolean value with default fallback."""
     if isinstance(value, bool):
         return value
     elif isinstance(value, int):

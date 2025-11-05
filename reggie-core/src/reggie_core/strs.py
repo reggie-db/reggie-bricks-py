@@ -1,3 +1,5 @@
+"""String tokenization helpers for names and identifiers."""
+
 import re
 from typing import Any, Iterable
 
@@ -5,6 +7,9 @@ from typing import Any, Iterable
 def tokenize(
     *inputs: Any, non_alpha_numeric=True, camel_case=True, lower=True
 ) -> Iterable[str]:
+    """Yield normalized token fragments from mixed input values.
+    Splits on non-alphanumeric chars, then camelCase boundaries, and lowercases when requested.
+    """
     for input in inputs:
         if input is None:
             continue
