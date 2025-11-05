@@ -7,8 +7,7 @@ import sys
 
 import tomli_w
 import tomllib
-
-PYPROJECT_FILE_NAME = "pyproject.toml"
+from utils import PYPROJECT_FILE_NAME
 
 
 def die(msg: str, code: int = 1) -> None:

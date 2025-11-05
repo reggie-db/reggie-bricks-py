@@ -10,27 +10,10 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger(__name__)
 
 DEFAULT_VERSION = "0.0.1"
-PY_PROJECT_FILE_NAME = "pyproject.toml"
 VERSION_KEY = "version"
-DYNAMIC_KEY = "dynamic"
+
 
 """Synchronize project versions across workspace members based on git revision."""
-
-
-def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.Path]:
-    """Return project directories matching the member glob, including subdirs."""
-    paths: list[pathlib.Path] = []
-    for p in root.glob(member_pattern):
-        if not p.is_dir():
-            continue
-        pj = p / PY_PROJECT_FILE_NAME
-        if pj.exists():
-            paths.append(p)
-        else:
-            for child in p.iterdir():
-                if child.is_dir() and (child / PY_PROJECT_FILE_NAME).exists():
-                    paths.append(child)
-    return paths
 
 
 def version() -> str:
@@ -52,7 +35,7 @@ def main():
     """Entry point: compute version and write it into each member's pyproject."""
     root = utils.repo_root()
     pyproject_version = version()
-    pyproject_root = tomllib.loads((root / PY_PROJECT_FILE_NAME).read_text())
+    pyproject_root = tomllib.loads((root / utils.PY_PROJECT_FILE_NAME).read_text())
     members = (
         pyproject_root.get("tool", {})
         .get("uv", {})
@@ -62,28 +45,22 @@ def main():
     if not members:
         raise SystemExit("No workspace members found under [tool.uv.workspace].")
 
-    projects: list[pathlib.Path] = []
-    seen = set()
-    for m in members:
-        for proj in candidate_projects(root, m):
-            rp = proj.resolve()
-            if rp not in seen:
-                seen.add(rp)
-                projects.append(proj)
+    projects = utils.enumerate_workspace_projects(root, members)
 
     for proj in projects:
-        py_path = proj / PY_PROJECT_FILE_NAME
+        py_path = proj / utils.PY_PROJECT_FILE_NAME
         data = tomllib.loads(py_path.read_text())
 
         proj_tbl = data.setdefault("project", {})
         current = proj_tbl.get(VERSION_KEY, "<none>")
 
         # If version was dynamic, remove it so a static version applies
-        dyn = proj_tbl.get(DYNAMIC_KEY)
+        dynamic_key = "dynamic"
+        dyn = proj_tbl.get(dynamic_key)
         if isinstance(dyn, list) and VERSION_KEY in dyn:
-            proj_tbl[DYNAMIC_KEY] = [x for x in dyn if x != VERSION_KEY]
-            if not proj_tbl[DYNAMIC_KEY]:
-                proj_tbl.pop(DYNAMIC_KEY)
+            proj_tbl[dynamic_key] = [x for x in dyn if x != VERSION_KEY]
+            if not proj_tbl[dynamic_key]:
+                proj_tbl.pop(dynamic_key)
 
         proj_tbl[VERSION_KEY] = pyproject_version
         LOG.info(f"{proj.name}: {current} -> {pyproject_version}")
