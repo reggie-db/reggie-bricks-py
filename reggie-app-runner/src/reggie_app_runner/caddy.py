@@ -20,13 +20,18 @@ _EXIT_CODE_PATTERN = re.compile(r'"exit_code"\s*:\s*(\d+)', re.IGNORECASE)
 
 
 def command() -> sh.Command:
+    """Return a baked ``sh.Command`` for the Caddy executable within our env."""
     return conda.run(_conda_env_name()).bake("caddy")
 
 
 def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.RunningCommand:
+    """Run Caddy with a provided config path, dict, or Caddyfile string.
+    Creates a temporary config file when given a dict or string and streams logs, mapping JSON lines to appropriate log levels and triggering cleanup on exit codes.
+    """
     config_file = _to_caddy_file(config)
 
     def _done(*_):
+        # Best-effort cleanup of the temp config file
         try:
             config_file.unlink()
             LOG.info(f"Deleted config file {config_file}")
@@ -34,6 +39,7 @@ def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.Running
             pass
 
     def _out(error, line):
+        # Derive log level from stream or JSON payload; detect exit codes for completion
         levelno = logging.ERROR if error else logging.INFO
         line = line.rstrip()
         if line:
@@ -54,6 +60,7 @@ def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.Running
 
     args = list(args)
 
+    # Launch Caddy with the materialized config file; wire stdout/stderr/done hooks
     proc = command()(
         "run",
         "--config",
@@ -70,6 +77,7 @@ def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.Running
 
 @functools.cache
 def _conda_env_name():
+    """Ensure the Caddy env is present and return the environment name."""
     conda.update(_CONDA_ENV_NAME, _CONDA_PACKAGE_NAME)
     return _CONDA_ENV_NAME
 
@@ -79,33 +87,21 @@ def _to_caddy_file(config: Union[str, Path, dict[str, Any]]) -> Path:
     if isinstance(config, Path):
         return config
     elif isinstance(config, Dict):
+        # Serialize dict configs to JSON content
         config_content = objects.to_json(config, indent=2)
         config_extension = "json"
     else:
         config = str(config)
+        # Treat input as a filesystem path when it exists
         if path := paths.path(config, exists=True):
             return path
+        # Otherwise assume a raw Caddyfile string
         config_content = config
         config_extension = "caddyfile"
     with tempfile.NamedTemporaryFile(
         mode="w+", suffix=f".{config_extension}", delete=False
     ) as caddy_file:
+        # Persist content to a temp file and return its absolute path
         caddy_file.write(config_content)
         caddy_file.flush()
         return paths.path(caddy_file.name, absolute=True)
-
-
-if __name__ == "__main__":
-    log_line = ' {"level":"info","ts":1760473445.142467,"msg":"shutdown complete","signal":"SIGINT","exit_code":0}'
-    caddy = run(
-        """
-
-    :8080 {
-        log {
-            output stdout
-        }
-        respond "Hello, world!"
-    }
-    """,
-    )
-    caddy.wait()

@@ -9,15 +9,18 @@ from requirements.requirement import Requirement
 
 
 def is_url(source: str) -> bool:
+    """Return True when the source is a valid git URL or git requirement string."""
     return _git_requirement(source) or giturlparse.validate(source)
 
 
 def ssh_url(source: str) -> giturlparse.GitUrlParsed:
+    """Return the SSH URL for a given source string when parseable."""
     git_url = _git_url(source)
     return git_url.url2ssh if git_url else None
 
 
 def revision(source: str) -> str:
+    """Resolve a preferred revision from a requirement string or URL, default main."""
     if requirement := _git_requirement(source):
         if requirement.revision:
             return requirement.revision
@@ -28,6 +31,7 @@ def revision(source: str) -> str:
 
 
 def remote_commit_hash(source: str, token: str | None = None) -> str:
+    """Fetch the remote commit hash for the given source and optional token."""
     remote_url = ssh_url(source)
     remote_revision = revision(source)
     output = _git_command(token)("ls-remote", remote_url, remote_revision)
@@ -35,11 +39,13 @@ def remote_commit_hash(source: str, token: str | None = None) -> str:
 
 
 def clone(source: str, dest: str | Path, token: str | None = None) -> None:
+    """Shallow clone source into dest at the resolved revision using optional token."""
     remote_url = ssh_url(source)
     remote_revision = revision(source)
 
     log = logs.logger("git_clone")
 
+    # Shallow single branch clone with progress logged to our logger
     _git_command(token)(
         "clone",
         "--branch",
@@ -56,6 +62,7 @@ def clone(source: str, dest: str | Path, token: str | None = None) -> None:
 
 
 def _git_command(token: str | None = None, **kwargs) -> sh.Command:
+    """Return a baked ``git`` command with optional token injected into the env."""
     if token:
         env = os.environ.copy()
         env["GITHUB_TOKEN"] = token
@@ -65,6 +72,7 @@ def _git_command(token: str | None = None, **kwargs) -> sh.Command:
 
 
 def _git_url(source: str) -> giturlparse.GitUrlParsed:
+    """Parse a git URL from a requirement string or raw URL, else return None."""
     if requirement := _git_requirement(source):
         source = requirement.uri
     if giturlparse.validate(source):
@@ -73,6 +81,7 @@ def _git_url(source: str) -> giturlparse.GitUrlParsed:
 
 
 def _git_requirement(source: str) -> Requirement:
+    """Return a parsed requirements entry when the source is a git VCS spec."""
     try:
         for req in requirements.parse(source):
             if "git" == req.vcs and req.uri:

@@ -1,4 +1,3 @@
-import asyncio
 import functools
 import logging
 import os
@@ -14,8 +13,6 @@ import sh
 import yaml
 from filelock import FileLock
 from reggie_core import logs, paths
-
-from reggie_app_runner import docker
 
 _CONDA_DIR_NAME = ".miniforge3"
 _CONDA_DEPENDENCY_PATTERN = re.compile(
@@ -43,6 +40,7 @@ def exec() -> Path:
 
 
 def run(env_name: str) -> sh.Command:
+    """Return a baked ``conda run -n <env>`` command with arg preprocessing."""
     return sh.Command(exec()).bake(
         "run",
         "-n",
@@ -57,13 +55,15 @@ def update(
     *dependencies: str,
     pip_dependencies: Iterable[str] = None,
 ):
-    """Create a conda environment with the given name and dependencies."""
+    """Create or update a conda environment with dependencies and optional pip deps."""
     dependencies = list(dependencies)
     if pip_dependencies:
+        # Represent pip dependencies using the conda env YAML structure
         dependencies.append({"pip": pip_dependencies})
     if not dependencies or (
         pip_dependencies and not any(d == "pip" for d in dependencies)
     ):
+        # Ensure pip exists when any pip deps are supplied
         dependencies.append("pip")
     conda_env = {
         "name": env_name,
@@ -76,6 +76,7 @@ def update(
         f.flush()
 
         def _log_msg(ran, call_args, pid=None):
+            # Render a concise invocation line while hiding the full conda path
             ran = ran.replace(str(exec()), "conda")
             return f"{ran}, pid {pid}"
 
@@ -83,6 +84,7 @@ def update(
 
 
 def dependency_name(dependency: str) -> str:
+    """Extract the base package name from a conda dependency spec string."""
     if dependency:
         match = _CONDA_DEPENDENCY_PATTERN.match(dependency)
         if match:
@@ -90,7 +92,7 @@ def dependency_name(dependency: str) -> str:
     return None
 
 
-def _install_conda(dir: Path) -> Path:
+def _install_conda(dir: Path):
     """Download and run the Miniforge installer into the given directory, cached by URL."""
     url = _install_url()
     log = logs.logger("conda_install")
@@ -101,24 +103,21 @@ def _install_conda(dir: Path) -> Path:
         return installer_path.is_file() and os.access(installer_path, os.X_OK)
 
     installer_lock_path = dir / f"{installer_file_name}.lock"
-    if not _installer_path_valid():
-        with FileLock(installer_lock_path):
-            if not _installer_path_valid():
-                log.info(f"Downloading Conda - url:{url} path:{installer_path}")
-                urlretrieve(url, installer_path)
-                installer_path.chmod(0o755)
-                log.info(f"Installing Conda - path:{installer_path}")
-                subprocess.run([installer_path, "-b", "-p", dir], check=True, text=True)
 
-    def _run_installer(path: Path):
-        installer_path = path / "installer.sh"
-        log.info(f"Downloading Conda - url:{url} path:{installer_path}")
-        urlretrieve(url, installer_path)
-        installer_path.chmod(0o755)
-        log.info(f"Installing Conda - path:{installer_path}")
-        subprocess.run([installer_path, "-b", "-p", dir], check=True, text=True)
-
-    return paths.cache_store(url + "v4", _run_installer)
+    try:
+        if not _installer_path_valid():
+            with FileLock(installer_lock_path):
+                if not _installer_path_valid():
+                    # Download the platform-specific installer and mark executable
+                    log.info(f"Downloading Conda - url:{url} path:{installer_path}")
+                    urlretrieve(url, installer_path)
+                    installer_path.chmod(0o755)
+    except Exception:
+        for file in [installer_path, installer_lock_path]:
+            file.unlink()
+        raise
+    log.info(f"Installing Conda - path:{installer_path}")
+    subprocess.run([installer_path, "-b", "-u", "-p", dir], check=True, text=True)
 
 
 def _install_url() -> str:
@@ -149,6 +148,7 @@ def _install_url() -> str:
 
 
 def _run_arg_preprocess(env_name: str, args, kwargs):
+    """Inject friendly logging and default stdout/stderr handlers for ``conda run``."""
     if "_log_msg" not in kwargs:
         exec_path = exec()
         exec_name = exec_path.stem
@@ -167,6 +167,7 @@ def _run_arg_preprocess(env_name: str, args, kwargs):
         log = logs.logger("conda_run")
 
         def _out(levelno, line, queue, process):
+            # Strip trailing newline and log with env name prefix for clarity
             if line.endswith("\n"):
                 line = line[:-1]
             log.log(levelno, f"{env_name} | {line}")
@@ -180,45 +181,3 @@ def _run_arg_preprocess(env_name: str, args, kwargs):
                 stderr_log_levelno, line, queue, process
             )
     return args, kwargs
-
-
-async def main():
-    print(dependency_name("caddy"))
-    print(dependency_name("caddy::caddy"))
-    print(dependency_name("cool::caddy=12"))
-    deps = [
-        "caddy",
-        "curl",
-    ]
-    if not docker.path():
-        deps.append("udocker")
-    update("cool", *deps)
-    run("cool")("caddy", "--version", _bg=True).wait()
-    run("cool")(
-        docker.path() or "udocker",
-        "run",
-        "hello-world",
-        _bg=True,
-    ).wait()
-    update("cool", "openjdk", pip_dependencies=["requests"])
-    run("cool")("java", "--version", _bg=True).wait()
-
-
-if __name__ == "__main__":
-    logging.getLogger().info("test")
-    asyncio.run(main())
-
-    # conda = path()
-    # print(json.dumps(env(include_os=False), indent=2))
-    # install("caddy", "curl", "openjdk")
-    # for commands in [
-    #     ["conda", "info"],
-    #     ["caddy", "version"],
-    #     ["curl", "--version"],
-    #     ["java", "--version"],
-    #     ["bash", "-c", "echo $JAVA_HOME"],
-    # ]:
-    #     subprocess.run(commands, env=env(), check=True)
-
-    # print(f"Conda executable: {conda}")
-    # start(["conda", "info"]).wait()

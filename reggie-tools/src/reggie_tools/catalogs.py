@@ -5,7 +5,6 @@ import re
 import uuid
 from builtins import hasattr
 from dataclasses import dataclass
-from typing import Optional, Set
 
 from pyspark.sql import SparkSession
 
@@ -103,7 +102,7 @@ def catalog_schema_table(
     if table:
         cs = catalog_schema(spark)
         if cs:
-            return CatalogSchemaTable(table, catalog_schema)
+            return CatalogSchemaTable(catalog=cs.catalog, schema=cs.schema, table=table)
     return None
 
 
@@ -117,7 +116,3 @@ def schema(spark: SparkSession = None) -> str | None:
     """Return only the schema component from :func:`catalog_schema`."""
     cs = catalog_schema(spark)
     return cs.schema if catalog_schema else None
-
-
-if __name__ == "__main__":
-    pass

@@ -12,7 +12,7 @@ from reggie_core import logs
 from reggie_tools import configs, runtimes
 
 
-def workspace_client(config: Config = None) -> WorkspaceClient:
+def workspace_client(config: Config | None = None) -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` using the provided or cached config.
     Uses the default cached config when none is supplied.
     """
