@@ -2,7 +2,6 @@
 
 import functools
 from datetime import datetime
-from typing import Optional
 
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
@@ -20,7 +19,7 @@ def workspace_client(config: Config = None) -> WorkspaceClient:
     return WorkspaceClient(config=config)
 
 
-def spark(config: Optional[Config] = None) -> SparkSession:
+def spark(config: Config | None = None) -> SparkSession:
     """Return a Spark session sourced from the runtime or Databricks Connect."""
     # Fast paths when no explicit config is provided
     if config is None:

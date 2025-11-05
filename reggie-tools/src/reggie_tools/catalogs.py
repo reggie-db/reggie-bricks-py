@@ -34,7 +34,7 @@ class CatalogSchemaTable(CatalogSchema):
 
 
 @functools.cache
-def _catalog_schema_config() -> Optional[CatalogSchema]:
+def _catalog_schema_config() -> CatalogSchema | None:
     """Attempt to resolve catalog and schema using configuration sources."""
     config_value_sources = configs.ConfigValueSource.without(
         configs.ConfigValueSource.SECRETS
@@ -66,7 +66,7 @@ def _catalog_schema_config() -> Optional[CatalogSchema]:
     return None
 
 
-def catalog_schema(spark: SparkSession = None) -> Optional[CatalogSchema]:
+def catalog_schema(spark: SparkSession = None) -> CatalogSchema | None:
     """Derive the active catalog/schema, preferring configuration hints first."""
     catalog_schema_config = _catalog_schema_config()
     if catalog_schema_config:
@@ -96,7 +96,7 @@ def catalog_schema(spark: SparkSession = None) -> Optional[CatalogSchema]:
 
 def catalog_schema_table(
     table: str, spark: SparkSession = None
-) -> Optional[CatalogSchemaTable]:
+) -> CatalogSchemaTable | None:
     """Return a fully qualified table reference for the provided ``table`` name."""
     if table:
         cs = catalog_schema(spark)
@@ -105,13 +105,13 @@ def catalog_schema_table(
     return None
 
 
-def catalog(spark: SparkSession = None) -> Optional[str]:
+def catalog(spark: SparkSession = None) -> str | None:
     """Return only the catalog component from :func:`catalog_schema`."""
     cs = catalog_schema(spark)
     return cs.catalog if catalog_schema else None
 
 
-def schema(spark: SparkSession = None) -> Optional[str]:
+def schema(spark: SparkSession = None) -> str | None:
     """Return only the schema component from :func:`catalog_schema`."""
     cs = catalog_schema(spark)
     return cs.schema if catalog_schema else None

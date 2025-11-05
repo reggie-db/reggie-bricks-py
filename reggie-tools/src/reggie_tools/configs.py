@@ -19,7 +19,7 @@ from reggie_tools import catalogs, clients, runtimes
 LOG = logs.logger(__file__)
 
 _config_default_lock = threading.Lock()
-_config_default: Optional[Config] = None
+_config_default: Config | None = None
 
 
 class ConfigValueSource(Enum):
@@ -36,7 +36,7 @@ class ConfigValueSource(Enum):
         return [member for member in cls if member not in excluded]
 
 
-def get(profile: Optional[str] = None) -> Config:
+def get(profile: str | None = None) -> Config:
     """Return a cached or freshly created Databricks ``Config`` for the given profile."""
     global _config_default
     if not profile:
@@ -48,7 +48,7 @@ def get(profile: Optional[str] = None) -> Config:
             with _config_default_lock:
                 return get(profile)
 
-    def _default_profile() -> Optional[str]:
+    def _default_profile() -> str | None:
         if not _cli_version():
             return None
         auth_profiles = _cli_auth_profiles()
@@ -227,7 +227,7 @@ def _cli_version() -> Dict[str, Any]:
 
 
 @functools.cache
-def _cli_auth_profiles() -> Optional[Dict[str, Any]]:
+def _cli_auth_profiles() -> Dict[str, Any | None]:
     """Return cached authentication profiles discovered via the Databricks CLI."""
     auth_profiles = _cli_run("auth", "profiles")[0]
     LOG.debug(f"auth profiles:{auth_profiles}")

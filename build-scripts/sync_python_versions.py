@@ -38,7 +38,7 @@ def candidate_projects(root: pathlib.Path, member_pattern: str) -> list[pathlib.
     return paths
 
 
-def update_requires_python(current: str, new_min: str, new_max: Optional[str]) -> str:
+def update_requires_python(current: str, new_min: str, new_max: str | None) -> str:
     """Update requires-python spec using packaging library."""
     try:
         current_spec = SpecifierSet(current or "")
@@ -62,7 +62,7 @@ def update_requires_python(current: str, new_min: str, new_max: Optional[str]) -
 
 
 def process_project(
-    py_path: pathlib.Path, min_ver: str, max_ver: Optional[str]
+    py_path: pathlib.Path, min_ver: str, max_ver: str | None
 ) -> None:
     data = tomllib.loads(py_path.read_text())
     proj = data.setdefault("project", {})

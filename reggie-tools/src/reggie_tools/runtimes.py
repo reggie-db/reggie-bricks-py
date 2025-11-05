@@ -11,13 +11,13 @@ from reggie_tools import clients
 
 
 @functools.cache
-def version() -> Optional[str]:
+def version() -> str | None:
     """Return the Databricks runtime version if running on a cluster."""
     runtime_version = os.environ.get("DATABRICKS_RUNTIME_VERSION")
     return runtime_version or None
 
 
-def ipython() -> Optional[Any]:
+def ipython() -> Any | None:
     """Return the active IPython instance when executing inside a notebook."""
     get_ipython_function = _get_ipython_function()
     if get_ipython_function:
@@ -27,7 +27,7 @@ def ipython() -> Optional[Any]:
     return None
 
 
-def ipython_user_ns(name: str) -> Optional[Any]:
+def ipython_user_ns(name: str) -> Any | None:
     """Look up ``name`` within the IPython user namespace, if available."""
     ip = ipython()
     if ip:
