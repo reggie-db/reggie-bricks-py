@@ -125,10 +125,10 @@ if name_dash not in members:
 
 root_py_path.write_text(tomli_w.dumps(root_data), encoding="utf-8")
 
-print(f"[ok] Project directory: {proj_dir}")
-print(f"[ok] Package module:    {name_us}")
-print(f"[ok] Workspace member:  {name_dash}")
+print(f"Project directory: {proj_dir}")
+print(f"[Package module:    {name_us}")
+print(f"Workspace member:  {name_dash}")
 if member_deps:
-    print("[ok] Ensured member dependencies and workspace sources for:")
+    print("Ensured member dependencies and workspace sources for:")
     for d in member_deps:
         print(f"     - {d}")

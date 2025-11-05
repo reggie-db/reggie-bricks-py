@@ -6,7 +6,7 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+g00922f8"
+version = "0.0.1+g63ae48a"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
@@ -16,6 +16,11 @@ dependencies = [
     "psutil",
     "requirements-parser",
     "giturlparse",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
 ]
 
 [tool.uv.sources.reggie-core]

@@ -80,8 +80,3 @@ def _git_requirement(source: str) -> Requirement:
     except Exception:
         pass
     return None
-
-
-if __name__ == "__main__":
-    print(remote_commit_hash("https://github.com/reggie-db/reggie-bricks-py"))
-    # clone("https://github.com/reggie-db/reggie-bricks-py", "./reggie-bricks-py")

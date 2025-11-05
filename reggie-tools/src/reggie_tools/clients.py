@@ -59,8 +59,4 @@ def _databricks_session_default() -> SparkSession:
 
 
 if __name__ == "__main__":
-    import os
-
-    os.environ["DATABRICKS_CONFIG_PROFILE"] = "FIELD-ENG-EAST"
-    print(spark())
-    print(spark())
+    pass

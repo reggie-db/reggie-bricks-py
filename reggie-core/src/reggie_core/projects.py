@@ -108,10 +108,3 @@ def _name_default() -> str:
         pn = name(Path.cwd(), "")
     return pn or "reggie-bricks"
 
-
-if __name__ == "__main__":
-    print(name())
-    print(name())
-    print(name(Path.cwd()))
-    print(name(__file__))
-    print(_remote_origin_name())

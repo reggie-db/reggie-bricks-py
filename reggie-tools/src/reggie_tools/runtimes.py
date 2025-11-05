@@ -153,4 +153,4 @@ def _get_context_function():
 
 
 if __name__ == "__main__":
-    print(ipython())
+    pass

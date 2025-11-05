@@ -1,4 +1,3 @@
-import datetime
 import inspect
 import json
 from dataclasses import asdict, is_dataclass
@@ -74,25 +73,3 @@ class _JSONEncoder(json.JSONEncoder):
 class _JSONEncoderProperties(json.JSONEncoder):
     def default(self, o: Any) -> Any:
         return _json_encoder_default(self, o, encode_properties=True)
-
-
-if __name__ == "__main__":
-    print(to_json(None))
-    print(to_json(1))
-    print(to_json("1"))
-    print(to_json(datetime.datetime.now()))
-
-    class Test:
-        def __init__(self, a: int, b: int):
-            self.a = a
-            self.b = b
-
-        @property
-        def c(self) -> int:
-            return self.a + self.b
-
-    test = Test(1, 2)
-    print(to_dict(test))
-    print(to_dict(test, properties=False))
-    print(to_json(test))
-    print(to_json(test, encode_properties=True))

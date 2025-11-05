@@ -135,37 +135,3 @@ def infer_json_parse(c: Column | str) -> Column:
     return F.from_json(infer_json(col), None, {"schemaLocationKey": "schema"})
 
 
-if __name__ == "__main__":
-    import os
-
-    from reggie_tools import clients
-
-    os.environ["DATABRICKS_CONFIG_PROFILE"] = "FIELD-ENG-EAST"
-
-    df = clients.spark().createDataFrame(
-        [
-            ('{"a":1,"b":2}',),
-            ('[{"x":1},{"y":2}]',),
-            ('"hello"',),
-            ("42",),
-            ("true",),
-            ("null",),
-            ("???",),
-            (None,),
-        ],
-        ["json_col"],
-    )
-
-    df.withColumn(
-        "wrapped_schema_only",
-        infer_json("json_col", include_value=False, include_type=False),
-    ).show(truncate=False)
-
-    df.withColumn(
-        "wrapped_value_only",
-        infer_json("json_col", include_schema=False, include_type=False),
-    ).show(truncate=False)
-
-    df.withColumn("wrapped_with_type", infer_json("json_col", include_type=True)).show(
-        truncate=False
-    )
