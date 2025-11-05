@@ -50,9 +50,9 @@ def dbutils(spark: SparkSession = None):
     return None
 
 
-def context(spark: SparkSession = None) -> Dict[str, Any]:
+def context(spark: SparkSession = None) -> dict[str, Any]:
     """Assemble runtime context information from notebook and Spark sources."""
-    contexts: List[Dict[str, Any]] = []
+    contexts: list[dict[str, Any]] = []
     get_context_function = _get_context_function()
     if get_context_function:
         contexts.append(get_context_function().__dict__)
@@ -78,7 +78,7 @@ def context(spark: SparkSession = None) -> Dict[str, Any]:
         else:
             return obj
 
-    def _deep_merge(a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
+    def _deep_merge(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
         for k, v in b.items():
             if not v:  # skip falsy
                 continue
@@ -89,7 +89,7 @@ def context(spark: SparkSession = None) -> Dict[str, Any]:
 
         return a
 
-    context: Dict[str, Any] = {}
+    context: dict[str, Any] = {}
     for ctx in contexts:
         if ctx:
             context = _deep_merge(_convert_keys(context), ctx)

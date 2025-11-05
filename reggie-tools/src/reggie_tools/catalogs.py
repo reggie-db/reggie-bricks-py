@@ -49,7 +49,7 @@ def _catalog_schema_config() -> CatalogSchema | None:
         if schema_name:
             return CatalogSchema(catalog_name, schema_name)
     if runtimes.is_pipeline():
-        catalog_schemas: Set[CatalogSchema] = set()
+        catalog_schemas: set[CatalogSchema] = set()
         try:
             # Intentionally reference a non existent table to surface fully qualified path in error
             clients.spark().sql(

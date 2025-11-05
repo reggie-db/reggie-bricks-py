@@ -23,7 +23,7 @@ def command() -> sh.Command:
     return conda.run(_conda_env_name()).bake("caddy")
 
 
-def run(config: Union[Path, Dict[str, Any], str], *args, **kwargs) -> sh.RunningCommand:
+def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.RunningCommand:
     config_file = _to_caddy_file(config)
 
     def _done(*_):
@@ -74,7 +74,7 @@ def _conda_env_name():
     return _CONDA_ENV_NAME
 
 
-def _to_caddy_file(config: Union[str, Path, Dict[str, Any]]) -> Path:
+def _to_caddy_file(config: Union[str, Path, dict[str, Any]]) -> Path:
     """Materialize a Caddy configuration to a file and return its path."""
     if isinstance(config, Path):
         return config

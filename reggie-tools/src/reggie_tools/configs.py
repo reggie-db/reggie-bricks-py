@@ -92,7 +92,7 @@ def config_value(
     name: str,
     default: Any = None,
     spark: SparkSession = None,
-    config_value_sources: List["ConfigValueSource"] = None,
+    config_value_sources: list["ConfigValueSource"] = None,
 ) -> Any:
     """Fetch a configuration value by checking the configured sources in order."""
     if not name:
@@ -180,7 +180,7 @@ def _cli_run(
     stderr=None,
     check=False,
     timeout=None,
-) -> Tuple[Dict[str, Any], subprocess.CompletedProcess]:
+) -> tuple[dict[str, Any], subprocess.CompletedProcess]:
     """Execute the Databricks CLI and return the parsed JSON payload and process."""
     version = runtimes.version()
     if version:
@@ -201,7 +201,7 @@ def _cli_run(
 
 
 @functools.cache
-def _cli_version() -> Dict[str, Any]:
+def _cli_version() -> dict[str, Any]:
     """Return cached CLI version metadata, if available outside a runtime cluster."""
     version = (
         None
@@ -213,7 +213,7 @@ def _cli_version() -> Dict[str, Any]:
 
 
 @functools.cache
-def _cli_auth_profiles() -> Dict[str, Any | None]:
+def _cli_auth_profiles() -> dict[str, Any | None]:
     """Return cached authentication profiles discovered via the Databricks CLI."""
     auth_profiles = _cli_run("auth", "profiles")[0]
     LOG.debug(f"auth profiles:{auth_profiles}")
