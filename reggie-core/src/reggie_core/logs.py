@@ -15,9 +15,9 @@ from collections.abc import Callable, Iterable
 
 from reggie_core import inputs, parsers, paths
 
-_LOGGING_AUTO_CONFIG = parsers.parse_bool(os.getenv("LOGGING_AUTO_CONFIG", True))
-_LOGGING_SERVER = parsers.parse_bool(os.getenv("LOGGING_SERVER"))
-_LOGGING_PRINT = parsers.parse_bool(os.getenv("LOGGING_PRINT", True))
+_LOGGING_AUTO_CONFIG = parsers.to_bool(os.getenv("LOGGING_AUTO_CONFIG", True))
+_LOGGING_SERVER = parsers.to_bool(os.getenv("LOGGING_SERVER"))
+_LOGGING_PRINT = parsers.to_bool(os.getenv("LOGGING_PRINT", True))
 _AUTO_CONFIG_MARK = object()
 
 
@@ -198,7 +198,7 @@ def _is_server(stream=None) -> bool:
     if platform.system() in ("Windows", "Darwin"):
         return False
     # Databricks notebooks expose ENABLE_REPL_LOGGING; if true, it's an interactive session.
-    if parsers.parse_bool(os.getenv("ENABLE_REPL_LOGGING")):
+    if parsers.to_bool(os.getenv("ENABLE_REPL_LOGGING")):
         return False
     # If stdout/stderr is not attached to a TTY, assume non-interactive (daemon, cron, etc.).
     if not inputs.is_interactive(stream):

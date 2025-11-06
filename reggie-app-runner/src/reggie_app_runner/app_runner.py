@@ -129,7 +129,7 @@ class AppRunnerConfig:
 
     @property
     def strip_path_prefix(self) -> bool:
-        return parsers.parse_bool(self.settings.get("strip_path_prefix", False))
+        return parsers.to_bool(self.settings.get("strip_path_prefix", False))
 
     @property
     def source(self) -> str:

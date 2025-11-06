@@ -13,6 +13,7 @@ import sh
 import yaml
 from filelock import FileLock
 from reggie_core import logs, paths
+from reggie_syncro import caches
 
 _CONDA_DIR_NAME = ".miniforge3"
 _CONDA_DEPENDENCY_PATTERN = re.compile(
@@ -94,6 +95,7 @@ def _install_conda(dir: Path):
     url = _install_url()
     log = logs.logger("conda_install")
     installer_file_name = "installer.sh"
+    caches.DiskCache("")
     installer_path = dir / installer_file_name
 
     def _installer_path_valid():

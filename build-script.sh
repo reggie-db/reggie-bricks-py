@@ -2,17 +2,24 @@
 set -e
 
 if [ -z "$1" ]; then
-  echo "Usage: $0 <script_path> [args...]"
+  echo "Usage: $0 <script|command> [args...]"
   exit 1
 fi
 
-SCRIPT_PATH="$1"
-shift
 BUILD_SCRIPTS_PATH="build-scripts"
 
-case "$SCRIPT_PATH" in
-  *.py) ;; 
-  *) SCRIPT_PATH="${SCRIPT_PATH}.py" ;;
+CMD="$1"
+shift
+
+case "$CMD" in
+  *.py) SCRIPT="$CMD" ;;
+  *) SCRIPT="$CMD.py" ;;
 esac
 
-env -u VIRTUAL_ENV uv run --project "$BUILD_SCRIPTS_PATH" --script "$BUILD_SCRIPTS_PATH/$SCRIPT_PATH" "$@"
+if [ -f "$BUILD_SCRIPTS_PATH/$SCRIPT" ]; then
+  set -- run --script "$BUILD_SCRIPTS_PATH/$SCRIPT" "$@"
+else
+  set -- "$CMD" "$@"
+fi
+
+env -u VIRTUAL_ENV uv --project "$BUILD_SCRIPTS_PATH" "$@"

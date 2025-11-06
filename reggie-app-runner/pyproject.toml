@@ -6,10 +6,11 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+gf448614"
+version = "0.0.1+g53a2722"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+    "reggie-syncro @ file://${PROJECT_ROOT}/../reggie-syncro",
     "filelock",
     "dynaconf",
     "pyaml",
@@ -25,4 +26,7 @@ dev = [
 ]
 
 [tool.uv.sources.reggie-core]
+workspace = true
+
+[tool.uv.sources.reggie-syncro]
 workspace = true

@@ -4,10 +4,14 @@ import datetime
 import hashlib
 import inspect
 import json
+import pickle as pickle_module
+from array import array
+from collections import deque
 from dataclasses import asdict, is_dataclass
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
+CONCRETE_TYPES = (list, tuple, set, dict, frozenset, deque, array, range)
 
 
 def call(fn: Callable, *args: Any) -> Any:
@@ -30,6 +34,18 @@ def call(fn: Callable, *args: Any) -> Any:
         adj = adj + [None] * (needed - len(adj))
 
     return fn(*adj)
+
+
+def remove_keys(d: dict, *keys: str):
+    def _remove_keys(obj: Any, *keys: str):
+        if keys and isinstance(obj, dict) and obj:
+            for key in keys:
+                if key in obj:
+                    del obj[key]
+            for v in obj.values():
+                _remove_keys(v, *keys)
+
+    _remove_keys(d, *keys)
 
 
 def to_dict(
@@ -82,10 +98,23 @@ def hash(
     pickle: bool = False,
     hash_fn: Callable[[bytes], T] = hashlib.sha256,
 ) -> T:
+    """Hash an object using a SHA-256 hash function.
+    If `pickle` is True, the object is pickled before hashing.
+    If `sort_keys` is True, the keys of the object are sorted before hashing.
+    If `hash_fn` is provided, it is used to hash the object.
+    """
     if pickle:
         if sort_keys:
-            obj = _sort_keys(obj)
-        obj_encoded = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+
+            def _sort_values(v: Any) -> Any:
+                if isinstance(v, dict):
+                    return tuple((k, _sort_values(v[k])) for k in sorted(v))
+                elif isinstance(v, CONCRETE_TYPES):
+                    return tuple(_sort_values(x) for x in v)
+                return v
+
+            obj = _sort_values(obj)
+        obj_encoded = pickle_module.dumps(obj, protocol=pickle_module.HIGHEST_PROTOCOL)
     else:
         obj_encoded = to_json(obj, sort_keys=sort_keys, separators=(",", ":")).encode()
     return hash_fn(obj_encoded)
@@ -99,16 +128,6 @@ def _object_properties(o: Any) -> dict[str, Any]:
             if isinstance(v, property) and v.fget is not None:
                 properties[k] = v.fget(o)
     return properties
-
-
-def _sort_keys(obj: Any) -> Any:
-    if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
-        return tuple(_sort_keys(v) for v in obj)
-    else:
-        obj = to_dict(obj, strict=False)
-        if isinstance(obj, dict):
-            return tuple((k, _sort_keys(obj[k])) for k in sorted(obj))
-    return obj
 
 
 def _json_encoder_default(
@@ -138,10 +157,12 @@ class _JSONEncoderProperties(json.JSONEncoder):
 
 
 if __name__ == "__main__":
-    print(hash({"neat": 1, "cool": "wow"}).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}).hexdigest())
-    print(hash({"neat": 1, "cool": "wow"}, sort_keys=False).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}, sort_keys=False).hexdigest())
+    print(hash({"neat": 1, "cool": "wow"}, pickle=True).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}, pickle=True).hexdigest())
+    print(hash({"neat": 1, "cool": "wow"}, pickle=False).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}, pickle=False).hexdigest())
+    print(hash({"neat": 1, "cool": "wow"}, pickle=True, sort_keys=False).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}, pickle=True, sort_keys=False).hexdigest())
     print(hash(1).hexdigest())
     print(hash("1").hexdigest())
     print(hash(datetime.datetime.now()).hexdigest())

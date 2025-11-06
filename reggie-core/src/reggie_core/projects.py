@@ -109,4 +109,3 @@ def _name_default() -> str:
     if not pn:
         pn = name(Path.cwd(), "")
     return pn or "reggie-bricks"
-
