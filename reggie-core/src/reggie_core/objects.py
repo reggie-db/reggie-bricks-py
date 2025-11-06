@@ -1,16 +1,39 @@
 """Serialization helpers for dataclasses, objects, and JSON encoding."""
 
+import datetime
 import hashlib
 import inspect
 import json
 from dataclasses import asdict, is_dataclass
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Sequence, TypeVar
 
 T = TypeVar("T")
 
 
+def call(fn: Callable, *args: Any) -> Any:
+    sig = inspect.signature(fn)
+    params = list(sig.parameters.values())
+
+    if any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params):
+        return fn(*args)
+
+    fixed = [
+        p
+        for p in params
+        if p.kind
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    needed = len(fixed)
+
+    adj = list(args[:needed])
+    if len(adj) < needed:
+        adj = adj + [None] * (needed - len(adj))
+
+    return fn(*adj)
+
+
 def to_dict(
-    obj: Any, properties: bool = True, recursive: bool = True
+    obj: Any, properties: bool = True, recursive: bool = True, strict: bool = True
 ) -> dict[Any, Any]:
     """Convert an object into a dictionary with optional property extraction.
     Dataclasses are expanded via asdict. Properties can be included by evaluating
@@ -40,7 +63,7 @@ def to_dict(
     data = _try_to_dict(obj)
     if data is None:
         return None
-    elif not isinstance(data, dict):
+    elif strict and not isinstance(data, dict):
         raise TypeError(f"Dict conversion failed, got {type(data)}")
     return data
 
@@ -53,9 +76,19 @@ def to_json(obj: Any, encode_properties: bool = False, **kwargs) -> Any:
     return json.dumps(obj, **kwargs)
 
 
-def hash(obj: Any, hash_fn: Callable[[bytes], T] = hashlib.sha256) -> T:
-    json = to_json(obj, sort_keys=True, separators=(",", ":"))
-    return hash_fn(json.encode())
+def hash(
+    obj: Any,
+    sort_keys: bool = True,
+    pickle: bool = False,
+    hash_fn: Callable[[bytes], T] = hashlib.sha256,
+) -> T:
+    if pickle:
+        if sort_keys:
+            obj = _sort_keys(obj)
+        obj_encoded = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        obj_encoded = to_json(obj, sort_keys=sort_keys, separators=(",", ":")).encode()
+    return hash_fn(obj_encoded)
 
 
 def _object_properties(o: Any) -> dict[str, Any]:
@@ -68,6 +101,16 @@ def _object_properties(o: Any) -> dict[str, Any]:
     return properties
 
 
+def _sort_keys(obj: Any) -> Any:
+    if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+        return tuple(_sort_keys(v) for v in obj)
+    else:
+        obj = to_dict(obj, strict=False)
+        if isinstance(obj, dict):
+            return tuple((k, _sort_keys(obj[k])) for k in sorted(obj))
+    return obj
+
+
 def _json_encoder_default(
     self: json.JSONEncoder, o: Any, encode_properties: bool = False
 ) -> Any:
@@ -77,7 +120,6 @@ def _json_encoder_default(
     elif hasattr(o, "isoformat") and callable(o.isoformat):
         return o.isoformat()
     elif is_dataclass(o) or isinstance(o, object):
-        # Build a shallow dict view and encode nested values via encoder recursion
         data = to_dict(o, properties=encode_properties, recursive=False)
         for k, v in data.items():
             data[k] = self.encode(v)
@@ -93,3 +135,15 @@ class _JSONEncoder(json.JSONEncoder):
 class _JSONEncoderProperties(json.JSONEncoder):
     def default(self, o: Any) -> Any:
         return _json_encoder_default(self, o, encode_properties=True)
+
+
+if __name__ == "__main__":
+    print(hash({"neat": 1, "cool": "wow"}).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}).hexdigest())
+    print(hash({"neat": 1, "cool": "wow"}, sort_keys=False).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}, sort_keys=False).hexdigest())
+    print(hash(1).hexdigest())
+    print(hash("1").hexdigest())
+    print(hash(datetime.datetime.now()).hexdigest())
+    call(lambda x: print(f"suh {x}"), "wow", "cool", "neat")
+    call(lambda x, y: print(f"suh {x} {y}"), "wow")
