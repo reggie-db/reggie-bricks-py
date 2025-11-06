@@ -34,9 +34,7 @@ def main():
     """Entry point: compute version and write it into each member's pyproject."""
     pyproject_version = version()
     for pyproject in utils.workspace_pyprojects():
-        print(f"pyproject:{pyproject.pyproject_path}")
         with pyproject.project() as project:
-            print(project)
             # If version was dynamic, remove it so a static version applies
             dynamic_key = "dynamic"
             dyn = project.get(dynamic_key)
