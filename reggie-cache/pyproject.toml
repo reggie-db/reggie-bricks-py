@@ -6,8 +6,8 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-cache"
-version = "0.0.1+g4b480dc"
-requires-python = ">=3.12"
+version = "0.0.1+gc990e25"
+requires-python = ">=3.10"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
 ]

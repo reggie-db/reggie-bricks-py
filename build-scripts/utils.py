@@ -2,12 +2,14 @@
 
 import pathlib
 import subprocess
+import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from typing import Iterator
 
 import tomli_w
 from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
 try:
     import tomllib
@@ -144,26 +146,47 @@ class PyProject:
             )
             return members
 
+    @contextmanager
+    def requires_python(self):
+        with self.project() as project:
+            key = "requires-python"
+            specifier_set_original = PyProject._specifier_set(project.get(key, None))
+            requires_python = (
+                [f"{v.operator}{v.version}" for v in specifier_set_original]
+                if specifier_set_original
+                else []
+            )
+            try:
+                yield requires_python
+            except Exception:
+                raise
+            else:
+                if not requires_python:
+                    requires_python.append(f"=={sys.version.split()[0]}")
+                specifier_set = PyProject._specifier_set(requires_python)
+                if specifier_set != specifier_set_original:
+                    project[key] = PyProject._specifier_set_to_str(specifier_set)
+
     @property
-    def requires_python_min(self):
+    def requires_python_min(self) -> Version | None:
         return self._requires_python_min(">", ">=", "==")
 
     @property
-    def requires_python_max(self):
+    def requires_python_max(self) -> Version | None:
         return self._requires_python_min("<", "<=")
 
-    def _requires_python_min(self, *operators: str):
+    def _requires_python_min(self, *operators: str) -> Version | None:
         if operators:
             operators = list(operators)
             with self.requires_python() as requires_python:
                 specifier_set = PyProject._specifier_set(requires_python)
                 if specifier_set:
-                    result = None
+                    result: Version | None = None
                     for specifier in specifier_set:
-                        if specifier.operator in operators and (
-                            result is None or result > specifier.version
-                        ):
-                            result = specifier.version
+                        if specifier.operator in operators:
+                            specifier_version = Version(specifier.version)
+                            if result is None or result > specifier_version:
+                                result = specifier_version
                     return result
         return None
 
