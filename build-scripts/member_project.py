@@ -6,22 +6,13 @@ import pathlib
 import re
 import sys
 
-import tomli_w
-import tomllib
-from utils import PYPROJECT_FILE_NAME
+import utils
 
 
 def die(msg: str, code: int = 1) -> None:
     """Exit the script with a message and non-zero status."""
     print(msg, file=sys.stderr)
     raise SystemExit(code)
-
-
-def load_toml(path: pathlib.Path) -> dict:
-    """Load TOML content or exit if the file does not exist."""
-    if not path.exists():
-        die(f"Missing TOML: {path}")
-    return tomllib.loads(path.read_text(encoding="utf-8"))
 
 
 if len(sys.argv) < 2:
@@ -38,100 +29,81 @@ if not parts:
 name_dash = "-".join(parts)  # project dir and project.name
 name_us = "_".join(parts)  # package dir
 
-root = pathlib.Path.cwd()
+root = utils.repo_root()
+root_pyproject = utils.PyProject(root)
+
+if member_deps:
+    root_members = root_pyproject.members
+    for dep in member_deps:
+        if dep not in root_members:
+            die(f"Member project does not exist: {dep}")
+
 proj_dir = root / name_dash
-proj_py_path = proj_dir / PYPROJECT_FILE_NAME
+proj_pyproject = utils.PyProject(proj_dir)
+pkg_dir = proj_dir / "src" / name_us
+pkg_dir.mkdir(parents=True, exist_ok=False)
+pkg_init = pkg_dir / "__init__.py"
+if not pkg_init.is_file():
+    pkg_init.write_text("", encoding="utf-8")
 
-# ensure member projects exist and are valid
-for dep in member_deps:
-    dep_dir = root / dep
-    dep_py = dep_dir / PYPROJECT_FILE_NAME
-    if not dep_dir.exists():
-        die(f"Member project directory does not exist: {dep_dir}")
-    if not dep_py.exists():
-        die(f"Member project pyproject.toml not found: {dep_py}")
 
-# create structure if missing, otherwise continue and log
-if proj_dir.exists():
-    print(f"[info] Project exists, will update: {proj_dir}")
-    if not proj_py_path.exists():
-        die(f"Existing project missing {PYPROJECT_FILE_NAME}: {proj_py_path}")
-else:
-    # create minimal structure
-    pkg_dir = proj_dir / "src" / name_us
-    pkg_dir.mkdir(parents=True, exist_ok=False)
-    (pkg_dir / "__init__.py").write_text("", encoding="utf-8")
-
-# load or initialize project pyproject data
-if proj_py_path.exists():
-    py_content = load_toml(proj_py_path)
-else:
-    py_content = {
-        "build-system": {
-            "requires": ["uv_build>=0.8.23,<0.9.0"],
-            "build-backend": "uv_build",
-        },
-        "project": {
-            "name": name_dash,
-            "version": "0.0.1",
-            "requires-python": ">=3.12",
-            "dependencies": [],
-        },
-    }
-
-# enforce required keys
-py_content.setdefault(
-    "build-system",
-    {
+pyproject_content = {
+    "build-system": {
         "requires": ["uv_build>=0.8.23,<0.9.0"],
         "build-backend": "uv_build",
     },
-)
-project_tbl = py_content.setdefault("project", {})
-project_tbl.setdefault("name", name_dash)
-project_tbl.setdefault("version", "0.0.1")
-project_tbl.setdefault("requires-python", ">=3.12")
-deps_list = project_tbl.setdefault("dependencies", [])
+    "project": {
+        "name": name_dash,
+        "version": "0.0.1",
+        "requires-python": ">=3",
+        "dependencies": [],
+    },
+}
 
-# project.optional-dependencies.dev = ["pytest"]
-optional_deps_tbl = project_tbl.setdefault("optional-dependencies", {})
-optional_deps_tbl.setdefault("dev", []).append("pytest")
 
-# merge dependencies of form "dep @ file://${PROJECT_ROOT}/../dep"
-want_deps = [f"{dep} @ file://${{PROJECT_ROOT}}/../{dep}" for dep in member_deps]
-existing = set(deps_list)
-for d in want_deps:
-    if d not in existing:
-        deps_list.append(d)
-        existing.add(d)
+with proj_pyproject.pyproject() as pyproject:
+    build_system = pyproject.setdefault("build-system", {})
+    build_system.setdefault("requires", ["uv_build>=0.8.23,<0.9.0"])
+    build_system.setdefault("build-backend", "uv_build")
 
-# add uv workspace sources for each dep
-tool_tbl = py_content.setdefault("tool", {})
-uv_tbl = tool_tbl.setdefault("uv", {})
-sources_tbl = uv_tbl.setdefault("sources", {})
-for dep in member_deps:
-    src = sources_tbl.get(dep)
-    if not isinstance(src, dict) or not src.get("workspace", False):
-        sources_tbl[dep] = {"workspace": True}
+    project = pyproject.setdefault("project", {})
+    project.setdefault("name", name_dash)
+    project.setdefault("version", "0.0.1")
+    project.setdefault("requires-python", ">=3")
+    dependencies = project.setdefault("dependencies", [])
 
-# write project pyproject.toml
-proj_py_path.write_text(tomli_w.dumps(py_content), encoding="utf-8")
+    if member_deps:
+        file_dependencies = [
+            f"{dep} @ file://${{PROJECT_ROOT}}/../{dep}" for dep in member_deps
+        ]
+        for dep in file_dependencies:
+            if dep not in dependencies:
+                dependencies.append(dep)
 
-# update root workspace members
-root_py_path = root / PYPROJECT_FILE_NAME
-if not root_py_path.exists():
-    die(f"Root {PYPROJECT_FILE_NAME} not found at {root_py_path}")
+        sources = (
+            pyproject.setdefault("tool", {})
+            .setdefault("uv", {})
+            .setdefault("sources", {})
+        )
+        for dep in member_deps:
+            src = sources.get(dep)
+            if not isinstance(src, dict) or not src.get("workspace", False):
+                sources[dep] = {"workspace": True}
 
-root_data = load_toml(root_py_path)
-tool_root = root_data.setdefault("tool", {})
-uv_root = tool_root.setdefault("uv", {})
-ws = uv_root.setdefault("workspace", {})
-members = ws.setdefault("members", [])
+    optional_dependencies = project.setdefault("optional-dependencies", {})
+    optional_dependencies.setdefault("dev", []).append("pytest")
 
-if name_dash not in members:
-    members.append(name_dash)
 
-root_py_path.write_text(tomli_w.dumps(root_data), encoding="utf-8")
+with root_pyproject.pyproject() as root_pyproject:
+    members = (
+        root_pyproject.setdefault("tool", {})
+        .setdefault("uv", {})
+        .setdefault("workspace", {})
+        .setdefault("members", [])
+    )
+    if name_dash not in members:
+        members.append(name_dash)
+
 
 print(f"Project directory: {proj_dir}")
 print(f"[Package module:    {name_us}")
