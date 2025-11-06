@@ -91,8 +91,10 @@ with proj_pyproject.pyproject() as pyproject:
             if not isinstance(src, dict) or not src.get("workspace", False):
                 sources[dep] = {"workspace": True}
 
-    optional_dependencies = project.setdefault("optional-dependencies", {})
-    optional_dependencies.setdefault("dev", []).append("pytest")
+    optional_deps = project.setdefault("optional-dependencies", {})
+    optional_deps_dev = optional_deps.setdefault("dev", [])
+    if "pytest" not in optional_deps_dev:
+        optional_deps_dev.append("pytest")
 
 
 with root_pyproject.pyproject() as root_pyproject:
