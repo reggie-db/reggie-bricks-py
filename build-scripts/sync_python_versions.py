@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger("python_version")
 
 
-def run(min_version: str | None, max_version: str | None = None):
+def run(min_version: str | None = None, max_version: str | None = None):
     pyprojects = list(utils.workspace_pyprojects())
     if not min_version:
         for pyproject in pyprojects:

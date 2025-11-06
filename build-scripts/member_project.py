@@ -6,6 +6,7 @@ import pathlib
 import re
 import sys
 
+import sync_python_versions
 import utils
 
 
@@ -41,7 +42,7 @@ if member_deps:
 proj_dir = root / name_dash
 proj_pyproject = utils.PyProject(proj_dir)
 pkg_dir = proj_dir / "src" / name_us
-pkg_dir.mkdir(parents=True, exist_ok=False)
+pkg_dir.mkdir(parents=True, exist_ok=True)
 pkg_init = pkg_dir / "__init__.py"
 if not pkg_init.is_file():
     pkg_init.write_text("", encoding="utf-8")
@@ -104,6 +105,7 @@ with root_pyproject.pyproject() as root_pyproject:
     if name_dash not in members:
         members.append(name_dash)
 
+sync_python_versions.run()
 
 print(f"Project directory: {proj_dir}")
 print(f"[Package module:    {name_us}")
