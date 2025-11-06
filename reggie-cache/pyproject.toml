@@ -5,18 +5,11 @@ requires = [
 build-backend = "uv_build"
 
 [project]
-name = "reggie-app-runner"
+name = "reggie-cache"
 version = "0.0.1+gd46f73c"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
-    "filelock",
-    "dynaconf",
-    "pyaml",
-    "sh",
-    "psutil",
-    "requirements-parser",
-    "giturlparse",
 ]
 
 [project.optional-dependencies]

@@ -4,4 +4,5 @@ members = [
     "reggie-tools",
     "reggie-app-runner",
     "generators-franchise",
+    "reggie-cache",
 ]

@@ -6,8 +6,6 @@ import logging
 import pathlib
 import subprocess
 
-import tomli_w
-import tomllib
 import utils
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -34,39 +32,23 @@ def version() -> str:
 
 def main():
     """Entry point: compute version and write it into each member's pyproject."""
-    root = utils.repo_root()
     pyproject_version = version()
-    pyproject_root = tomllib.loads((root / utils.PY_PROJECT_FILE_NAME).read_text())
-    members = (
-        pyproject_root.get("tool", {})
-        .get("uv", {})
-        .get("workspace", {})
-        .get("members", [])
-    )
-    if not members:
-        raise SystemExit("No workspace members found under [tool.uv.workspace].")
+    for pyproject in utils.workspace_pyprojects():
+        print(f"pyproject:{pyproject.pyproject_path}")
+        with pyproject.project() as project:
+            print(project)
+            # If version was dynamic, remove it so a static version applies
+            dynamic_key = "dynamic"
+            dyn = project.get(dynamic_key)
+            if isinstance(dyn, list) and VERSION_KEY in dyn:
+                project[dynamic_key] = [x for x in dyn if x != VERSION_KEY]
+                if not project[dynamic_key]:
+                    project.pop(dynamic_key)
 
-    projects = utils.workspace_projects(root, members)
-
-    for proj in projects:
-        py_path = proj / utils.PY_PROJECT_FILE_NAME
-        data = tomllib.loads(py_path.read_text())
-
-        proj_tbl = data.setdefault("project", {})
-        current = proj_tbl.get(VERSION_KEY, "<none>")
-
-        # If version was dynamic, remove it so a static version applies
-        dynamic_key = "dynamic"
-        dyn = proj_tbl.get(dynamic_key)
-        if isinstance(dyn, list) and VERSION_KEY in dyn:
-            proj_tbl[dynamic_key] = [x for x in dyn if x != VERSION_KEY]
-            if not proj_tbl[dynamic_key]:
-                proj_tbl.pop(dynamic_key)
-
-        proj_tbl[VERSION_KEY] = pyproject_version
-        LOG.info(f"{proj.name}: {current} -> {pyproject_version}")
-
-        py_path.write_text(tomli_w.dumps(data))
+            project[VERSION_KEY] = pyproject_version
+            LOG.info(
+                f"{pyproject.pyproject_path.parent.name} version: {pyproject_version}"
+            )
 
 
 if __name__ == "__main__":

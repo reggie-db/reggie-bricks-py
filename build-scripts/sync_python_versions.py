@@ -3,63 +3,39 @@
 
 import argparse
 import logging
-import pathlib
+import sys
 
-import tomli_w
-import tomllib
 import utils
-from packaging.specifiers import SpecifierSet
-from packaging.version import InvalidVersion, Version
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger("python_version")
 
 
-def load_workspace_members(root: pathlib.Path) -> list[str]:
-    """Read workspace members from the root pyproject.toml."""
-    pyproject = tomllib.loads((root / utils.PY_PROJECT_FILE_NAME).read_text())
-    return (
-        pyproject.get("tool", {}).get("uv", {}).get("workspace", {}).get("members", [])
-    )
+def run(min_version: str | None, max_version: str | None = None):
+    projects = utils.workspace_pyprojects()
+    if not min_version:
+        for project in projects:
+            project_min_version = project.requires_python_min
+            if project_min_version is not None and (
+                min_version is None or project_min_version < min_version
+            ):
+                min_version = project_min_version
+    if not min_version:
+        min_version = sys.version.split()[0]
+    for project in projects:
+        _process_project(project, min_version, max_version)
 
 
-def update_requires_python(current: str, new_min: str, new_max: str | None) -> str:
-    """Compute a normalized requires-python string given new min/max constraints.
-    Preserves an existing upper bound when it is below the requested minimum.
-    """
-    try:
-        current_spec = SpecifierSet(current or "")
-    except Exception:
-        current_spec = SpecifierSet("")
-
-    new_spec_parts = [f">={new_min}"]
-    if new_max:
-        new_spec_parts.append(f"<{new_max}")
-    else:
-        # Keep the current max only if it's lower than the requested minimum
-        for s in current_spec:
-            if s.operator in ("<", "<="):
-                try:
-                    if Version(s.version) < Version(new_min):
-                        new_spec_parts.append(str(s))
-                except InvalidVersion:
-                    pass
-
-    return ",".join(new_spec_parts)
-
-
-def process_project(py_path: pathlib.Path, min_ver: str, max_ver: str | None) -> None:
+def _process_project(
+    project: utils.PyProject, min_ver: str, max_ver: str | None
+) -> None:
     """Load a project's pyproject.toml and update its requires-python field if needed."""
-    data = tomllib.loads(py_path.read_text())
-    proj = data.setdefault("project", {})
-    current = proj.get("requires-python", "")
-    updated = update_requires_python(current, min_ver, max_ver)
-    if updated != current:
-        proj["requires-python"] = updated
-        LOG.info(f"{py_path.parent.name}: {current or '<none>'} -> {updated}")
-        py_path.write_text(tomli_w.dumps(data))
-    else:
-        LOG.info(f"{py_path.parent.name}: unchanged ({current or '<none>'})")
+    with project.requires_python() as requires_python:
+        requires_python.clear()
+        requires_python.append(f">={min_ver}")
+        if max_ver:
+            requires_python.append(f"<{max_ver}")
+    LOG.info(f"{project.project_path.parent.name} - min:{min_ver}, max:{max_ver}")
 
 
 if __name__ == "__main__":
@@ -72,14 +48,4 @@ if __name__ == "__main__":
         "max_version", nargs="?", help="Optional maximum Python version, e.g. 4.0"
     )
     args = parser.parse_args()
-
-    root = utils.repo_root()
-    members = load_workspace_members(root)
-    if not members:
-        raise SystemExit("No workspace members found under [tool.uv.workspace].")
-
-    projects = utils.workspace_projects(root, members)
-
-    for proj in projects:
-        py_path = proj / utils.PY_PROJECT_FILE_NAME
-        process_project(py_path, args.min_version, args.max_version)
+    run(args.min_version, args.max_version)

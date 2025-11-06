@@ -1,5 +1,9 @@
 [project]
 name = "build-scripts"
 version = "0.0.1"
-requires-python = ">=3.9"
-dependencies = ["tomli-w", "packaging"]
+requires-python = ">=3.10"
+dependencies = [
+    "tomli",
+    "tomli-w",
+    "packaging",
+]
