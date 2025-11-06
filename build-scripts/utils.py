@@ -124,7 +124,6 @@ class PyProject:
             except Exception:
                 raise
             else:
-                print(f"pyproject:{project}")
                 if project:
                     if "name" not in project:
                         project["name"] = self.pyproject_path.parent.name.replace(
