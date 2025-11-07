@@ -1,6 +1,6 @@
 [project]
 name = "reggie-tools"
-version = "0.0.1+gb4edfd9"
+version = "0.0.1+g67517ed"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-core",

@@ -1,7 +1,11 @@
 import argparse
+import os
 import pathlib
+import shutil
 import subprocess
 import sys
+
+from scripts import projects
 
 from scripts.projects import root_pyproject, PyProject
 
@@ -14,6 +18,29 @@ def update_versions(version: str | None = None):
     pyproject = root_pyproject()
     for p in [pyproject] + list(pyproject.members()):
         _set_version(p, version)
+
+
+def clean_build_artifacts():
+    root = projects.root_pyproject().pyproject.parent
+    root_venv = root / ".venv"
+    excludes = [
+        lambda path: path.name == ".venv" and path.parent == root,
+        lambda path: projects.scripts_pyproject().pyproject in path.parents,
+    ]
+    matchers = [
+        lambda path: path.name == ".venv",
+        lambda path: path.name == "__pycache__" and path.parent != root_venv,
+        lambda path: path.name.endswith(".egg-info"),
+    ]
+    for dirpath, dirnames, _ in os.walk(root):
+        path = pathlib.Path(dirpath)
+        if any(f(path) for f in excludes):
+            dirnames[:] = []
+            continue
+        if any(f(path) for f in matchers):
+            dirnames[:] = []
+            print(f"Deleting directory:{path}")
+            shutil.rmtree(path)
 
 
 def _set_version(pyproject: PyProject, version: str):

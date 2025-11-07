@@ -35,7 +35,7 @@ def root_pyproject() -> "PyProject":
 
 
 @functools.cache
-def _scripts_pyproject() -> "PyProject":
+def scripts_pyproject() -> "PyProject":
     file = pathlib.Path(__file__)
     for p in root_pyproject().members(include_scripts=True):
         try:
@@ -107,7 +107,7 @@ class PyProject:
             name = path.name
             if match_any(name, members) and not match_any(name, exclude):
                 file = path / _PYPROJECT_FILE_NAME
-                if file.is_file() and (include_scripts or file != _scripts_pyproject().pyproject):
+                if file.is_file() and (include_scripts or file != scripts_pyproject().pyproject):
                     yield PyProject(file)
 
     def write_data(self):
@@ -125,7 +125,7 @@ class PyProject:
 
 if __name__ == "__main__":
     print(root_pyproject().name)
-    print(_scripts_pyproject().name)
+    print(scripts_pyproject().name)
     p = root_pyproject()
     print(list(m.name for m in p.members()))
     print(p.name)
