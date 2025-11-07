@@ -29,7 +29,7 @@ def sync_build_system():
 
 def sync_version(version: str | None = None):
     if not version:
-        version = _version()
+        version = _detect_version()
     _set_member_pyproject_values("project", "version", version)
 
 
@@ -80,18 +80,18 @@ def clean_build_artifacts():
         lambda path: path.name == "__pycache__" and path.parent != root_venv,
         lambda path: path.name.endswith(".egg-info"),
     ]
-    for dirpath, dirnames, _ in os.walk(root):
-        path = pathlib.Path(dirpath)
+    for root_path, dir_names, _ in os.walk(root):
+        path = pathlib.Path(root_path)
         if any(f(path) for f in excludes):
-            dirnames[:] = []
+            dir_names[:] = []
             continue
         if any(f(path) for f in matchers):
-            dirnames[:] = []
+            dir_names[:] = []
             print(f"Deleting directory:{path}")
             shutil.rmtree(path)
 
 
-def _version() -> str:
+def _detect_version() -> str:
     """Build a workspace version string of the form 0.0.1+g<rev> when git is available."""
     try:
         rev = subprocess.check_output(
