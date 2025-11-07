@@ -79,6 +79,7 @@ class InstallPath(Path):
 
 
 if __name__ == "__main__":
+    print("suh")
     source = "https://github.com/regclient/regclient/releases/download/v0.9.2/regctl-darwin-arm64"
     resource = _install(source)
     print(resource)

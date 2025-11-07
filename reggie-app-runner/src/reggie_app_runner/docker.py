@@ -99,3 +99,14 @@ def _image_name_mirror(image_name: str):
     ):
         image_name = f"mirror.gcr.io/library/{image_name}"
     return image_name
+
+
+if __name__ == "__main__":
+    print(runtime_path())
+    print(command())
+    print(image_hash("plexinc/pms-docker"))
+    print(image_hash("plexinc/pms-docker:1.42.2.10156-f737b826c"))
+    pull("plexinc/pms-docker")
+    print(command()("version", _bg=True).wait())
+    print(command()("run", "hello-world", _bg=True).wait())
+    print(command()("run", "ealen/echo-server", _bg=True).wait())
