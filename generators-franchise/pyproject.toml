@@ -1,6 +1,6 @@
 [project]
 name = "generators-franchise"
-version = "0.0.1+gc64263e"
+version = "0.0.1+gb745e06"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
@@ -17,3 +17,9 @@ workspace = true
 
 [tool.uv.sources.reggie-tools]
 workspace = true
+
+[build-system]
+requires = [
+    "uv_build>=0.9.6,<0.10.0",
+]
+build-backend = "uv_build"

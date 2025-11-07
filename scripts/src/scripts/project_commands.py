@@ -13,6 +13,20 @@ from scripts import projects
 _DEFAULT_VERSION = "0.0.1"
 
 
+def sync():
+    sync_build_system()
+    sync_version()
+    sync_requires_python()
+    sync_member_dependencies()
+
+
+def sync_build_system():
+    root_pyp = projects.root_pyproject()
+    key = "build-system"
+    build_system = root_pyp.data[key]
+    _set_member_pyproject_values(None, key, build_system)
+
+
 def sync_version(version: str | None = None):
     if not version:
         version = _version()
@@ -92,7 +106,7 @@ def _version() -> str:
     return _DEFAULT_VERSION
 
 
-def _set_member_pyproject_values(path: str, key: str, value: Any, create: bool = True):
+def _set_member_pyproject_values(path: str | None, key: str, value: Any, create: bool = True):
     root_pyp = projects.root_pyproject()
     for p in [root_pyp] + list(root_pyp.members()):
         with p.edit() as data:
