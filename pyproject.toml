@@ -4,6 +4,9 @@ requires = [
 ]
 build-backend = "uv_build"
 
+[tool.settings]
+requires-python = ">=3.10"
+
 [tool.uv]
 dev-dependencies = [
     "pytest",

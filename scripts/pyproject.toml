@@ -1,6 +1,7 @@
 [project]
 name = "scripts"
 version = "0"
+requires-python = ">=3.10"
 description = "Local build utilities"
 dependencies = [
     "python-benedict[toml]",

@@ -3,6 +3,7 @@ set -e
 
 # Run your sync (updates pyproject files)
 ./scripts.sh project_commands update_versions
+./scripts.sh project_commands update_requires_python
 
 # Stage any changes made by the sync so they land in THIS commit
 git add -A
