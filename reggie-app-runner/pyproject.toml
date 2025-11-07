@@ -1,6 +1,6 @@
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+gb745e06"
+version = "0.0.1+g7e467da"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",

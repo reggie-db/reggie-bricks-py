@@ -1,6 +1,12 @@
+[build-system]
+requires = [
+    "uv_build>=0.9.6,<0.10.0",
+]
+build-backend = "uv_build"
+
 [project]
 name = "reggie-core"
-version = "0.0.1+gb745e06"
+version = "0.0.1+g7e467da"
 dependencies = [
     "sitecustomize-entrypoints",
 ]
@@ -8,8 +14,4 @@ dependencies = [
 [project.entry-points.sitecustomize]
 logs_auto_config = "reggie_core.logs:auto_config"
 
-[build-system]
-requires = [
-    "uv_build>=0.9.6,<0.10.0",
-]
-build-backend = "uv_build"
+
