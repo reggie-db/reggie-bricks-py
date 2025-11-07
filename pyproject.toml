@@ -1,9 +1,14 @@
 [tool.uv.workspace]
-members = [
-    "reggie-core",
-    "reggie-tools",
-    "reggie-app-runner",
-    "generators-franchise",
-    "reggie-cache",
-    "reggie-concurio",
-]
+members = ["*"]
+exclude = ["__*", "*.egg-info", "prpr", "build-scripts"]
+
+[tool.uv.sources]
+reggie-core = { workspace = true }
+reggie-tools = { workspace = true }
+reggie-app-runner = { workspace = true }
+generators-franchise = { workspace = true }
+reggie-cache = { workspace = true }
+reggie-concurio = { workspace = true }
+
+[tool.uv]
+dev-dependencies = ["pytest"]

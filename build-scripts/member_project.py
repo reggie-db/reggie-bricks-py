@@ -62,7 +62,7 @@ pyproject_content = {
 }
 
 
-with proj_pyproject.pyproject() as pyproject:
+with proj_pyproject.content() as pyproject:
     build_system = pyproject.setdefault("build-system", {})
     build_system.setdefault("requires", ["uv_build>=0.8.23,<0.9.0"])
     build_system.setdefault("build-backend", "uv_build")
@@ -97,7 +97,7 @@ with proj_pyproject.pyproject() as pyproject:
         optional_deps_dev.append("pytest")
 
 
-with root_pyproject.pyproject() as root_pyproject:
+with root_pyproject.content() as root_pyproject:
     members = (
         root_pyproject.setdefault("tool", {})
         .setdefault("uv", {})

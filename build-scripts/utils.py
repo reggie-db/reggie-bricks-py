@@ -1,5 +1,6 @@
 """Small utility helpers used by build scripts."""
 
+import functools
 import pathlib
 import subprocess
 import sys
@@ -21,6 +22,7 @@ except ModuleNotFoundError:
 PYPROJECT_FILE_NAME = "pyproject.toml"
 
 
+@functools.cache
 def repo_root() -> pathlib.Path:
     """Return the repository root using git when available, else fall back to parent."""
     try:
@@ -35,6 +37,7 @@ def repo_root() -> pathlib.Path:
     return pathlib.Path(__file__).resolve().parents[1]
 
 
+@functools.cache
 def build_scripts_root() -> pathlib.Path:
     file_path = pathlib.Path(__file__).resolve()
     for child in repo_root().iterdir():
@@ -95,7 +98,7 @@ class PyProject:
         self.pyproject_path = project_path / PYPROJECT_FILE_NAME
 
     @contextmanager
-    def pyproject(self):
+    def content(self, *keys: str):
         path = self.pyproject_path
         if path.exists():
             data = tomllib.loads(path.read_text())
@@ -103,7 +106,10 @@ class PyProject:
             data = {}
         original_data = deepcopy(data)
         try:
-            yield data
+            content = data
+            for key in keys:
+                content = content.setdefault(key, {})
+            yield content
         except:
             raise
         else:
@@ -118,7 +124,7 @@ class PyProject:
 
     @contextmanager
     def project(self):
-        with self.pyproject() as pyproject:
+        with self.content() as pyproject:
             key = "project"
             project = pyproject.setdefault(key, {})
             try:
@@ -137,7 +143,7 @@ class PyProject:
 
     @property
     def members(self) -> list[str]:
-        with self.pyproject() as pyproject:
+        with self.content() as pyproject:
             members = (
                 pyproject.get("tool", {})
                 .get("uv", {})

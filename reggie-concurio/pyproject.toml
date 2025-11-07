@@ -6,18 +6,10 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-concurio"
-version = "0.0.1+gd5e876d"
+version = "0.0.1+gbd680f4"
 requires-python = ">=3.10"
 dependencies = [
-    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+    "reggie-core",
     "diskcache",
     "fasteners",
 ]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
-]
-
-[tool.uv.sources.reggie-core]
-workspace = true

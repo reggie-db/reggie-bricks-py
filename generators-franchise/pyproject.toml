@@ -6,11 +6,11 @@ build-backend = "uv_build"
 
 [project]
 name = "generators-franchise"
-version = "0.0.1+gd5e876d"
+version = "0.0.1+gbd680f4"
 requires-python = ">=3.10"
 dependencies = [
-    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
-    "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
+    "reggie-core",
+    "reggie-tools",
     "xhtml2pdf",
     "faker",
     "random-address",
@@ -18,9 +18,3 @@ dependencies = [
     "jinja2",
     "markovify",
 ]
-
-[tool.uv.sources.reggie-core]
-workspace = true
-
-[tool.uv.sources.reggie-tools]
-workspace = true
