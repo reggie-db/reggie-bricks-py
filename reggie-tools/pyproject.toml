@@ -6,7 +6,7 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-tools"
-version = "0.0.1+g53a2722"
+version = "0.0.1+gd5e876d"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",

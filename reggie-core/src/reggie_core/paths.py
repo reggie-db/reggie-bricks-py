@@ -12,6 +12,7 @@ def path(
     expanduser: bool = True,
     resolve: bool = True,
     absolute: bool = False,
+    mkdir: bool = False,
     exists: bool = False,
 ) -> Path | None:
     """Best effort conversion of input to a ``Path`` with optional checks.
@@ -22,8 +23,8 @@ def path(
         for input in inputs:
             if input is None:
                 continue
-            elif not isinstance(input, Path):
-                input = Path(input)
+            if not isinstance(input, Path):
+                input = pathlib.Path(input)
             if expanduser:
                 input = input.expanduser()
             if result is None:
@@ -38,7 +39,9 @@ def path(
                 result = result.resolve()
             if absolute:
                 result = result.absolute()
-            if not exists or result.exists():
+            if mkdir:
+                result.mkdir(parents=True, exist_ok=True)
+            if mkdir or (not exists or result.exists()):
                 return result
     except Exception:
         pass

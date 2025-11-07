@@ -4,6 +4,7 @@ import os
 import platform
 import re
 import subprocess
+import uuid
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -11,27 +12,27 @@ from urllib.request import urlretrieve
 
 import sh
 import yaml
-from filelock import FileLock
+from reggie_concurio import caches
 from reggie_core import logs, paths
-from reggie_syncro import caches
 
-_CONDA_DIR_NAME = ".miniforge3"
+_CONDA_DIR = paths.path(paths.home() / ".miniforge3", mkdir=True)
 _CONDA_DEPENDENCY_PATTERN = re.compile(
     r"^(?:[A-Za-z0-9_.-]+::)?(?P<name>[A-Za-z0-9_.-]+)"
 )
+_CONDA_INSTALLER_CACHE_DIR = _CONDA_DIR / ".installer"
+_CONDA_INSTALLER_CACHE = caches.DiskCache(directory=_CONDA_INSTALLER_CACHE_DIR)
 
 
 @functools.cache
 def exec() -> Path:
     """Return the conda executable path. Install Miniforge to ~/.miniforge3 if needed."""
-    conda_dir = paths.home() / _CONDA_DIR_NAME
-    bin_path = conda_dir / "bin" / "conda"
+    bin_path = _CONDA_DIR / "bin" / "conda"
 
     def _bin_path_valid():
         return bin_path.is_file() and os.access(bin_path, os.X_OK)
 
     if not _bin_path_valid():
-        installer_dir = _install_conda(conda_dir)
+        installer_dir = _install_conda(_CONDA_DIR)
         if not _bin_path_valid():
             raise ValueError(
                 f"Failed to install conda - path:{bin_path} installer_dir:{installer_dir}"
@@ -94,27 +95,19 @@ def _install_conda(dir: Path):
     """Download and run the Miniforge installer into the given directory, cached by URL."""
     url = _install_url()
     log = logs.logger("conda_install")
-    installer_file_name = "installer.sh"
-    caches.DiskCache("")
-    installer_path = dir / installer_file_name
 
-    def _installer_path_valid():
-        return installer_path.is_file() and os.access(installer_path, os.X_OK)
+    def _download_installer() -> Path:
+        url = _install_url()
+        dir = paths.path(_CONDA_INSTALLER_CACHE_DIR / uuid.uuid4().hex, mkdir=True)
+        exec = dir / "installer.sh"
+        log.info(f"Downloading Conda - url:{url} path:{exec}")
+        urlretrieve(url, exec)
+        exec.chmod(0o755)
+        return exec
 
-    installer_lock_path = dir / f"{installer_file_name}.lock"
-
-    try:
-        if not _installer_path_valid():
-            with FileLock(installer_lock_path):
-                if not _installer_path_valid():
-                    # Download the platform-specific installer and mark executable
-                    log.info(f"Downloading Conda - url:{url} path:{installer_path}")
-                    urlretrieve(url, installer_path)
-                    installer_path.chmod(0o755)
-    except Exception:
-        for file in [installer_path, installer_lock_path]:
-            file.unlink()
-        raise
+    installer_path = _CONDA_INSTALLER_CACHE.get_or_load(
+        url, loader=_download_installer
+    ).value
     log.info(f"Installing Conda - path:{installer_path}")
     subprocess.run([installer_path, "-b", "-u", "-p", dir], check=True, text=True)
 
@@ -180,3 +173,7 @@ def _run_arg_preprocess(env_name: str, args, kwargs):
                 stderr_log_levelno, line, queue, process
             )
     return args, kwargs
+
+
+if __name__ == "__main__":
+    print(exec())

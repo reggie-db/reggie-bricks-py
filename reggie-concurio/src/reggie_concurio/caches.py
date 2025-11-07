@@ -1,3 +1,4 @@
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Callable, TypeVar
@@ -29,15 +30,14 @@ class DiskCache(Cache):
 
     _SENTINEL = object()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, name: str | None = None, key_lock=True, **kwargs):
+        args, kwargs = DiskCache._modify_kwargs(args, name, kwargs)
         super().__init__(*args, **kwargs)
-        # Resolve and ensure the backing directory exists
-        directory = paths.path(kwargs.get("directory"))
-        if not directory:
-            lock_dir_name = "_".join(strs.tokenize(DiskCache.__name__))
-            directory = paths.temp_dir() / lock_dir_name
-        self._lock_directory = directory / ".key-locks"
-        self._lock_directory.mkdir(parents=True, exist_ok=True)
+        if key_lock:
+            directory = paths.path(super().directory)
+            self._lock_directory = directory / ".key-locks"
+        else:
+            self._lock_directory = None
 
     def get_or_load(
         self,
@@ -60,9 +60,16 @@ class DiskCache(Cache):
         # If missing or stale, prepare to load under a process wide lock
         if not DiskCache._is_valid(cache_value, expire):
             # Derive a lock file path unique to the key
-            lock_path = self._lock_directory / f"{objects.hash(key).hexdigest()}.lock"
-            lock = InterProcessLock(lock_path)
-            with lock:
+            if self._lock_directory is not None:
+                lock_path = (
+                    self._lock_directory / f"{objects.hash(key).hexdigest()}.lock"
+                )
+                lock = InterProcessLock(lock_path)
+            else:
+                lock = None
+            if lock is not None:
+                lock.acquire()
+            try:
                 # Re read in case another process populated while we waited
                 cache_value = super().get(key, default=DiskCache._SENTINEL)
                 if not DiskCache._is_valid(cache_value, expire):
@@ -72,7 +79,35 @@ class DiskCache(Cache):
                     cache_value = DiskCacheValue(value=value)
                     # Persist with expiry so future calls can reuse it
                     super().set(key, cache_value, expire=expire)
+            finally:
+                if lock is not None:
+                    lock.release()
         return cache_value
+
+    @staticmethod
+    def _modify_kwargs(args, name: str | None, kwargs):
+        if args:
+            directory = args[0]
+            args = args[1:]
+        else:
+            directory = kwargs.get("directory")
+        directory = paths.path(directory, absolute=True)
+        is_file = directory is not None and directory.is_file()
+        directory_paths = []
+        if is_file or directory is None:
+            directory_paths.append(paths.temp_dir())
+            if is_file:
+                directory_paths.append(
+                    f"{directory.stem}_{objects.hash(str(directory), hash_fn=hashlib.md5).hexdigest()}"
+                )
+            else:
+                directory_paths.append("_".join(strs.tokenize(DiskCache.__name__)))
+        else:
+            directory_paths.append(directory)
+        directory_paths.append(name)
+        kwargs["directory"] = str(paths.path(*directory_paths, mkdir=True))
+        print(kwargs)
+        return args, kwargs
 
     @staticmethod
     def _is_valid(cache_value, expire: float | None = None) -> bool:
@@ -87,10 +122,8 @@ class DiskCache(Cache):
 
 
 if __name__ == "__main__":
-    directory = paths.temp_dir() / "test_cache_v3"
-    print(f"Cache directory: {directory}")
-    cache = DiskCache(directory=directory)
-
+    cache = DiskCache(directory=__file__)
+    print(f"Cache directory: {cache.directory}")
     result = cache.get_or_load("test", loader=lambda: "this is a value", expire=10)
     print(result)
     print(result.load_timestamp.strftime("%Y-%m-%d %H:%M:%S"))
