@@ -2,6 +2,7 @@ import argparse
 import os
 import pathlib
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -9,19 +10,17 @@ from typing import Any
 
 from scripts import projects
 
-from scripts.projects import root_pyproject, PyProject
-
 _DEFAULT_VERSION = "0.0.1"
 
 
-def update_versions(version: str | None = None):
+def sync_version(version: str | None = None):
     if not version:
         version = _version()
     _set_member_pyproject_values("project", "version", version)
 
 
-def update_requires_python(specifier: str | None = None):
-    root_pyp = root_pyproject()
+def sync_requires_python(specifier: str | None = None):
+    root_pyp = projects.root_pyproject()
     if not specifier:
         specifier = root_pyp.data.get("tools.settings.requires-python", None)
     if not specifier:
@@ -30,20 +29,21 @@ def update_requires_python(specifier: str | None = None):
     _set_member_pyproject_values("project", "requires-python", specifier, False)
 
 
-def _set_member_pyproject_values(path: str, key: str, value: Any, create: bool = True):
-    root_pyp = root_pyproject()
-    for p in [root_pyp] + list(root_pyp.members()):
-        _set_pyproject_value(p, path, key, value, create)
-
-
-def _set_pyproject_value(pyproject: PyProject, path: str, key: str, value: Any, create: bool = True):
-    with pyproject.edit() as data:
-        if node := data.get(path, None) if path else data:
-            if value:
-                if create or key in node:
-                    node[key] = value
-            elif key in node:
-                del node[key]
+def sync_member_dependencies(specifier: str | None = None):
+    # reggie-core @ file://${PROJECT_ROOT}/../reggie-core
+    root_pyp = projects.root_pyproject()
+    member_project_names = set(p.name for p in root_pyp.members())
+    for p in root_pyp.members():
+        with p.edit() as data:
+            deps = data.get("project.dependencies", None)
+            for i in range(len(deps) if deps else 0):
+                dep = deps[i]
+                if dep not in member_project_names:
+                    m = re.match(r"^(.*?)(?=\s@\s+file://)", dep)
+                    dep = m.group(1).strip() if m else None
+                    if not dep or dep in member_project_names:
+                        continue
+                deps[i] = dep + " @ file://${PROJECT_ROOT}/../" + dep
 
 
 def clean_build_artifacts():
@@ -84,6 +84,18 @@ def _version() -> str:
     return _DEFAULT_VERSION
 
 
+def _set_member_pyproject_values(path: str, key: str, value: Any, create: bool = True):
+    root_pyp = projects.root_pyproject()
+    for p in [root_pyp] + list(root_pyp.members()):
+        with p.edit() as data:
+            if node := data.get(path, None) if path else data:
+                if value:
+                    if create or key in node:
+                        node[key] = value
+                elif key in node:
+                    del node[key]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("command", help="Method name to run")
@@ -101,3 +113,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # sync_member_dependencies()

@@ -1,8 +1,8 @@
 [project]
 name = "reggie-concurio"
-version = "0.0.1+g7f7caf4"
+version = "0.0.1+g05227a5"
 dependencies = [
-    "reggie-core",
+    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "diskcache",
     "fasteners",
 ]

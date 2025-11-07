@@ -1,8 +1,8 @@
 [project]
 name = "reggie-tools"
-version = "0.0.1+g7f7caf4"
+version = "0.0.1+g05227a5"
 dependencies = [
-    "reggie-core",
+    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "databricks-sdk",
     "databricks-connect<=17.1",
     "requests",
