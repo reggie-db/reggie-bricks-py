@@ -40,6 +40,7 @@ def _delete_key(content: dict, *keys: str):
     def _delete(data: dict, idx: int):
         key = keys[idx]
         last = idx == len(keys) - 1
+
         if last and key in data:
             del data[key]
         else:

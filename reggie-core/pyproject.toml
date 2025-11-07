@@ -1,6 +1,6 @@
 [project]
 name = "reggie-core"
-version = "0.0.1+ga81da09"
+version = "0.0.1+gadf4496"
 requires-python = ">=3.10"
 dependencies = [
     "sitecustomize-entrypoints",

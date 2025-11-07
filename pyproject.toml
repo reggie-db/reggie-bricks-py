@@ -1,13 +1,17 @@
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
+
 [tool.uv.workspace]
 members = ["*"]
-exclude = ["__*", "*.egg-info", "prpr", "build-scripts"]
+exclude = ["__*", "*.egg-info", "build", "dist", "prpr", "build-scripts"]
 
 [tool.uv.sources]
 reggie-core = { workspace = true }
 reggie-tools = { workspace = true }
 reggie-app-runner = { workspace = true }
 generators-franchise = { workspace = true }
-reggie-cache = { workspace = true }
 reggie-concurio = { workspace = true }
 
 [tool.uv]

@@ -1,9 +1,9 @@
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+ga81da09"
+version = "0.0.1+gadf4496"
 dependencies = [
     "reggie-core",
-    "reggie-concurio",
+    "reggie-tools",
     "dynaconf",
     "pyaml",
     "sh",
