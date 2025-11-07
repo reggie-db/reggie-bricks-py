@@ -1,6 +1,6 @@
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+g05227a5"
+version = "0.0.1+gc64263e"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
@@ -11,3 +11,9 @@ dependencies = [
     "requirements-parser",
     "giturlparse",
 ]
+
+[tool.uv.sources.reggie-core]
+workspace = true
+
+[tool.uv.sources.reggie-tools]
+workspace = true

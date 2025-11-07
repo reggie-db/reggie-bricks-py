@@ -31,19 +31,27 @@ def sync_requires_python(specifier: str | None = None):
 
 def sync_member_dependencies(specifier: str | None = None):
     # reggie-core @ file://${PROJECT_ROOT}/../reggie-core
+
+    def parse_dep_name(dep: str) -> str | None:
+        m = re.match(r"^\s*([\w\-\.\[\]]+)\s*@\s*file://", dep)
+        return m.group(1) if m else dep
+
     root_pyp = projects.root_pyproject()
     member_project_names = set(p.name for p in root_pyp.members())
     for p in root_pyp.members():
         with p.edit() as data:
             deps = data.get("project.dependencies", None)
+            member_deps = []
             for i in range(len(deps) if deps else 0):
-                dep = deps[i]
+                dep = parse_dep_name(deps[i])
                 if dep not in member_project_names:
-                    m = re.match(r"^(.*?)(?=\s@\s+file://)", dep)
-                    dep = m.group(1).strip() if m else None
-                    if not dep or dep in member_project_names:
-                        continue
-                deps[i] = dep + " @ file://${PROJECT_ROOT}/../" + dep
+                    continue
+                file_dep = dep + " @ file://${PROJECT_ROOT}/../" + dep
+                member_deps.append(dep)
+                deps[i] = file_dep
+            for member_dep in member_deps:
+                # tool.uv.sources.scripts
+                data[f"tool.uv.sources.{member_dep}.workspace"] = True
 
 
 def clean_build_artifacts():

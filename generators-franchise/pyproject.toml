@@ -1,6 +1,6 @@
 [project]
 name = "generators-franchise"
-version = "0.0.1+g05227a5"
+version = "0.0.1+gc64263e"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
@@ -11,3 +11,9 @@ dependencies = [
     "jinja2",
     "markovify",
 ]
+
+[tool.uv.sources.reggie-core]
+workspace = true
+
+[tool.uv.sources.reggie-tools]
+workspace = true

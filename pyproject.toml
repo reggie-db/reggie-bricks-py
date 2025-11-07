@@ -26,19 +26,3 @@ exclude = [
 
 [tool.uv.sources.scripts]
 workspace = true
-
-[tool.uv.sources.reggie-core]
-workspace = true
-
-[tool.uv.sources.reggie-tools]
-workspace = true
-
-[tool.uv.sources.reggie-app-runner]
-workspace = true
-
-[tool.uv.sources.generators-franchise]
-workspace = true
-
-[tool.uv.sources.reggie-concurio]
-workspace = true
-

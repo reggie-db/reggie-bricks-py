@@ -1,6 +1,6 @@
 [project]
 name = "reggie-tools"
-version = "0.0.1+g05227a5"
+version = "0.0.1+gc64263e"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "databricks-sdk",
@@ -9,3 +9,6 @@ dependencies = [
     "urllib3",
     "pydantic",
 ]
+
+[tool.uv.sources.reggie-core]
+workspace = true

@@ -1,6 +1,6 @@
 [project]
 name = "reggie-core"
-version = "0.0.1+g05227a5"
+version = "0.0.1+gc64263e"
 dependencies = [
     "sitecustomize-entrypoints",
 ]

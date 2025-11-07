@@ -1,8 +1,11 @@
 [project]
 name = "reggie-concurio"
-version = "0.0.1+g05227a5"
+version = "0.0.1+gc64263e"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "diskcache",
     "fasteners",
 ]
+
+[tool.uv.sources.reggie-core]
+workspace = true
