@@ -1,0 +1,17 @@
+[project]
+name = "scripts"
+version = "0"
+description = "Local build utilities"
+dependencies = [
+    "python-benedict[toml]",
+    "tomli-w",
+    "packaging",
+]
+
+[tool.uv]
+managed = true
+skip-build = true
+
+[tool.uv_build]
+package = false
+

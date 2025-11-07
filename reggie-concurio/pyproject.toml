@@ -1,12 +1,9 @@
 [project]
 name = "reggie-concurio"
-version = "0.0.1+g59ace47"
+version = "0.0.1+gcd805a6"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-core",
     "diskcache",
     "fasteners",
 ]
-
-[tool.uv.sources.reggie-core]
-workspace = true

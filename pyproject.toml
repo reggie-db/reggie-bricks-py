@@ -1,18 +1,41 @@
 [build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"]
+requires = [
+    "uv_build>=0.9.6,<0.10.0",
+]
 build-backend = "uv_build"
 
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+]
 
 [tool.uv.workspace]
-members = ["*"]
-exclude = ["__*", "*.egg-info", "build", "dist", "prpr", "build-scripts"]
+members = [
+    "*",
+]
+exclude = [
+    "__*",
+    "*.egg-info",
+    "build",
+    "dist",
+    "prpr",
+]
 
-[tool.uv.sources]
-reggie-core = { workspace = true }
-reggie-tools = { workspace = true }
-reggie-app-runner = { workspace = true }
-generators-franchise = { workspace = true }
-reggie-concurio = { workspace = true }
+[tool.uv.sources.scripts]
+workspace = true
 
-[tool.uv]
-dev-dependencies = ["pytest"]
+[tool.uv.sources.reggie-core]
+workspace = true
+
+[tool.uv.sources.reggie-tools]
+workspace = true
+
+[tool.uv.sources.reggie-app-runner]
+workspace = true
+
+[tool.uv.sources.generators-franchise]
+workspace = true
+
+[tool.uv.sources.reggie-concurio]
+workspace = true
+

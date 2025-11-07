@@ -17,7 +17,6 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib
 
-
 # Common file name constants used across scripts
 PYPROJECT_FILE_NAME = "pyproject.toml"
 
@@ -31,7 +30,7 @@ def repo_root() -> pathlib.Path:
         ).strip()
         if out:
             return pathlib.Path(out)
-    except Exception:
+    except subprocess.CalledProcessError:
         pass
     # When git is unavailable or the file is outside a repo, use the parent dir
     return pathlib.Path(__file__).resolve().parents[1]
@@ -198,7 +197,7 @@ class PyProject:
 
     @staticmethod
     def _specifier_set(
-        specifier: SpecifierSet | list[str] | str | None,
+            specifier: SpecifierSet | list[str] | str | None,
     ) -> SpecifierSet | None:
         if not specifier:
             return None
@@ -210,7 +209,7 @@ class PyProject:
 
     @staticmethod
     def _specifier_set_to_str(
-        specifier: SpecifierSet | list[str] | str | None,
+            specifier: SpecifierSet | list[str] | str | None,
     ) -> str | None:
         specifier = PyProject._specifier_set(specifier)
         result = ",".join([f"{v.operator}{v.version}" for v in (specifier or [])])

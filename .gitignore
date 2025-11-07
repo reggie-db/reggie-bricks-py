@@ -21,6 +21,9 @@ idea.log
 .vscode/
 .history/
 *.code-workspace
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 
 # -----------------------
 # Cursor editor
@@ -28,6 +31,9 @@ idea.log
 .cursor/
 .cursorignore
 .cursorindexingignore
+!.cursor/settings.json
+!.cursor/tasks.json
+!.cursor/launch.json
 
 # -----------------------
 # Python
