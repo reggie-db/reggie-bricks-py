@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Run your sync (updates pyproject files)
+# Run updates (updates pyproject files)
 ./scripts.sh project_commands update_versions
 ./scripts.sh project_commands update_requires_python
 
