@@ -6,12 +6,10 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-core"
-version = "0.0.1+g7e467da"
+version = "0.0.1+g5711d7d"
 dependencies = [
     "sitecustomize-entrypoints",
 ]
 
 [project.entry-points.sitecustomize]
 logs_auto_config = "reggie_core.logs:auto_config"
-
-
