@@ -102,9 +102,9 @@ class Project:
                 continue
             name = path.name
             if match_any(name, members) and not match_any(name, exclude):
-                file = path / _PYPROJECT_FILE_NAME
-                if file.is_file() and (include_scripts or file != scripts_dir()):
-                    yield file
+                member_dir = dir(path)
+                if member_dir and (include_scripts or member_dir != scripts_dir()):
+                    yield member_dir
 
     def __str__(self):
         return f"{Project.__name__}(name={self.name!r} dir={self.dir!r}"

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"] # [tool.member-project]
-build-backend = "uv_build" # [tool.member-project]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
 
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+g2b2dc94"
+version = "0.0.1+g52ed0d9"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
@@ -22,6 +22,3 @@ workspace = true
 
 [tool.uv.sources.reggie-tools]
 workspace = true
-
-[tool.example.key]
-test = "xyz"

@@ -87,7 +87,7 @@ def sync_member_dependencies(*pyprojects: Project):
         if isinstance(sources, Mapping):
             del_deps = []
             for k, v in sources.items():
-                if k not in member_deps and v.workspace == True:
+                if k not in member_deps and (v.get("workspace", None) is True):
                     del_deps.append(k)
 
             for dep in del_deps:
