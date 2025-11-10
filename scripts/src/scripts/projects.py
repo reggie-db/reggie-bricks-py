@@ -33,7 +33,7 @@ def dir(input: PathLike | str, match_member: bool = True) -> pathlib.Path | None
     except Exception:
         pass
     if match_member and isinstance(input, str):
-        for p in root().members(include_scripts=True):
+        for p in root().members():
             if p.name == input:
                 return p.dir
     return None
@@ -59,7 +59,7 @@ def root_dir() -> pathlib.Path:
 @functools.cache
 def scripts_dir() -> pathlib.Path:
     file = pathlib.Path(__file__)
-    for p in root().members(include_scripts=True):
+    for p in root().members():
         if file.is_relative_to(p.dir):
             return p.dir
     raise ValueError(f"Scripts dir not found: {file}")
@@ -86,11 +86,19 @@ class Project:
         project_name = self.pyproject.get("project.name", None)
         return project_name or self.dir.name
 
-    def members(self, include_scripts: bool = False) -> Iterable["Project"]:
-        for dir in self.member_dirs(include_scripts=include_scripts):
-            yield Project(dir)
+    @property
+    def is_root(self) -> bool:
+        return root_dir() == self.dir
 
-    def member_dirs(self, include_scripts: bool = False) -> Iterable[pathlib.Path]:
+    @property
+    def is_scripts(self) -> bool:
+        return scripts_dir() == self.dir
+
+    def members(self) -> Iterable["Project"]:
+        for member_dir in self.member_dirs():
+            yield Project(member_dir)
+
+    def member_dirs(self) -> Iterable[pathlib.Path]:
         members = self.pyproject.get("tool.uv.workspace.members", [])
         exclude = self.pyproject.get("tool.uv.workspace.exclude", [])
 
@@ -102,19 +110,18 @@ class Project:
                 continue
             name = path.name
             if match_any(name, members) and not match_any(name, exclude):
-                member_dir = dir(path)
-                if member_dir and (include_scripts or member_dir != scripts_dir()):
+                if member_dir := dir(path):
                     yield member_dir
 
     def __str__(self):
-        return f"{Project.__name__}(name={self.name!r} dir={self.dir!r}"
+        return f"{Project.__name__}(name={self.name!r} dir={self.dir.name!r})"
 
 
 if __name__ == "__main__":
     print("-")
     print(root().name)
     print(root().pyproject)
-    print(list(m.name for m in root().members(include_scripts=True)))
+    print(list(m.name for m in root().members()))
     print(scripts_dir())
     p = Project(root_dir() / "reggie-tools")
     p.pyproject.tool.test.example = "xyz12"

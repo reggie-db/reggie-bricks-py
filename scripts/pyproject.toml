@@ -1,3 +1,7 @@
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
 [project]
 name = "scripts"
 version = "0"
@@ -15,7 +19,3 @@ skip-build = true
 
 [tool.uv_build]
 package = false
-
-[build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"]
-build-backend = "uv_build"

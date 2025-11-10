@@ -2,9 +2,7 @@
 set -e
 
 # Run updates (updates pyproject files)
-./scripts.sh project_commands sync_version
-./scripts.sh project_commands sync_requires_python
-./scripts.sh project_commands sync_member_dependencies
+./scripts.sh workspace sync all
 
 # Stage any changes made by the sync so they land in THIS commit
 git add -A
