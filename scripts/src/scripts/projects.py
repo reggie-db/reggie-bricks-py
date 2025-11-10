@@ -8,7 +8,7 @@ from typing import Iterable
 import benedict
 import tomlkit
 
-_PYPROJECT_FILE_NAME = "pyproject.toml"
+PYPROJECT_FILE_NAME = "pyproject.toml"
 
 
 @functools.cache
@@ -20,8 +20,8 @@ def dir(input: PathLike | str, match_member: bool = True) -> pathlib.Path | None
     def _pyproject_file(path: pathlib.Path | None):
         if path is not None:
             if path.is_dir():
-                return _pyproject_file(path / _PYPROJECT_FILE_NAME)
-            elif path.name != _PYPROJECT_FILE_NAME:
+                return _pyproject_file(path / PYPROJECT_FILE_NAME)
+            elif path.name != PYPROJECT_FILE_NAME:
                 return _pyproject_file(path.parent)
             elif path.is_file():
                 return path
@@ -71,14 +71,14 @@ class Project:
         self.dir = dir(path)
         if not self.dir:
             raise ValueError(f"Project dir not found: {path}")
-        self.pyproject_file = self.dir / _PYPROJECT_FILE_NAME
+        self.pyproject_file = self.dir / PYPROJECT_FILE_NAME
         try:
             pyproject_text = self.pyproject_file.read_text().rstrip()
             if pyproject_text:
                 pyproject_text += "\n"
             pyproject_doc = tomlkit.parse(pyproject_text)
         except Exception as e:
-            raise ValueError(f"Project {_PYPROJECT_FILE_NAME} error - path:{self.pyproject_file} error:{e}")
+            raise ValueError(f"Project {PYPROJECT_FILE_NAME} error - path:{self.pyproject_file} error:{e}")
         self.pyproject = benedict.benedict(pyproject_doc, keyattr_dynamic=True)
 
     @property

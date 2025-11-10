@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-concurio"
-version = "0.0.1+g5c2cc99"
+version = "0.0.1+gd5bb948"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "diskcache",

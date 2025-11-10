@@ -38,6 +38,9 @@ app = typer.Typer()
 sync = typer.Typer(result_callback=_sync_result_callback)
 app.add_typer(sync, name="sync")
 
+create = typer.Typer()
+app.add_typer(create, name="create")
+
 clean = typer.Typer()
 app.add_typer(clean, name="clean")
 
@@ -125,8 +128,51 @@ def member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None):
     _sync(_set, sync_projects)
 
 
-@clean.command()
-def build_artifacts():
+@create.callback(invoke_without_command=True)
+def create_member(name: str, path: Annotated[
+    pathlib.Path,
+    typer.Option(dir_okay=True, file_okay=False)] = None,
+                  project_dependencies: Annotated[
+                      list[str],
+                      typer.Option("-pd", "--project-dependency")] = None, ):
+    if path:
+        if not path.is_relative_to(projects.root_dir()):
+            raise ValueError(f"Invalid path:{path}")
+    else:
+        path = projects.root_dir()
+    path = path / name
+    if path.name != projects.PYPROJECT_FILE_NAME:
+        path = path / projects.PYPROJECT_FILE_NAME
+    if path.is_file():
+        raise ValueError(f"Project exists path:{path}")
+    project_dir = path.parent
+    project_dir.mkdir(parents=True, exist_ok=True)
+    project_name = project_dir.name
+    print(f"Creating member project - name:{project_name} dir:{project_dir}")
+    pyproject_toml = benedict(tomlkit.document(), keyattr_dynamic=True)
+    pyproject_toml["build-system"] = {}
+    pyproject_toml["project"] = {
+        "name": project_name,
+    }
+    if project_dependencies:
+        dependencies = tomlkit.array()
+        dependencies.multiline(True)
+        for dep in project_dependencies:
+            dep_dir = projects.dir(dep)
+            dep_project = Project(dep_dir)
+            dependencies.append(dep_project.name)
+        pyproject_toml["project"]["dependencies"] = dependencies
+    path.write_text(tomlkit.dumps(pyproject_toml))
+    package_dir = project_dir / "src" / project_name.replace("-", "_")
+    package_dir.mkdir(parents=True, exist_ok=True)
+    (package_dir / "__init__.py").touch()
+    proj = Project(project_dir)
+    all([proj])
+    _persist_projects([proj])
+
+
+@clean.command(name="build-artifacts")
+def clean_build_artifacts():
     root = projects.root_dir()
     root_venv = root / ".venv"
     excludes = [

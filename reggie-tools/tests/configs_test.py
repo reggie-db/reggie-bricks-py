@@ -6,11 +6,11 @@ Exercises config discovery helpers to avoid running prints during library import
 
 from typing import Iterable
 
-from reggie_tools import clients
-from reggie_tools.configs import _get_all, config_value, get
-
+from reggie_tools import clients, configs
+from reggie_tools.configs import _get_all, config_value
 
 if __name__ == "__main__":
+    print(configs.token())
     test = None
     print(getattr(test, "conf", None))
     print(isinstance({}, Iterable))
@@ -19,5 +19,3 @@ if __name__ == "__main__":
     print(config_value("spark.databricks.execution.timeout2"))
     print(config_value("HOME"))
     clients.spark().sql("select 'hello there' as msg").show()
-
-
