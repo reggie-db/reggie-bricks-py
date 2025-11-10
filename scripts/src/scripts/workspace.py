@@ -206,4 +206,5 @@ def main():
 if __name__ == "__main__":
     sync.registered_commands.sort(key=lambda c: (c.name != "all", c.name))
     app.registered_groups.sort(key=lambda c: c.name)
+    
     app()
