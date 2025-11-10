@@ -45,28 +45,32 @@ clean = typer.Typer()
 app.add_typer(clean, name="clean")
 
 
-@sync.command()
-def all(sync_projects: _SYNC_PROJECTS_OPTION = None):
+@sync.command(name="all")
+def sync_all(sync_projects: _SYNC_PROJECTS_OPTION = None):
+    _sync_all(sync_projects)
+
+
+def _sync_all(sync_projects: Iterable[Any] = None):
     projs = list(_projects(sync_projects))
     for cmd in sync.registered_commands:
         callback = cmd.callback
-        if "all" != getattr(callback, "__name__", None):
+        if "sync_all" != getattr(callback, "__name__", None):
             callback(projs)
 
 
-@sync.command()
-def build_system(sync_projects: _SYNC_PROJECTS_OPTION = None):
+@sync.command(name="build-system")
+def sync_build_system(sync_projects: _SYNC_PROJECTS_OPTION = None):
     def _set(p: Project):
         key = "build-system"
         data = projects.root().pyproject.get(key, None)
         if data:
             p.pyproject.merge({key: deepcopy(data)}, overwrite=True)
 
-    _sync(_set, sync_projects, include_scripts=True)
+    _sync_projects(_set, sync_projects, include_scripts=True)
 
 
-@sync.command()
-def version(sync_projects: _SYNC_PROJECTS_OPTION = None, version: Annotated[str, typer.Argument()] = None):
+@sync.command(name="version")
+def sync_version(sync_projects: _SYNC_PROJECTS_OPTION = None, version: Annotated[str, typer.Argument()] = None):
     if not version:
         version = _git_version() or _DEFAULT_VERSION
 
@@ -74,21 +78,21 @@ def version(sync_projects: _SYNC_PROJECTS_OPTION = None, version: Annotated[str,
         data = {"project": {"version": version}}
         p.pyproject.merge(data, overwrite=True)
 
-    _sync(_set, sync_projects)
+    _sync_projects(_set, sync_projects)
 
 
-@sync.command()
-def member_project_tool(sync_projects: _SYNC_PROJECTS_OPTION = None):
+@sync.command(name="member-project-tool")
+def sync_member_project_tool(sync_projects: _SYNC_PROJECTS_OPTION = None):
     def _set(p: Project):
         data = projects.root().pyproject.get("tool.member-project", None)
         if data:
             p.pyproject.merge(deepcopy(data), overwrite=True)
 
-    _sync(_set, sync_projects)
+    _sync_projects(_set, sync_projects)
 
 
-@sync.command()
-def member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None):
+@sync.command(name="member-project-dependencies")
+def sync_member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None):
     # reggie-core @ file://${PROJECT_ROOT}/../reggie-core
     member_project_names = list(p.name for p in projects.root().members())
 
@@ -125,7 +129,7 @@ def member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None):
                     "workspace"] = True
             p.pyproject.merge(data)
 
-    _sync(_set, sync_projects)
+    _sync_projects(_set, sync_projects)
 
 
 @create.callback(invoke_without_command=True)
@@ -170,7 +174,7 @@ def create_member(name: str, path: Annotated[
     package_dir.mkdir(parents=True, exist_ok=True)
     (package_dir / "__init__.py").touch()
     proj = Project(project_dir)
-    all([proj])
+    _sync_all([proj])
     _persist_projects([proj])
 
 
@@ -213,7 +217,7 @@ def _git_version() -> str | None:
     return None
 
 
-def _sync(pyproject_fn: Callable[[Project], None], projs: Iterable[Any] | None, include_scripts: bool = False):
+def _sync_projects(pyproject_fn: Callable[[Project], None], projs: Iterable[Any] | None, include_scripts: bool = False):
     for proj in _projects(projs):
         if not include_scripts and proj.is_scripts:
             continue
@@ -254,6 +258,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sync.registered_commands.sort(key=lambda c: (c.name != "all", c.name))
-    app.registered_groups.sort(key=lambda c: c.name)
     app()
