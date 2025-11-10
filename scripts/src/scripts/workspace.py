@@ -189,8 +189,9 @@ def _projects(projs: Iterable[Any] = None) -> Iterable[Project]:
         projs = projects.root().members()
     for proj in projs:
         if not isinstance(proj, Project):
+            print(proj)
             project_dir = projects.dir(proj)
-            print(project_dir)
+            print(project_dir.absolute())
             if not project_dir:
                 raise ValueError(f"Project {proj} not found - sync_projects: {projs}")
             proj = Project(project_dir)
@@ -206,5 +207,4 @@ def main():
 if __name__ == "__main__":
     sync.registered_commands.sort(key=lambda c: (c.name != "all", c.name))
     app.registered_groups.sort(key=lambda c: c.name)
-    
     app()
