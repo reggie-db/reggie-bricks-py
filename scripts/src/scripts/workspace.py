@@ -136,6 +136,7 @@ def create_member(name: str, path: Annotated[
                       list[str],
                       typer.Option("-pd", "--project-dependency")] = None, ):
     if path:
+        path = path.resolve()
         if not path.is_relative_to(projects.root_dir()):
             raise ValueError(f"Invalid path:{path}")
     else:
@@ -153,6 +154,8 @@ def create_member(name: str, path: Annotated[
     pyproject_toml["build-system"] = {}
     pyproject_toml["project"] = {
         "name": project_name,
+        "version": "0",
+        "requires-python": ">=3.6"
     }
     if project_dependencies:
         dependencies = tomlkit.array()
