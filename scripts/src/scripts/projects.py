@@ -119,4 +119,4 @@ if __name__ == "__main__":
     p = Project(root_dir() / "reggie-tools")
     p.pyproject.tool.test.example = "xyz12"
     print(p.name)
-    print(p.pyproject)
+    print(tomlkit.dumps(p.pyproject))

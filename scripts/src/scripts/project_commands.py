@@ -18,12 +18,19 @@ _DEFAULT_VERSION = "0.0.1"
 
 
 def sync():
-    member_projects = list(projects.root().members())
-    sync_build_system(*member_projects)
+    member_projects = list(projects.root().members(include_scripts=True))
+    scripts_dir = projects.scripts_dir()
+    script_project: Project = None
+    for i in range(len(member_projects)):
+        member_project = member_projects[i]
+        if scripts_dir == member_project.dir:
+            script_project = member_project
+            del member_projects[i]
+    sync_build_system(*set(member_projects + [script_project]))
     sync_version(*member_projects)
     sync_tool_member_project(*member_projects)
     sync_member_dependencies(*member_projects)
-    for member_project in member_projects:
+    for member_project in member_projects + [script_project]:
         _persist(member_project)
 
 
