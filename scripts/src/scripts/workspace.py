@@ -63,7 +63,7 @@ def build_system(sync_projects: _SYNC_PROJECTS_OPTION = None):
 
 
 @sync.command()
-def version(sync_projects: _SYNC_PROJECTS_OPTION = None, version: str | None = None):
+def version(sync_projects: _SYNC_PROJECTS_OPTION = None, version: Annotated[str, typer.Argument()] = None):
     if not version:
         version = _git_version() or _DEFAULT_VERSION
 
@@ -131,7 +131,7 @@ def build_artifacts():
     root_venv = root / ".venv"
     excludes = [
         lambda p: p.name == ".venv" and p.parent == root,
-        lambda p: projects.scripts_pyproject().file in p.parents,
+        lambda p: projects.scripts_dir() in p.parents,
     ]
     matchers = [
         lambda p: p.name == ".venv",
