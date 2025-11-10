@@ -1,79 +1,114 @@
 import argparse
 import os
 import pathlib
-import platform
 import re
 import shutil
 import subprocess
 import sys
-from typing import Any
+from copy import deepcopy
+from typing import Callable, Mapping
+
+import tomlkit
+from benedict import benedict
 
 from scripts import projects
+from scripts.projects import Project
 
 _DEFAULT_VERSION = "0.0.1"
 
 
 def sync():
-    sync_build_system()
-    sync_version()
-    sync_requires_python()
-    sync_member_dependencies()
+    member_projects = list(projects.root().members())
+    sync_build_system(*member_projects)
+    sync_version(*member_projects)
+    sync_tool_member_project(*member_projects)
+    sync_member_dependencies(*member_projects)
+    for member_project in member_projects:
+        _persist(member_project)
 
 
-def sync_build_system():
-    root_pyp = projects.root_pyproject()
-    key = "build-system"
-    build_system = root_pyp.data[key]
-    _set_member_pyproject_values(None, key, build_system)
+def sync_build_system(*pyprojects: Project):
+    root = projects.root()
+
+    def _set(p: Project):
+        key = "build-system"
+        data = root.pyproject.get(key, None)
+        if data:
+            p.pyproject.merge({key: deepcopy(data)}, overwrite=True)
+
+    _sync(_set, *pyprojects)
 
 
-def sync_version(version: str | None = None):
+def sync_version(*pyprojects: Project, version: str | None = None):
     if not version:
-        version = _detect_version()
-    _set_member_pyproject_values("project", "version", version)
+        version = _git_version() or _DEFAULT_VERSION
+
+    def _set(p: Project):
+        data = {"project": {"version": version}}
+        p.pyproject.merge(data, overwrite=True)
+
+    _sync(_set, *pyprojects)
 
 
-def sync_requires_python(specifier: str | None = None):
-    root_pyp = projects.root_pyproject()
-    if not specifier:
-        specifier = root_pyp.data.get("tools.settings.requires-python", None)
-    if not specifier:
-        version = platform.python_version_tuple()
-        specifier = f">={version[0]}.{version[1]}"
-    _set_member_pyproject_values("project", "requires-python", specifier, False)
+def sync_tool_member_project(*pyprojects: Project):
+    root = projects.root()
+
+    def _set(p: Project):
+        data = root.pyproject.get("tool.member-project", None)
+        if data:
+            p.pyproject.merge(deepcopy(data), overwrite=True)
+
+    _sync(_set, *pyprojects)
 
 
-def sync_member_dependencies(specifier: str | None = None):
+def sync_member_dependencies(*pyprojects: Project):
     # reggie-core @ file://${PROJECT_ROOT}/../reggie-core
+
+    root = projects.root()
+    member_project_names = set(p.name for p in root.members())
 
     def parse_dep_name(dep: str) -> str | None:
         m = re.match(r"^\s*([\w\-\.\[\]]+)\s*@\s*file://", dep)
         return m.group(1) if m else dep
 
-    root_pyp = projects.root_pyproject()
-    member_project_names = set(p.name for p in root_pyp.members())
-    for p in root_pyp.members():
-        with p.edit() as data:
-            deps = data.get("project.dependencies", None)
-            member_deps = []
-            for i in range(len(deps) if deps else 0):
-                dep = parse_dep_name(deps[i])
-                if dep not in member_project_names:
-                    continue
-                file_dep = dep + " @ file://${PROJECT_ROOT}/../" + dep
-                member_deps.append(dep)
-                deps[i] = file_dep
+    def _set(p: Project):
+        doc = p.pyproject
+        deps = doc.get("project.dependencies", [])
+        member_deps = []
+        for i in range(len(deps)):
+            dep = parse_dep_name(deps[i])
+            if dep not in member_project_names:
+                continue
+            file_dep = dep + " @ file://${PROJECT_ROOT}/../" + dep
+            member_deps.append(dep)
+            deps[i] = file_dep
+        sources_path = "tool.uv.sources"
+        sources = doc.get(sources_path, None)
+        if isinstance(sources, Mapping):
+            del_deps = []
+            for k, v in sources.items():
+                if k not in member_deps and v.workspace == True:
+                    del_deps.append(k)
+
+            for dep in del_deps:
+                del sources[dep]
+        if member_deps:
+            data = {}
             for member_dep in member_deps:
-                # tool.uv.sources.scripts
-                data[f"tool.uv.sources.{member_dep}.workspace"] = True
+                # tool.uv.sources.[name]
+                data.setdefault("tool", {}).setdefault("uv", {}).setdefault("sources", {}).setdefault(member_dep, {})[
+                    "workspace"] = True
+            p.pyproject.merge(data)
+
+    _sync(_set, *pyprojects)
 
 
 def clean_build_artifacts():
-    root = projects.root_pyproject().pyproject.parent
+    root = projects.root_pyproject().file.parent
     root_venv = root / ".venv"
     excludes = [
         lambda path: path.name == ".venv" and path.parent == root,
-        lambda path: projects.scripts_pyproject().pyproject in path.parents,
+        lambda path: projects.scripts_pyproject().file in path.parents,
     ]
     matchers = [
         lambda path: path.name == ".venv",
@@ -91,7 +126,26 @@ def clean_build_artifacts():
             shutil.rmtree(path)
 
 
-def _detect_version() -> str:
+def _sync(pyproject_fn: Callable[[Project], None], *pyprojects: Project):
+    if len(pyprojects) == 0:
+        pyprojects = list(projects.root().members())
+    for p in pyprojects:
+        pyproject_fn(p)
+
+
+def _persist(project: Project, prune: bool = True):
+    file = project.pyproject_file
+    doc = project.pyproject
+    if prune and isinstance(doc, benedict):
+        doc.clean(strings=False)
+    text = tomlkit.dumps(doc)
+    current_text = file.read_text() if file.exists() else None
+    if text != current_text:
+        file.write_text(text)
+        print(f"Project updated - {project}")
+
+
+def _git_version() -> str:
     """Build a workspace version string of the form 0.0.1+g<rev> when git is available."""
     try:
         rev = subprocess.check_output(
@@ -103,19 +157,7 @@ def _detect_version() -> str:
             return f"{_DEFAULT_VERSION}+g{rev}"
     except Exception:
         pass
-    return _DEFAULT_VERSION
-
-
-def _set_member_pyproject_values(path: str | None, key: str, value: Any, create: bool = True):
-    root_pyp = projects.root_pyproject()
-    for p in [root_pyp] + list(root_pyp.members()):
-        with p.edit() as data:
-            if node := data.get(path, None) if path else data:
-                if value:
-                    if create or key in node:
-                        node[key] = value
-                elif key in node:
-                    del node[key]
+    return None
 
 
 def main():
@@ -134,5 +176,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     # sync_member_dependencies()
+    sync()

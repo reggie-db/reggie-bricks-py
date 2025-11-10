@@ -1,13 +1,14 @@
 [project]
 name = "scripts"
-version = "0"
-requires-python = ">=3.10"
+version = "0.0.1+g2b2dc94"
 description = "Local build utilities"
 dependencies = [
+    "toml",
     "python-benedict[toml]",
-    "tomli-w",
+    "tomlkit",
     "packaging",
 ]
+requires-python = ">=3.10"
 
 [tool.uv]
 managed = true
@@ -16,3 +17,9 @@ skip-build = true
 [tool.uv_build]
 package = false
 
+[tool.example.key]
+test = "xyz"
+
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"] # [tool.member-project]
+build-backend = "uv_build" # [tool.member-project]
