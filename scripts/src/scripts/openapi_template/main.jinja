@@ -1,0 +1,62 @@
+from __future__ import annotations
+
+from fastapi import FastAPI
+
+{{imports}}
+
+from abc import ABC, abstractmethod
+from fastapi import APIRouter
+from typing import Any
+
+
+class APIContract(ABC):
+    """Abstract base class defining the API contract."""
+
+{% for operation in operations %}
+    @abstractmethod
+    def {{operation.function_name}}(self, {{operation.snake_case_arguments}}) -> {{operation.return_type}}:
+        """{{operation.summary or ''}}"""
+        raise NotImplementedError
+{% endfor %}
+
+
+class GeneratedRouter:
+    """Router generator that binds API routes to a given contract implementation."""
+
+    def __init__(self, contract: APIContract):
+        self.contract = contract
+        self.router = APIRouter()
+
+{% for operation in operations %}
+        @self.router.{{operation.type}}(
+            "{{operation.path}}",
+            response_model={{operation.response}}
+            {% if operation.additional_responses %}
+            , responses={
+                {% for status_code, models in operation.additional_responses.items() %}
+                    "{{ status_code }}": {
+                        {% for key, model in models.items() %}
+                            "{{ key }}": {{ model }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            }
+            {% endif %}
+            {% if operation.tags %}
+            , tags={{operation.tags}}
+            {% endif %}
+        )
+        def _{{ operation.function_name }}({{ operation.snake_case_arguments }}):
+            {% set sorted_arguments = operation.__class__.merge_arguments_with_union(operation.arguments_list) %}
+            return self.contract.{{ operation.function_name }}(
+                {{ sorted_arguments | map(attribute="name") | join(", ") }}
+            )
+{% endfor %}
+
+
+def create_app(contract: APIContract, info: dict[str, Any] | None = None) -> FastAPI:
+    """Creates a FastAPI app with router included."""
+    app = FastAPI(**(info or {}))
+    router = GeneratedRouter(contract)
+    app.include_router(router.router)
+    return app

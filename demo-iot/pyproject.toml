@@ -3,16 +3,14 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "reggie-zerobus"
+name = "demo-iot"
 version = "0.0.1+g767bd46"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
-]
-
-[project.optional-dependencies]
-prpr = [
-    "databricks-zerobus @ file:${PROJECT_ROOT}/prpr/databricks_zerobus-0.0.16-py3-none-any.whl",
+    "uvicorn",
+    "fastapi",
+    "humanize"
 ]
 
 [tool.uv.sources.reggie-tools]

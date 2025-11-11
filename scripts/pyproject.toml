@@ -10,7 +10,9 @@ dependencies = [
     "tomlkit",
     "python-benedict[toml]",
     "packaging",
-    "typer"
+    "click<8.2.0", # https://github.com/koxudaxi/fastapi-code-generator/issues/495
+    "typer",
+    "fastapi-code-generator"
 ]
 
 [tool.uv]

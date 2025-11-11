@@ -15,6 +15,7 @@ members = [
     "*",
 ]
 exclude = [
+    "dev-local",
     "__*",
     "*.egg-info",
     "build",

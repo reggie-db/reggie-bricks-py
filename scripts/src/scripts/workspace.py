@@ -66,7 +66,7 @@ def sync_build_system(sync_projects: _SYNC_PROJECTS_OPTION = None):
         if data:
             p.pyproject.merge({key: deepcopy(data)}, overwrite=True)
 
-    _sync_projects(_set, sync_projects, include_scripts=True)
+    _update_projects(_set, sync_projects, include_scripts=True)
 
 
 @sync.command(name="version")
@@ -78,7 +78,7 @@ def sync_version(sync_projects: _SYNC_PROJECTS_OPTION = None, version: Annotated
         data = {"project": {"version": version}}
         p.pyproject.merge(data, overwrite=True)
 
-    _sync_projects(_set, sync_projects)
+    _update_projects(_set, sync_projects)
 
 
 @sync.command(name="member-project-tool")
@@ -88,7 +88,7 @@ def sync_member_project_tool(sync_projects: _SYNC_PROJECTS_OPTION = None):
         if data:
             p.pyproject.merge(deepcopy(data), overwrite=True)
 
-    _sync_projects(_set, sync_projects)
+    _update_projects(_set, sync_projects)
 
 
 @sync.command(name="member-project-dependencies")
@@ -129,7 +129,7 @@ def sync_member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None
                     "workspace"] = True
             p.pyproject.merge(data)
 
-    _sync_projects(_set, sync_projects)
+    _update_projects(_set, sync_projects)
 
 
 @create.callback(invoke_without_command=True)
@@ -217,7 +217,7 @@ def _git_version() -> str | None:
     return None
 
 
-def _sync_projects(pyproject_fn: Callable[[Project], None], projs: Iterable[Any] | None, include_scripts: bool = False):
+def _update_projects(pyproject_fn: Callable[[Project], None], projs: Iterable[Any] | None, include_scripts: bool = False):
     for proj in _projects(projs):
         if not include_scripts and proj.is_scripts:
             continue
