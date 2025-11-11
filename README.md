@@ -1,27 +1,27 @@
 # reggie-bricks
 
-Utilities and sample applications for Databricks projects, packaged as a
-multi-module uv workspace. The goal is to centralize shared helpers—Spark
-sessions, catalog access, configuration loaders—so jobs avoid repeating
-boilerplate or pulling in unnecessary third-party dependencies.
+A multi-module Python workspace managed with uv. This repository contains
+multiple related projects organized as workspace members, each with its own
+`pyproject.toml` and documentation.
 
-## Repository Layout
+## Overview
 
-- `reggie-tools/` – Databricks-specific utilities (Spark client bootstrap,
-  configuration resolution, catalog helpers).
-- `reggie-core/` – lightweight shared functionality (logging primitives, common
-  utilities) intended to be reused by higher-level modules without carrying
-  Databricks dependencies.
-- `reggie-rx/` – reactive process helpers used to monitor child processes from
-  Databricks jobs.
-- `reggie-app-runner/` – orchestration layer that consumes the other modules to
-  clone/run application repos according to Databricks App configuration.
-- `build-scripts/` – tooling for keeping the workspace tidy (see *Build
-  scripts* below).
+This repository breaks down different development needs at Databricks into
+separate, focused sub-projects. Each sub-project addresses specific use cases
+with minimal code and minimal dependency sharing, allowing projects to remain
+lightweight and focused. By organizing functionality into discrete modules, we
+avoid unnecessary dependencies and keep each project's scope clear and
+maintainable.
 
-`pyproject.toml` at the root declares the uv workspace. Each member project has
-its own `pyproject.toml`, but relies on the root for shared `tool.uv.sources` so
-workspace dependencies resolve without duplicating configuration.
+## Repository Structure
+
+This is a uv workspace. The root `pyproject.toml` declares the workspace, and
+each member project has its own `pyproject.toml` that relies on the root for
+shared `tool.uv.sources` configuration, allowing workspace dependencies to
+resolve without duplicating configuration.
+
+Each sub-project contains its own README with project-specific documentation.
+See individual project directories for details.
 
 ## Prerequisites
 
@@ -30,42 +30,34 @@ workspace dependencies resolve without duplicating configuration.
 
 ## Local Setup
 
-Synchronize the workspace once to resolve all project dependencies:
+Synchronize the workspace to resolve all project dependencies:
 
 ```bash
 uv sync --workspace
 ```
 
-You can then execute any module script in place. For example, to exercise the
-core utilities or the app-runner locally:
+You can then execute any module script in place:
 
 ```bash
-uv run --project reggie-tools python -m reggie_tools.test_configs
-uv run --project reggie-app-runner python -m reggie_app_runner.test_runs
+uv run --project <project-name> python -m <module>.<script>
 ```
 
-Because both modules live in the same uv workspace, local changes in
-`reggie-tools`, `reggie-core`, or `reggie-rx` are immediately visible to
-dependents without publishing wheels or editing `PYTHONPATH`.
+Because all modules live in the same uv workspace, local changes in one project
+are immediately visible to dependents without publishing wheels or editing
+`PYTHONPATH`.
 
-## Build Scripts
+## Scripts
 
-The `build-scripts/` directory contains small utilities that automate common
-workspace maintenance tasks:
+Workspace management scripts can be invoked using the `scripts.sh` wrapper:
 
-- `member_project.py` – scaffolds a new workspace member. It can create the
-  directory structure, initialize a uv-aware `pyproject.toml`, wire up
-  dependencies on other workspace members, and update the root workspace list.
-  Example: `python build-scripts/member_project.py analytics-core reggie-tools`.
-- `sync_versions.py` – computes a build metadata version (default `0.0.1`
-  suffixed with the current Git revision) and writes that version into every
-  workspace member so releases stay aligned.
+```bash
+./scripts.sh <script-name> [args...]
+```
 
-These scripts expect to run from the repository root and only touch files under
-version control.
+Run `./scripts.sh --help` for more information about available scripts and their
+usage.
 
 ## Additional Notes
 
 - Use `uv run --project <member>` for ad-hoc commands inside a specific module.
-- Keep Databricks-specific logic inside `reggie-tools`; rely on `reggie-core`
-  for shared, dependency-light helpers when Databricks context is not required.
+- See individual project READMEs for project-specific documentation and usage.
