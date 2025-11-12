@@ -60,7 +60,7 @@ class APIImplementation(APIContract):
         self.genie_service = genie.Service(clients.workspace_client(config),
                                            os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"))
         self.detection_table_name = str(catalogs.catalog_schema_table("detections", self.spark))
-        self.query_cache = caches.DiskCache(paths.temp_dir() / f"{__class__.__name__}")
+        self.query_cache = caches.DiskCache(paths.temp_dir() / f"{__class__.__name__}_v2")
 
     def send_chat_message(self, body: AiChatPostRequest) -> Union[AiChatPostResponse, Error]:
         resp = AiChatPostResponse(
@@ -116,13 +116,18 @@ class APIImplementation(APIContract):
 
         def _load_sql():
             conv_id = self.genie_service.create_conversation("User search on detection data").conversation_id
+            sql_query = None
+            description = None
             for msg in self.genie_service.chat(conv_id, q):
-                for query in msg.queries:
-                    return re.sub(r"\s*;\s*$", "", query)
-            return None
+                for msg_query in msg.queries:
+                    sql_query = re.sub(r"\s*;\s*$", "", msg_query)
+                for msg_description in msg.descriptions:
+                    description = msg_description
+            return sql_query, description
 
-        sql = self.query_cache.get_or_load(objects.hash(["sql", q]).hexdigest(), _load_sql).value
-        print(sql)
+        sql, description = self.query_cache.get_or_load(objects.hash(["sql_description", q]).hexdigest(),
+                                                        _load_sql).value
+        print(f"sql: {sql}, description: {description}")
         if not sql:
             columns, rows, total = [], [], 0
         else:
@@ -153,6 +158,7 @@ class APIImplementation(APIContract):
             columns=columns,
             data=rows,
             sql=sql,
+            description=description,
             total=total,
             limit=limit,
             offset=offset,
