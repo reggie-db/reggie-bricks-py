@@ -12,7 +12,7 @@ dependencies = [
     "urllib3",
     "pydantic",
 ]
-version = "0.0.1+gaf68da1"
+version = "0.0.1+g773fffe"
 requires-python = ">=3.10"
 
 [tool.uv.sources.reggie-core]
