@@ -65,34 +65,28 @@ def _list_files(directory: Path) -> list[str]:
 
 
 def _files_diff(file1: Path, file2: Path) -> bool:
-    """Return True if files differ (ignoring quote differences), False if equivalent."""
+    """Return True if files differ (ignoring quote-only or timestamp-line differences)."""
 
-    def _read_lines(file: Path):
+    def _read_normalized(file: Path) -> list[str]:
         lines = []
         if file.exists():
             with open(file, "rb") as f:
-                for line in f:
-                    if not _TIMESTAMP_RE.match(line):
-                        lines.append(line.decode("utf-8", errors="ignore"))
+                for raw_line in f:
+                    if _TIMESTAMP_RE.match(raw_line):
+                        continue
+                    line = raw_line.decode("utf-8", errors="ignore")
+                    # Normalize quotes in one pass
+                    line = _QUOTES_RE.sub(
+                        lambda m: '"' if m.group(0) == "'" else "'", line
+                    )
+                    lines.append(line)
         return lines
 
-    def _normalize_quotes(line: str) -> str:
-        return _QUOTES_RE.sub(lambda m: '"' if m.group(0) == "'" else "'", line)
+    lines1 = _read_normalized(file1)
+    lines2 = _read_normalized(file2)
 
-    lines1 = _read_lines(file1)
-    lines2 = _read_lines(file2)
-
-    # Generate diff on original lines
-    diff = difflib.unified_diff(lines1, lines2, n=0)
-    for line in diff:
-        # Consider only changed lines (ignore headers like --- +++)
-        if line.startswith(("+", "-")) and not line.startswith(("+++", "---")):
-            # Extract normalized comparison lines for equality ignoring quotes
-            normalized = _normalize_quotes(line[1:])
-            counterpart_list = lines2 if line.startswith("-") else lines1
-            if all(_normalize_quotes(c) != normalized for c in counterpart_list):
-                return True
-    return False
+    diff = list(difflib.unified_diff(lines1, lines2, n=0))
+    return bool(diff)
 
 
 if __name__ == "__main__":

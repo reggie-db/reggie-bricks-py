@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "generators-franchise"
-version = "0.0.1+gccc29ee"
+version = "0.0.1+gb36625b"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
