@@ -4,7 +4,7 @@ OpenAPI code generation utilities.
 Generates FastAPI code from OpenAPI specs and syncs generated files with change detection.
 """
 
-import hashlib
+import difflib
 import re
 import shutil
 from pathlib import Path
@@ -35,23 +35,14 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     input_dir, output_dir = input_dir.resolve(), output_dir.resolve()
     input_files, output_files = _list_files(input_dir), _list_files(output_dir)
 
-    input_hash, output_hash = (
-        _hash_files(input_dir, input_files),
-        _hash_files(output_dir, output_files),
-    )
-
-    changed = [
-        f
-        for f in sorted(set(input_hash) | set(output_hash))
-        if input_hash.get(f) != output_hash.get(f)
-    ]
+    changed = []
+    for file in set(input_files + output_files):
+        if _files_diff(input_dir / file, output_dir / file):
+            changed.append(file)
 
     if not changed:
         LOG.info("No changes detected")
         return
-
-    if extra := (output_files - input_files):
-        raise ValueError(f"Extra files in output: {sorted(extra)}")
 
     LOG.info("Changed files:\n" + "\n".join(f"  {f}" for f in changed))
 
@@ -61,35 +52,41 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     LOG.info(f"Synchronized {output_dir}")
 
 
-def _list_files(directory: Path) -> set[str]:
+def _list_files(directory: Path) -> list[str]:
     """Return relative file paths from directory, skipping caches and compiled files."""
     if not directory.is_dir():
-        return set()
-    return {
+        return []
+    files = {
         str(p.relative_to(directory))
         for p in directory.rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
     }
+    return sorted(list(files))
 
 
-def _hash_files(dir: Path, rel_files: set[str]) -> dict[str, str]:
-    """Return SHA-256 hashes for given relative file paths, ignoring timestamp comments."""
+def _files_diff(file1: Path, file2: Path) -> bool:
+    """Return True if files differ (ignoring quote differences), False if equivalent."""
+    if file1.is_file() != file2.is_file():
+        return True
 
     def _normalize_quotes(line: str) -> str:
         return _QUOTES_RE.sub(lambda m: '"' if m.group(0) == "'" else "'", line)
 
-    out = {}
-    for file in sorted(rel_files):
-        h = hashlib.sha256()
-        h.update(file.encode())
-        with open(dir / file, "rb") as f:
-            for line in f:
-                if not _TIMESTAMP_RE.match(line):
-                    line = line.decode("utf-8", "ignore")
-                    line = _normalize_quotes(line)
-                    h.update(line.encode())
-        out[file] = h.hexdigest()
-    return out
+    with open(file1, encoding="utf-8") as f1, open(file2, encoding="utf-8") as f2:
+        lines1 = f1.readlines()
+        lines2 = f2.readlines()
+
+    # Generate diff on original lines
+    diff = difflib.unified_diff(lines1, lines2, n=0)
+    for line in diff:
+        # Consider only changed lines (ignore headers like --- +++)
+        if line.startswith(("+", "-")) and not line.startswith(("+++", "---")):
+            # Extract normalized comparison lines for equality ignoring quotes
+            normalized = _normalize_quotes(line[1:])
+            counterpart_list = lines2 if line.startswith("-") else lines1
+            if all(_normalize_quotes(c) != normalized for c in counterpart_list):
+                return True
+    return False
 
 
 if __name__ == "__main__":
