@@ -174,7 +174,11 @@ def _cli_run(
         "cli run - args:%s stdout:%s stderr:%s check:%s", args, stdout, stderr, check
     )
     completed_process = subprocess.run(
-        args, stdout=stdout, stderr=stderr, check=check, timeout=timeout
+        args,
+        stdout=stdout,
+        stderr=stderr,
+        check=check,
+        timeout=timeout,
     )
     return json.loads(
         completed_process.stdout

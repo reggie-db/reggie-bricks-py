@@ -4,8 +4,8 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-zerobus"
-version = "0.0.1+g548b42a"
-requires-python = ">=3.10"
+version = "0.0.1+g823dfd2"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
 ]

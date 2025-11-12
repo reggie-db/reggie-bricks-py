@@ -12,6 +12,9 @@ from reggie_core import logs
 from reggie_tools import configs, runtimes
 
 
+LOG = logs.logger(__file__)
+
+
 def workspace_client(config: Config | None = None) -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` using the provided or cached config.
     Uses the default cached config when none is supplied.
@@ -24,7 +27,7 @@ def workspace_client(config: Config | None = None) -> WorkspaceClient:
 def spark(config: Config | None = None) -> SparkSession:
     """Return a Spark session sourced from the runtime or Databricks Connect."""
     # Fast path when no explicit config is provided
-    if config is None:
+    if config is None or config == configs.get():
         # Prefer an existing session injected in the IPython user namespace
         sess = runtimes.ipython_user_ns("spark")
         if sess:
@@ -43,7 +46,10 @@ def spark(config: Config | None = None) -> SparkSession:
         return _databricks_session_default()
 
     # Config provided or resolved above
-    return DatabricksSession.builder.sdkConfig(config).getOrCreate()
+    session_builder = DatabricksSession.builder.sdkConfig(config)
+    spark_session = session_builder.getOrCreate()
+    LOG.debug("connected to spark:%s", config)
+    return spark_session
 
 
 @functools.cache
@@ -57,3 +63,7 @@ def _databricks_session_default() -> SparkSession:
     elapsed = (datetime.now() - start_time).total_seconds()
     log.info(f"databricks connect session created in {elapsed:.2f}s")
     return sess
+
+
+if __name__ == "__main__":
+    print(spark())

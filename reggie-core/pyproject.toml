@@ -4,11 +4,11 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-core"
-version = "0.0.1+g548b42a"
+version = "0.0.1+g823dfd2"
 dependencies = [
     "sitecustomize-entrypoints",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 
 [project.entry-points.sitecustomize]
 logs_auto_config = "reggie_core.logs:auto_config"

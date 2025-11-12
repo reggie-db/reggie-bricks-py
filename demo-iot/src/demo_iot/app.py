@@ -1,6 +1,8 @@
 import asyncio
+import contextvars
 import os
 import re
+import time
 from datetime import date, datetime, timedelta
 from typing import Optional, Union
 import random
@@ -8,7 +10,7 @@ import random
 import humanize
 import uvicorn
 from databricks.sdk.config import Config
-from fastapi import Path
+from fastapi import Path, Request
 from pydantic import conint
 from pyspark.sql import functions as F
 from starlette.middleware.cors import CORSMiddleware
@@ -50,8 +52,10 @@ from demo_iot_generated.models import (
     ObjectDetection,
 )
 from reggie_concurio import caches
-from reggie_core import objects, paths
+from reggie_core import objects, paths, logs
 from reggie_tools import configs, clients, catalogs, genie
+
+LOG = logs.logger(__file__)
 
 
 class APIImplementation(APIContract):
@@ -130,17 +134,49 @@ class APIImplementation(APIContract):
         sort_column: Optional[str] = None,
         sort_direction: Optional[SortDirection] = "asc",
     ) -> Union[ApiSearchGetResponse, Error]:
+        def _conversation_id():
+            request = get_current_request()
+            session_id = (
+                request.headers.get("X-REACT-SESSION-ID", None) if request else None
+            )
+            LOG.info("session_id: %s", session_id)
+
+            def _load_conversation_id():
+                LOG.info("loading conversation id - session_id:%s", session_id)
+                conv_id = self.genie_service.create_conversation(
+                    "User search on detection data"
+                ).conversation_id
+                return conv_id
+
+            if session_id:
+                return self.query_cache.get_or_load(
+                    objects.hash(["conversation_id", session_id]).hexdigest(),
+                    _load_conversation_id,
+                    expire=60 * 60 * 6,
+                ).value
+            else:
+                return _load_conversation_id()
+
         def _load_sql():
-            conv_id = self.genie_service.create_conversation(
-                "User search on detection data"
-            ).conversation_id
+            conv_id = _conversation_id()
+            LOG.info("loading sql - conversation_id:%s", conv_id)
+
             sql_query = None
             description = None
+            sql_query_found = None
+
             for msg in self.genie_service.chat(conv_id, q):
+                LOG.info("genie msg: %s", msg)
                 for msg_query in msg.queries:
-                    sql_query = re.sub(r"\s*;\s*$", "", msg_query)
+                    sql_query = re.sub(r"\s*;\s*$", "", msg_query).strip() or sql_query
+                    if sql_query and not sql_query_found:
+                        sql_query_found = time.time()
                 for msg_description in msg.descriptions:
                     description = msg_description
+                if (sql_query and description) or (
+                    sql_query_found and (time.time() - sql_query_found > 3)
+                ):
+                    break
             return sql_query, description
 
         sql, description = self.query_cache.get_or_load(
@@ -422,6 +458,27 @@ class APIImplementation(APIContract):
 
 
 app = main.create_app(APIImplementation(configs.get()))
+
+
+_current_request = contextvars.ContextVar("current_request")
+
+
+_current_request = contextvars.ContextVar("current_request")
+
+
+def get_current_request() -> Request | None:
+    return _current_request.get(None)
+
+
+@app.middleware("http")
+async def store_request(request: Request, call_next):
+    token = _current_request.set(request)
+    try:
+        return await call_next(request)
+    finally:
+        _current_request.reset(token)
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # or specific domains: ["https://example.com"]

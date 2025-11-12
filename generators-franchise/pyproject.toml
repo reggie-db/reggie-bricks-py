@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "generators-franchise"
-version = "0.0.1+g548b42a"
+version = "0.0.1+g823dfd2"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
@@ -15,7 +15,7 @@ dependencies = [
     "jinja2",
     "markovify"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 
 [tool.uv.sources.reggie-core]
 workspace = true

@@ -34,23 +34,16 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     input_dir, output_dir = input_dir.resolve(), output_dir.resolve()
     input_files, output_files = _list_files(input_dir), _list_files(output_dir)
 
-    input_hash, output_hash = (
-        _hash_files(input_dir, input_files),
-        _hash_files(output_dir, output_files),
-    )
-
-    changed = [
-        f
-        for f in sorted(set(input_hash) | set(output_hash))
-        if input_hash.get(f) != output_hash.get(f)
-    ]
+    changed = []
+    for file in set(input_files + output_files):
+        input_hash = _hash_file(input_dir, file)
+        output_hash = _hash_file(output_dir, file)
+        if input_hash != output_hash:
+            changed.append(file)
 
     if not changed:
         LOG.info("No changes detected")
         return
-
-    if extra := (output_files - input_files):
-        raise ValueError(f"Extra files in output: {sorted(extra)}")
 
     LOG.info("Changed files:\n" + "\n".join(f"  {f}" for f in changed))
 
@@ -60,35 +53,36 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     LOG.info(f"Synchronized {output_dir}")
 
 
-def _list_files(directory: Path) -> set[str]:
+def _list_files(directory: Path) -> list[str]:
     """Return relative file paths from directory, skipping caches and compiled files."""
     if not directory.is_dir():
-        return set()
-    return {
+        return []
+    rel_files: set[str] = {
         str(p.relative_to(directory))
         for p in directory.rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
     }
+    return sorted(list(rel_files))
 
 
-def _hash_files(dir: Path, rel_files: set[str]) -> dict[str, str]:
+def _hash_file(dir: Path, rel_file: str) -> str:
     """Return SHA-256 hashes for given relative file paths, ignoring timestamp comments."""
-    out = {}
-    for file in sorted(rel_files):
-        h = hashlib.sha256()
-        h.update(file.encode())
-        with open(dir / file, "rb") as f:
+    h = hashlib.sha256()
+    file_path = dir / rel_file
+    if file_path.is_file():
+        with open(file_path, "rb") as f:
             for line in f:
                 if not _TIMESTAMP_RE.match(line):
                     decoded_line = line.decode("utf-8", errors="ignore")
                     decoded_line = decoded_line.replace("\\'", '\\"').replace("'", '"')
                     h.update(decoded_line.encode())
-        out[file] = h.hexdigest()
-    return out
+    elif file_path.is_dir():
+        h.update("|".encode())
+    return h.hexdigest()
 
 
 if __name__ == "__main__":
-    src = Path("~/Desktop/open-api.yaml").expanduser()
+    src = Path("/Users/reggie.pierce/Projects/reggie-demo-ui/iot/src/openapi.yaml")
     tmpl = Path(__file__).parent / "openapi_template"
     out = projects.root_dir() / "demo-iot/src/demo_iot_generated"
 
