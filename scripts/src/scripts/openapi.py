@@ -4,7 +4,7 @@ OpenAPI code generation utilities.
 Generates FastAPI code from OpenAPI specs and syncs generated files with change detection.
 """
 
-import difflib
+import hashlib
 import re
 import shutil
 from pathlib import Path
@@ -23,8 +23,7 @@ import fastapi_code_generator.__main__ as fastapi_code_generator_main  # noqa: E
 
 
 LOG = utils.logger()
-_QUOTES_RE = re.compile(r"['\"]")
-_TIMESTAMP_RE = re.compile(r"(['\"])(.*?)(\1)")
+_TIMESTAMP_RE = re.compile(rb"^\s*#\s*timestamp:.*$")
 
 
 def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
@@ -35,14 +34,23 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     input_dir, output_dir = input_dir.resolve(), output_dir.resolve()
     input_files, output_files = _list_files(input_dir), _list_files(output_dir)
 
-    changed = []
-    for file in set(input_files + output_files):
-        if _files_diff(input_dir / file, output_dir / file):
-            changed.append(file)
+    input_hash, output_hash = (
+        _hash_files(input_dir, input_files),
+        _hash_files(output_dir, output_files),
+    )
+
+    changed = [
+        f
+        for f in sorted(set(input_hash) | set(output_hash))
+        if input_hash.get(f) != output_hash.get(f)
+    ]
 
     if not changed:
         LOG.info("No changes detected")
         return
+
+    if extra := (output_files - input_files):
+        raise ValueError(f"Extra files in output: {sorted(extra)}")
 
     LOG.info("Changed files:\n" + "\n".join(f"  {f}" for f in changed))
 
@@ -52,46 +60,31 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     LOG.info(f"Synchronized {output_dir}")
 
 
-def _list_files(directory: Path) -> list[str]:
+def _list_files(directory: Path) -> set[str]:
     """Return relative file paths from directory, skipping caches and compiled files."""
     if not directory.is_dir():
-        return []
-    files = {
+        return set()
+    return {
         str(p.relative_to(directory))
         for p in directory.rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
     }
-    return sorted(list(files))
 
 
-def _files_diff(file1: Path, file2: Path) -> bool:
-    """Return True if files differ (ignoring quote-only or timestamp-line differences)."""
-
-    def _normalize_quotes(line: str) -> str:
-        def _replace(m: re.Match) -> str:
-            try:
-                inner = m.group(2)
-            except IndexError:
-                return m.group(0)
-            return f'"{inner}"'
-
-        return _QUOTES_RE.sub(_replace, line)
-
-    def _read_normalized(file: Path) -> list[str]:
-        lines = []
-        if file.exists():
-            with open(file, "rb") as f:
-                for raw_line in f.readlines():
-                    line = raw_line.decode("utf-8", errors="ignore")
-                    if _TIMESTAMP_RE.match(line):
-                        continue
-                    lines.append(_normalize_quotes(line))
-        return lines
-
-    lines1 = _read_normalized(file1)
-    lines2 = _read_normalized(file2)
-    diff = list(difflib.unified_diff(lines1, lines2, n=0))
-    return bool(diff)
+def _hash_files(dir: Path, rel_files: set[str]) -> dict[str, str]:
+    """Return SHA-256 hashes for given relative file paths, ignoring timestamp comments."""
+    out = {}
+    for file in sorted(rel_files):
+        h = hashlib.sha256()
+        h.update(file.encode())
+        with open(dir / file, "rb") as f:
+            for line in f:
+                if not _TIMESTAMP_RE.match(line):
+                    decoded_line = line.decode("utf-8", errors="ignore")
+                    decoded_line = decoded_line.replace("\\'", '\\"').replace("'", '"')
+                    h.update(decoded_line.encode())
+        out[file] = h.hexdigest()
+    return out
 
 
 if __name__ == "__main__":
