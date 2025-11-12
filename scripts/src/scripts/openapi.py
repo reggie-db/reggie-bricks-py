@@ -57,7 +57,7 @@ def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
     if output_dir.exists():
         shutil.rmtree(output_dir)
     shutil.copytree(input_dir, output_dir)
-    LOG.info(f"Synchronized {input_dir} → {output_dir}")
+    LOG.info(f"Synchronized {output_dir}")
 
 
 def _list_files(directory: Path) -> set[str]:
@@ -90,22 +90,23 @@ if __name__ == "__main__":
     tmpl = Path(__file__).parent / "openapi_template"
     out = projects.root_dir() / "demo-iot/src/demo_iot_generated"
 
-    with TemporaryDirectory() as tmp:
-        tmp_dir = Path(tmp)
-        LOG.info(f"Generating code: {src} → {out}")
-        try:
-            fastapi_code_generator_main.app(
-                [
-                    "--input",
-                    str(src),
-                    "--output",
-                    str(tmp_dir),
-                    "--template-dir",
-                    str(tmpl),
-                ]
-            )
-        except SystemExit as e:
-            if e.code:
-                raise
-        (tmp_dir / "__init__.py").touch()
-        sync_generated_code(tmp_dir, out)
+    for _ in utils.watch_file(src):
+        with TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            LOG.info(f"Generating code: {src} → {out}")
+            try:
+                fastapi_code_generator_main.app(
+                    [
+                        "--input",
+                        str(src),
+                        "--output",
+                        str(tmp_dir),
+                        "--template-dir",
+                        str(tmpl),
+                    ]
+                )
+            except SystemExit as e:
+                if e.code:
+                    raise
+            (tmp_dir / "__init__.py").touch()
+            sync_generated_code(tmp_dir, out)
