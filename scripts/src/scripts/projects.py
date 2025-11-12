@@ -13,7 +13,7 @@ import subprocess
 from os import PathLike
 from typing import Iterable
 
-import benedict
+from benedict.dicts import benedict
 import tomlkit
 
 # Standard filename for Python project configuration files
@@ -50,6 +50,7 @@ def dir(input: PathLike | str, match_member: bool = True) -> pathlib.Path | None
     Returns:
         Path to the project directory if found, None otherwise
     """
+
     def _pyproject_file(path: pathlib.Path | None):
         """
         Recursively search for pyproject.toml file starting from the given path.
@@ -171,7 +172,7 @@ class Project:
         except Exception as e:
             raise ValueError(f"Project {PYPROJECT_FILE_NAME} error - path:{self.pyproject_file} error:{e}")
         # Use benedict for dynamic attribute access and easy merging
-        self.pyproject = benedict.benedict(pyproject_doc, keyattr_dynamic=True)
+        self.pyproject = benedict(pyproject_doc, keyattr_dynamic=True)
 
     @property
     def name(self):

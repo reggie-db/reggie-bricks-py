@@ -40,10 +40,10 @@ class DiskCache(Cache):
             self._lock_directory = None
 
     def get_or_load(
-        self,
-        key: Any,
-        loader: Callable[[...], T],
-        expire: float | None = None,
+            self,
+            key: Any,
+            loader: Callable[[...], T] | Callable[[], T],
+            expire: float | None = None,
     ) -> DiskCacheValue[T]:
         """Get a value from disk or load it with the provided loader.
 
@@ -62,7 +62,7 @@ class DiskCache(Cache):
             # Derive a lock file path unique to the key
             if self._lock_directory is not None:
                 lock_path = (
-                    self._lock_directory / f"{objects.hash(key).hexdigest()}.lock"
+                        self._lock_directory / f"{objects.hash(key).hexdigest()}.lock"
                 )
                 lock = InterProcessLock(lock_path)
             else:
@@ -113,11 +113,11 @@ class DiskCache(Cache):
     def _is_valid(cache_value, expire: float | None = None) -> bool:
         """Return True if a cached value exists and is not stale."""
         return cache_value is not DiskCache._SENTINEL and (
-            expire is None
-            or (
-                cache_value.load_timestamp
-                >= (datetime.now() - timedelta(seconds=expire))
-            )
+                expire is None
+                or (
+                        cache_value.load_timestamp
+                        >= (datetime.now() - timedelta(seconds=expire))
+                )
         )
 
 

@@ -17,7 +17,7 @@ from typing import Annotated, Any, Callable, Iterable, Mapping
 import click
 import tomlkit
 import typer
-from benedict import benedict
+from benedict.dicts import benedict
 
 from scripts import projects
 from scripts.projects import Project

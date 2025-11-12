@@ -4,14 +4,15 @@ import datetime
 import hashlib
 import inspect
 import json
-import pickle as pickle_module
 from array import array
 from collections import deque
-from dataclasses import asdict, is_dataclass
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, Iterable
 
 T = TypeVar("T")
-CONCRETE_TYPES = (list, tuple, set, dict, frozenset, deque, array, range)
+_SENTINEL = object()
+_DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict"]
+_DESCRIPTOR_ATTRS = ["__get__", "__set__", "__delete__"]
+_COLLECTION_TYPES = (list, tuple, set, dict, frozenset, deque, array, range)
 
 
 def call(fn: Callable, *args: Any) -> Any:
@@ -25,7 +26,7 @@ def call(fn: Callable, *args: Any) -> Any:
         p
         for p in params
         if p.kind
-        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+           in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
     ]
     needed = len(fixed)
 
@@ -48,101 +49,102 @@ def remove_keys(d: dict, *keys: str):
     _remove_keys(d, *keys)
 
 
-def to_dict(
-    obj: Any, properties: bool = True, recursive: bool = True, strict: bool = True
+def dump(
+        obj: Any, recursive: bool = True, member_properties: bool = True
 ) -> dict[Any, Any]:
     """Convert an object into a dictionary with optional property extraction.
     Dataclasses are expanded via asdict. Properties can be included by evaluating
     @property getters. When recursive is True, nested values are converted too.
     """
 
-    def _try_to_dict(value: Any) -> dict[Any, Any]:
+    def _dump(value: Any):
+        if value is None:
+            return value
         if isinstance(value, dict):
-            d = value
-        elif is_dataclass(value) and recursive:
-            d = asdict(value)
-        elif isinstance(value, object):
-            d = getattr(value, "__dict__", None)
-            if not isinstance(d, dict):
+            if recursive:
+                out = {}
+                for k, v in value.items():
+                    out[k] = _dump(v)
+                return out
+            else:
                 return value
-            d = d.copy()
-        if properties:
-            # Merge computed properties onto the dict view
-            for member_name, member_value in _object_properties(value).items():
-                d[member_name] = member_value
-        if recursive:
-            # Convert nested values in-place for a consistent mapping output
-            for k, v in d.items():
-                d[k] = _try_to_dict(v)
-        return d
+        elif isinstance(value, _COLLECTION_TYPES):
+            if recursive:
+                out = []
+                for v in value:
+                    out.append(_dump(v))
+                return out
+            else:
+                return value
+        else:
+            for attr in _DUMP_ATTRS:
+                if hasattr(value, attr):
+                    dump_attr = getattr(value, attr)
+                    v = dump_attr() if callable(dump_attr) else None
+                    if v is not None:
+                        return _dump(v) if recursive else v
+            if hasattr(value, "__dict__"):
+                v = value.__dict__
+                if v is not None:
+                    return _dump(v) if recursive else v
+            out = None
+            for k, v in _properties(value, member_properties):
+                if out is None:
+                    out = {}
+                out[k] = _dump(v) if recursive else v
+            return out if out is not None else value
 
-    data = _try_to_dict(obj)
-    if data is None:
-        return None
-    elif strict and not isinstance(data, dict):
-        raise TypeError(f"Dict conversion failed, got {type(data)}")
-    return data
+    return _dump(obj)
 
 
-def to_json(obj: Any, encode_properties: bool = False, **kwargs) -> Any:
+def to_json(obj: Any, member_properties: bool = True, **kwargs) -> Any:
     """Serialize ``obj`` while automatically handling dataclasses and ISO dates."""
     kwargs.setdefault(
-        "cls", _JSONEncoderProperties if encode_properties else _JSONEncoder
+        "cls", _JSONMemberPropertiesEncoder if member_properties else _JSONEncoder
     )
     return json.dumps(obj, **kwargs)
 
 
 def hash(
-    obj: Any,
-    sort_keys: bool = True,
-    pickle: bool = False,
-    hash_fn: Callable[[bytes], T] = hashlib.sha256,
+        obj: Any,
+        sort_keys: bool = True,
+        member_properties: bool = True,
+        hash_fn: Callable[[bytes], T] = hashlib.sha256,
 ) -> T:
-    """Hash an object using a SHA-256 hash function.
-    If `pickle` is True, the object is pickled before hashing.
-    If `sort_keys` is True, the keys of the object are sorted before hashing.
-    If `hash_fn` is provided, it is used to hash the object.
-    """
-    if pickle:
-        if sort_keys:
-
-            def _sort_values(v: Any) -> Any:
-                if isinstance(v, dict):
-                    return tuple((k, _sort_values(v[k])) for k in sorted(v))
-                elif isinstance(v, CONCRETE_TYPES):
-                    return tuple(_sort_values(x) for x in v)
-                return v
-
-            obj = _sort_values(obj)
-        obj_encoded = pickle_module.dumps(obj, protocol=pickle_module.HIGHEST_PROTOCOL)
-    else:
-        obj_encoded = to_json(obj, sort_keys=sort_keys, separators=(",", ":")).encode()
+    obj_encoded = to_json(obj, sort_keys=sort_keys, member_properties=member_properties, separators=(",", ":")).encode()
     return hash_fn(obj_encoded)
 
 
-def _object_properties(o: Any) -> dict[str, Any]:
-    """Return a mapping of property names to evaluated values for an object."""
-    properties = {}
-    if isinstance(o, object):
-        for k, v in inspect.getmembers(o.__class__):
-            if isinstance(v, property) and v.fget is not None:
-                properties[k] = v.fget(o)
-    return properties
+def _properties(obj: Any, member_properties: bool = True) -> Iterable[tuple[str, Any]]:
+    if obj is not None:
+        keys = set()
+        if member_properties:
+            for k, v in inspect.getmembers(obj.__class__):
+                if isinstance(v, property) and v.fget is not None and k not in keys:
+                    keys.add(k)
+                    yield k, v.fget(obj)
+
+        for k, v in inspect.getmembers(obj.__class__):
+            if not k.startswith("_") and k not in keys and not callable(v) and not any(
+                    hasattr(v, m) for m in _DESCRIPTOR_ATTRS):
+                keys.add(k)
+                yield k, v
 
 
 def _json_encoder_default(
-    self: json.JSONEncoder, o: Any, encode_properties: bool = False
+        self: json.JSONEncoder, o: Any
 ) -> Any:
     """Default JSON encoding strategy covering dataclasses and ISO-like values."""
     if o is None:
         return None
     elif hasattr(o, "isoformat") and callable(o.isoformat):
         return o.isoformat()
-    elif is_dataclass(o) or isinstance(o, object):
-        data = to_dict(o, properties=encode_properties, recursive=False)
-        for k, v in data.items():
-            data[k] = self.encode(v)
-        return data
+    else:
+        data = dump(o, recursive=False)
+        if isinstance(data, dict):
+            for k, v in data.items():
+                data[k] = self.encode(v)
+            return data
     return str(o)
 
 
@@ -151,18 +153,20 @@ class _JSONEncoder(json.JSONEncoder):
         return _json_encoder_default(self, o)
 
 
-class _JSONEncoderProperties(json.JSONEncoder):
+class _JSONMemberPropertiesEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
-        return _json_encoder_default(self, o, encode_properties=True)
+        return _json_encoder_default(self, o)
 
 
 if __name__ == "__main__":
-    print(hash({"neat": 1, "cool": "wow"}, pickle=True).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}, pickle=True).hexdigest())
-    print(hash({"neat": 1, "cool": "wow"}, pickle=False).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}, pickle=False).hexdigest())
-    print(hash({"neat": 1, "cool": "wow"}, pickle=True, sort_keys=False).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}, pickle=True, sort_keys=False).hexdigest())
+    print(dump({"neat": 1, "cool": "wow"}))
+    print(dump("ok"))
+    print(hash({"neat": 1, "cool": "wow"}).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}).hexdigest())
+    print(hash({"neat": 1, "cool": "wow"}).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}).hexdigest())
+    print(hash({"neat": 1, "cool": "wow"}, sort_keys=False).hexdigest())
+    print(hash({"cool": "wow", "neat": 1}, sort_keys=False).hexdigest())
     print(hash(1).hexdigest())
     print(hash("1").hexdigest())
     print(hash(datetime.datetime.now()).hexdigest())

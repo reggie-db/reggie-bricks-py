@@ -51,7 +51,7 @@ def generate(info: "FranchiseAgreementInfo" = None) -> str:
         generated_by_secno[i + 1] = clauses
 
     html = tpl.render(
-        **funcs.to_dict(info, recursive=False),
+        **funcs.dump(info, recursive=False),
         sections_order=sections,
         generated_by_secno=generated_by_secno,
     )
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     info = FranchiseAgreementInfo(
         brand_name="Baskin Robbins",
     )
-    pprint.pprint(funcs.to_dict(info))
+    pprint.pprint(funcs.dump(info))
     html = generate_franchise_agreement(info)
     with open(
         pathlib.Path(__file__).parent / "dev-local" / "agreement_with_generated.html",

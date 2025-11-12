@@ -4,14 +4,18 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+gd0a8f84"
+version = "0.0.1+ga7b4653"
 requires-python = ">=3.10"
 dependencies = [
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
+    "reggie-concurio @ file://${PROJECT_ROOT}/../reggie-concurio",
     "uvicorn",
     "fastapi",
     "humanize"
 ]
 
 [tool.uv.sources.reggie-tools]
+workspace = true
+
+[tool.uv.sources.reggie-concurio]
 workspace = true

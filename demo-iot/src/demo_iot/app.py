@@ -1,3 +1,6 @@
+import asyncio
+import os
+import re
 from datetime import date, datetime, timedelta
 from typing import Optional, Union
 import random
@@ -39,12 +42,13 @@ from demo_iot_generated.models import (
     StateDistribution,
     RecentPlate,
     StateStats,
-    ObjectDetection,
     HourlyDetection,
     RecentDetection,
-    Data, Error, Status,
+    Data, Error, Status, ObjectDetection,
 )
-from reggie_tools import configs, clients
+from reggie_concurio import caches
+from reggie_core import objects, paths
+from reggie_tools import configs, clients, catalogs, genie
 
 
 class APIImplementation(APIContract):
@@ -53,6 +57,10 @@ class APIImplementation(APIContract):
     def __init__(self, config: Config):
         self.config = config
         self.spark = clients.spark(config)
+        self.genie_service = genie.Service(clients.workspace_client(config),
+                                           os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"))
+        self.detection_table_name = str(catalogs.catalog_schema_table("detections", self.spark))
+        self.query_cache = caches.DiskCache(paths.temp_dir() / f"{__class__.__name__}")
 
     def send_chat_message(self, body: AiChatPostRequest) -> Union[AiChatPostResponse, Error]:
         resp = AiChatPostResponse(
@@ -105,13 +113,51 @@ class APIImplementation(APIContract):
     def search_data(self, q: str, limit: Optional[conint(ge=1, le=1000)] = 50, offset: Optional[conint(ge=0)] = 0,
                     sort_column: Optional[str] = None, sort_direction: Optional[SortDirection] = 'asc') -> Union[
         ApiSearchGetResponse, Error]:
-        rows = [
-            {"device_id": f"RT-ATL-{i:03d}", "location": "Atlanta, GA", "temperature": random.uniform(70, 95),
-             "status": random.choice(["normal", "warning", "critical"])}
-            for i in range(10)
-        ]
-        return ApiSearchGetResponse(columns=["device_id", "location", "temperature", "status"], data=rows,
-                                    total=len(rows), limit=limit, offset=offset, hasMore=False)
+
+        def _load_sql():
+            conv_id = self.genie_service.create_conversation("User search on detection data").conversation_id
+            for msg in self.genie_service.chat(conv_id, q):
+                for query in msg.queries:
+                    return re.sub(r"\s*;\s*$", "", query)
+            return None
+
+        sql = self.query_cache.get_or_load(objects.hash(["sql", q]).hexdigest(), _load_sql).value
+        print(sql)
+        if not sql:
+            columns, rows, total = [], [], 0
+        else:
+            def _load_total():
+                count_sql = f"SELECT COUNT(*) AS total FROM ({re.sub(r'\\s*;\\s*$', '', sql)}) AS subq"
+                return self.spark.sql(count_sql).collect()[0]["total"]
+
+            total = self.query_cache.get_or_load(objects.hash(["total", sql]).hexdigest(), _load_total).value
+
+            # Add sorting if requested
+            if sort_column:
+                direction = "ASC" if sort_direction is not None and str(sort_direction).lower() == "asc" else "DESC"
+                sql = f"SELECT * FROM ({sql}) AS subq ORDER BY `{sort_column}` {direction}"
+            sql_df = self.spark.sql(sql)
+            if sort_column:
+                sort_col = F.col(sort_column)
+                if SortDirection.desc == sort_direction:
+                    sort_col = sort_col.desc_nulls_last()
+                else:
+                    sort_col = sort_col.asc_nulls_last()
+                sql_df = sql_df.orderBy(sort_col)
+            rows_df = sql_df.offset(offset).limit(limit)
+            columns = rows_df.columns
+            rows = [row.asDict() for row in rows_df.collect()]
+
+        print(len(rows))
+        return ApiSearchGetResponse(
+            columns=columns,
+            data=rows,
+            sql=sql,
+            total=total,
+            limit=limit,
+            offset=offset,
+            hasMore=(offset + len(rows)) < total,
+        )
 
     def get_devices(self) -> Union[DevicesGetResponse, Error]:
         devices = [
@@ -173,7 +219,7 @@ class APIImplementation(APIContract):
                 state=code,
                 name=name,
                 count=random.randint(100, 500),
-                percentage=random.uniform(5, 25),
+                percentage=round(random.uniform(5, 25), 2),
                 color=random.choice(["#dc2626", "#16a34a", "#2563eb"]),
             )
             for code, name in [("GA", "Georgia"), ("FL", "Florida"), ("TX", "Texas")]
@@ -211,11 +257,13 @@ class APIImplementation(APIContract):
     def get_recent_detections(self, limit: Optional[conint(ge=1, le=100)] = 20) -> Union[
         ObjectDetectionRecentGetResponse, Error]:
         detections_df = (
-            self.spark.table("reggie_pierce.iot_ingest.detections")
+            self.spark.table(str(catalogs.catalog_schema_table("detections")))
             .where(F.col("store_id") != 1)
             .where(F.col("label").isNotNull())
             .orderBy(F.col("timestamp").desc())
-        ).limit(limit)
+            .dropDuplicates(["label"])
+            .limit(limit)
+        )
         data = []
         for idx, detection in enumerate(detections_df.collect()):
             data.append(RecentDetection(
@@ -223,17 +271,90 @@ class APIImplementation(APIContract):
                 type=detection.label,
                 location="Store",
                 time=humanize.naturaltime(datetime.utcnow() - detection.timestamp),
-                confidence=int(detection.score * 100) if detection.score < 1 else int(detection.scoreg),
+                confidence=int(detection.score * 100) if detection.score < 1 else int(detection.score),
                 timestamp=detection.timestamp,
             ))
         return ObjectDetectionRecentGetResponse(success=True, data=data)
 
+    # noinspection SqlNoDataSourceInspection
     def get_object_detection_summary(self, period: Optional[Period] = 'today') -> Union[
         ObjectDetectionSummaryGetResponse, Error]:
-        objects = [
-            ObjectDetection(object="Vehicles", count=1247, trend="+12%", icon="Car", color="#3b82f6"),
-            ObjectDetection(object="People", count=743, trend="-3%", icon="User", color="#22c55e"),
-        ]
+        spark = self.spark
+        table = self.detection_table_name
+
+        # Step 1: latest_per_object
+        latest_per_object = (
+            spark.table(table)
+            .filter(F.col("label").isNotNull())
+            .groupBy("label")
+            .agg(F.max("parsed_timestamp").alias("latest_ts"))
+        )
+
+        # Step 2: counts_all_time
+        counts_all_time = (
+            spark.table(table)
+            .filter(F.col("label").isNotNull())
+            .groupBy("label")
+            .agg(F.count("*").alias("total_count"))
+        )
+
+        # Step 3: current_window
+        detections = spark.table(table).alias("d")
+        latest = latest_per_object.alias("l")
+
+        current_window = (
+            detections.join(latest, detections.label == latest.label, "inner")
+            .filter(
+                (detections.parsed_timestamp >= F.date_sub(latest.latest_ts, 6))
+                & (detections.parsed_timestamp <= latest.latest_ts)
+            )
+            .groupBy(detections.label)
+            .agg(F.count("*").alias("count_last_7_days"))
+        )
+
+        # Step 4: joined
+        joined = (
+            latest.alias("l")
+            .join(counts_all_time.alias("a"), "label", "left")
+            .join(current_window.alias("c"), "label", "left")
+            .select(
+                F.col("l.label").alias("object"),
+                F.col("a.total_count"),
+                F.col("l.latest_ts").alias("latest_detection"),
+                F.coalesce(F.col("c.count_last_7_days"), F.lit(0)).alias("count_last_7_days"),
+                F.round(
+                    F.coalesce(F.col("c.count_last_7_days"), F.lit(0)) * 100.0
+                    / F.nullif(F.col("a.total_count"), F.lit(0)),
+                    1,
+                ).alias("trend"),
+            )
+        )
+
+        # Step 5: with_meta
+        with_meta = (
+            joined.withColumn(
+                "icon",
+                F.when(F.col("object") == "Vehicles", F.lit("Car"))
+                .when(F.col("object") == "People", F.lit("User"))
+                .otherwise(F.lit("Box")),
+            )
+            .withColumn(
+                "color",
+                F.when(F.col("object") == "Vehicles", F.lit("#3b82f6"))
+                .when(F.col("object") == "People", F.lit("#22c55e"))
+                .otherwise(F.lit("#a855f7")),
+            )
+            .orderBy(F.desc("total_count"))
+        )
+
+        # Step 6: show or collect
+        objects = []
+        for row in with_meta.limit(8).collect():
+            trend = row["trend"]
+            trend = f"+{trend}%" if trend else ""
+            objects.append(
+                ObjectDetection(object=row.object, count=row.total_count, trend=trend, icon=row.icon, color=row.color))
+
         return ObjectDetectionSummaryGetResponse(success=True, data=objects)
 
 
@@ -247,4 +368,6 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
+    if "loop_factory" not in asyncio.run.__code__.co_varnames:
+        uvicorn.server.asyncio_run = lambda coro, **_: asyncio.run(coro)
     uvicorn.run(app, host="0.0.0.0", port=8000)

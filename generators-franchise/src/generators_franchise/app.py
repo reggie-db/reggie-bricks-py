@@ -123,7 +123,7 @@ def _render(
     metadata = {
         "file_path": pdf_dir_path,
         "created_at": dt.now().isoformat(),
-        "info": funcs.to_dict(info, recursive=True),
+        "info": funcs.dump(info, recursive=True),
     }
     json_bytes = _to_json_bytes(metadata)
     json_volume_path = f"{volume_path}/metadata/{file_name}.json"

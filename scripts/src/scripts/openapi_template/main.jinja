@@ -8,6 +8,10 @@ from abc import ABC, abstractmethod
 from fastapi import APIRouter
 from typing import Any
 
+import logging
+from reggie_core import logs
+
+LOG = logs.logger(__file__)
 
 class APIContract(ABC):
     """Abstract base class defining the API contract."""
@@ -23,11 +27,13 @@ class APIContract(ABC):
 class GeneratedRouter:
     """Router generator that binds API routes to a given contract implementation."""
 
-    def __init__(self, contract: APIContract):
+    def __init__(self, contract: APIContract, log_level = None):
         self.contract = contract
         self.router = APIRouter()
+        self.log_level = logs.get_level(log_level, logging.DEBUG)[0]
 
 {% for operation in operations %}
+{% set sorted_arguments = operation.__class__.merge_arguments_with_union(operation.arguments_list) %}
         @self.router.{{operation.type}}(
             "{{operation.path}}",
             response_model={{operation.response}}
@@ -47,7 +53,12 @@ class GeneratedRouter:
             {% endif %}
         )
         def _{{ operation.function_name }}({{ operation.snake_case_arguments }}):
-            {% set sorted_arguments = operation.__class__.merge_arguments_with_union(operation.arguments_list) %}
+            LOG.log(
+                self.log_level,
+                "api request:%s args=%s",
+                "{{ operation.function_name }}",
+                { {% for arg in sorted_arguments %}"{{ arg.name }}": {{ arg.name }}{% if not loop.last %}, {% endif %}{% endfor %} }
+            )
             return self.contract.{{ operation.function_name }}(
                 {{ sorted_arguments | map(attribute="name") | join(", ") }}
             )

@@ -89,7 +89,7 @@ log = logs.logger(__name__)
 log.info("Message")
 
 # Object serialization
-data = objects.to_dict(my_object, properties=True)
+data = objects.dump(my_object, member_properties=True)
 json_str = objects.to_json(data)
 
 # Path resolution
