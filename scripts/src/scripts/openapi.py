@@ -24,7 +24,7 @@ import fastapi_code_generator.__main__ as fastapi_code_generator_main  # noqa: E
 
 LOG = utils.logger()
 _QUOTES_RE = re.compile(r"['\"]")
-_TIMESTAMP_RE = re.compile(rb"^\s*#\s*timestamp:.*$")
+_TIMESTAMP_RE = re.compile(r"(['\"])(.*?)(\1)")
 
 
 def sync_generated_code(input_dir: Path, output_dir: Path) -> None:
@@ -67,24 +67,29 @@ def _list_files(directory: Path) -> list[str]:
 def _files_diff(file1: Path, file2: Path) -> bool:
     """Return True if files differ (ignoring quote-only or timestamp-line differences)."""
 
+    def _normalize_quotes(line: str) -> str:
+        def _replace(m: re.Match) -> str:
+            try:
+                inner = m.group(2)
+            except IndexError:
+                return m.group(0)
+            return f'"{inner}"'
+
+        return _QUOTES_RE.sub(_replace, line)
+
     def _read_normalized(file: Path) -> list[str]:
         lines = []
         if file.exists():
             with open(file, "rb") as f:
-                for raw_line in f:
-                    if _TIMESTAMP_RE.match(raw_line):
-                        continue
+                for raw_line in f.readlines():
                     line = raw_line.decode("utf-8", errors="ignore")
-                    # Normalize quotes in one pass
-                    line = _QUOTES_RE.sub(
-                        lambda m: '"' if m.group(0) == "'" else "'", line
-                    )
-                    lines.append(line)
+                    if _TIMESTAMP_RE.match(line):
+                        continue
+                    lines.append(_normalize_quotes(line))
         return lines
 
     lines1 = _read_normalized(file1)
     lines2 = _read_normalized(file2)
-
     diff = list(difflib.unified_diff(lines1, lines2, n=0))
     return bool(diff)
 
