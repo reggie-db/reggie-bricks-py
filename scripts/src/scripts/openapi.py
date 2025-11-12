@@ -23,6 +23,7 @@ import fastapi_code_generator.__main__ as fastapi_code_generator_main  # noqa: E
 
 
 LOG = utils.logger()
+_QUOTES_RE = re.compile(r"['\"]")
 _TIMESTAMP_RE = re.compile(rb"^\s*#\s*timestamp:.*$")
 
 
@@ -73,6 +74,10 @@ def _list_files(directory: Path) -> set[str]:
 
 def _hash_files(dir: Path, rel_files: set[str]) -> dict[str, str]:
     """Return SHA-256 hashes for given relative file paths, ignoring timestamp comments."""
+
+    def _normalize_quotes(line: str) -> str:
+        return _QUOTES_RE.sub(lambda m: '"' if m.group(0) == "'" else "'", line)
+
     out = {}
     for file in sorted(rel_files):
         h = hashlib.sha256()
@@ -80,7 +85,9 @@ def _hash_files(dir: Path, rel_files: set[str]) -> dict[str, str]:
         with open(dir / file, "rb") as f:
             for line in f:
                 if not _TIMESTAMP_RE.match(line):
-                    h.update(line)
+                    line = line.decode("utf-8", "ignore")
+                    line = _normalize_quotes(line)
+                    h.update(line.encode())
         out[file] = h.hexdigest()
     return out
 
