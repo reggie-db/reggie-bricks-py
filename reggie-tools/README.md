@@ -75,6 +75,16 @@ Pydantic model extensions:
 
 - **SchemaModel**: Base model with JSON schema generation utilities
 - **Response format**: Generate OpenAI-compatible response format schemas
+- **Key exclusion**: Recursively remove keys from generated schemas
+
+### Genie API (`genie.py`)
+
+Databricks Genie API client for AI assistant interactions:
+
+- **Service**: Client for creating conversations and sending messages to Genie
+- **GenieResponse**: Wrapper for extracting queries and descriptions from responses
+- **Streaming responses**: Poll for incremental updates as Genie processes requests
+- **Query extraction**: Extract SQL queries and descriptions from Genie message attachments
 
 ## Usage
 
@@ -111,6 +121,14 @@ value = configs.config_value(
         configs.ConfigValueSource.OS_ENVIRON,
     ]
 )
+
+# Use Genie API for AI assistance
+from reggie_tools import genie
+service = genie.Service(clients.workspace_client(), "space-id")
+conversation = service.create_conversation("Initial question")
+for response in service.chat(conversation.conversation_id, "Follow-up question"):
+    for query in response.queries:
+        spark.sql(query).show()
 ```
 
 ## Dependencies

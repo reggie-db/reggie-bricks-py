@@ -109,10 +109,10 @@ def catalog_schema_table(
 def catalog(spark: SparkSession = None) -> str | None:
     """Return only the catalog component from :func:`catalog_schema`."""
     cs = catalog_schema(spark)
-    return cs.catalog if catalog_schema else None
+    return cs.catalog if cs else None
 
 
 def schema(spark: SparkSession = None) -> str | None:
     """Return only the schema component from :func:`catalog_schema`."""
     cs = catalog_schema(spark)
-    return cs.schema if catalog_schema else None
+    return cs.schema if cs else None
