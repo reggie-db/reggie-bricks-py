@@ -66,15 +66,21 @@ def _list_files(directory: Path) -> list[str]:
 
 def _files_diff(file1: Path, file2: Path) -> bool:
     """Return True if files differ (ignoring quote differences), False if equivalent."""
-    if file1.is_file() != file2.is_file():
-        return True
+
+    def _read_lines(file: Path):
+        lines = []
+        if file.exists():
+            with open(file, "rb") as f:
+                for line in f:
+                    if not _TIMESTAMP_RE.match(line):
+                        lines.append(line.decode("utf-8", errors="ignore"))
+        return lines
 
     def _normalize_quotes(line: str) -> str:
         return _QUOTES_RE.sub(lambda m: '"' if m.group(0) == "'" else "'", line)
 
-    with open(file1, encoding="utf-8") as f1, open(file2, encoding="utf-8") as f2:
-        lines1 = f1.readlines()
-        lines2 = f2.readlines()
+    lines1 = _read_lines(file1)
+    lines2 = _read_lines(file2)
 
     # Generate diff on original lines
     diff = difflib.unified_diff(lines1, lines2, n=0)
