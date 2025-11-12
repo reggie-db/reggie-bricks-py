@@ -6,6 +6,8 @@ It supports synchronizing project configurations (versions, build systems, depen
 creating new member projects, and cleaning build artifacts across the workspace.
 """
 
+import functools
+import inspect
 import os
 import pathlib
 import re
@@ -19,11 +21,14 @@ import tomlkit
 import typer
 from benedict.dicts import benedict
 
-from scripts import projects
+from scripts import projects, utils
 from scripts.projects import Project
 
 # Default version string used when git version cannot be determined
 _DEFAULT_VERSION = "0.0.1"
+
+
+LOG = utils.logger()
 
 
 def _sync_projects_option_callback(ctx: typer.Context, sync_projects: Iterable[Any]):
@@ -107,7 +112,8 @@ def _sync_all(sync_projects: Iterable[Any] = None):
         callback = cmd.callback
         # Skip sync_all to avoid infinite recursion
         if "sync_all" != getattr(callback, "__name__", None):
-            callback(projs)
+            sig = inspect.signature(callback)
+            callback(projs) if len(sig.parameters) >= 1 else callback()
 
 
 @sync.command(
@@ -220,6 +226,19 @@ def sync_member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None
     _update_projects(_set, sync_projects)
 
 
+@sync.command(
+    name="ruff",
+    help="Run ruff on git tracked python fils",
+)
+def sync_ruff():
+    ruff_exec = _exec("ruff")
+    if ruff_exec:
+        git_files = _git_files()
+        if git_files:
+            py_files = [str(f) for f in git_files if f.name.endswith(".py")]
+            subprocess.run(["ruff", "format", *py_files], check=True)
+
+
 @create.callback(
     invoke_without_command=True,
     help="Create a new member project in the workspace. Creates a new Python project directory with a pyproject.toml file and initial package structure. The project will be synchronized with workspace defaults (build-system, version, etc.) after creation.",
@@ -323,6 +342,32 @@ def clean_build_artifacts():
             shutil.rmtree(path)
 
 
+@functools.lru_cache(maxsize=None)
+def _exec(name: str) -> pathlib.Path | None:
+    path = shutil.which(name)
+    if path:
+        return pathlib.Path(path)
+    LOG.warning(f"Executable not found: {name}")
+    return None
+
+
+@functools.cache
+def _git_files() -> list[pathlib.Path] | None:
+    git_exec = _exec("git")
+    if git_exec:
+        try:
+            result = subprocess.run(
+                [str(git_exec), "ls-files"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return [pathlib.Path(f) for f in result.stdout.splitlines() if f]
+        except Exception:
+            pass
+    return None
+
+
 def _git_version() -> str | None:
     """
     Build a workspace version string from git commit hash.
@@ -334,16 +379,18 @@ def _git_version() -> str | None:
     Returns:
         Version string like "0.0.1+g767bd46" or None if git is unavailable
     """
-    try:
-        rev = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=pathlib.Path(__file__).resolve().parents[1],
-            text=True,
-        ).strip()
-        if rev:
-            return f"{_DEFAULT_VERSION}+g{rev}"
-    except Exception:
-        pass
+    git_exec = _exec("git")
+    if git_exec:
+        try:
+            rev = subprocess.check_output(
+                [str(git_exec), "rev-parse", "--short", "HEAD"],
+                cwd=pathlib.Path(__file__).resolve().parents[1],
+                text=True,
+            ).strip()
+            if rev:
+                return f"{_DEFAULT_VERSION}+g{rev}"
+        except Exception:
+            pass
     return None
 
 

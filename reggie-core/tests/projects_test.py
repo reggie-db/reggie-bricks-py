@@ -16,5 +16,3 @@ if __name__ == "__main__":
     print(name(Path.cwd()))
     print(name(__file__))
     print(_remote_origin_name())
-
-

@@ -39,7 +39,7 @@ def call(fn: Callable, *args: Any) -> Any:
         p
         for p in params
         if p.kind
-           in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
     ]
     needed = len(fixed)
 
@@ -74,7 +74,7 @@ def remove_keys(d: dict, *keys: str):
 
 
 def dump(
-        obj: Any, recursive: bool = True, member_properties: bool = True
+    obj: Any, recursive: bool = True, member_properties: bool = True
 ) -> dict[Any, Any]:
     """
     Convert an object into a dictionary with optional property extraction.
@@ -137,7 +137,6 @@ def dump(
                 out[k] = _dump(v) if recursive else v
             return out if out is not None else value
 
-
     return _dump(obj)
 
 
@@ -165,10 +164,10 @@ def to_json(obj: Any, member_properties: bool = True, **kwargs) -> Any:
 
 
 def hash(
-        obj: Any,
-        sort_keys: bool = True,
-        member_properties: bool = True,
-        hash_fn: Callable[[bytes], T] = hashlib.sha256,
+    obj: Any,
+    sort_keys: bool = True,
+    member_properties: bool = True,
+    hash_fn: Callable[[bytes], T] = hashlib.sha256,
 ) -> T:
     """
     Hash an object using JSON serialization.
@@ -220,10 +219,10 @@ def _properties(obj: Any, member_properties: bool = True) -> Iterable[tuple[str,
 
         for k, v in inspect.getmembers(obj.__class__):
             if (
-                    not k.startswith("_")
-                    and k not in keys
-                    and not callable(v)
-                    and not any(hasattr(v, m) for m in _DESCRIPTOR_ATTRS)
+                not k.startswith("_")
+                and k not in keys
+                and not callable(v)
+                and not any(hasattr(v, m) for m in _DESCRIPTOR_ATTRS)
             ):
                 keys.add(k)
                 yield k, v

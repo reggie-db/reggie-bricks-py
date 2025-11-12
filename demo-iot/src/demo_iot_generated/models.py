@@ -12,198 +12,198 @@ from pydantic import BaseModel, Field
 
 
 class Status(Enum):
-    normal = 'normal'
-    warning = 'warning'
-    critical = 'critical'
+    normal = "normal"
+    warning = "warning"
+    critical = "critical"
 
 
 class Device(BaseModel):
-    id: str = Field(..., description='Unique device identifier', example='RT-ATL-001')
-    name: str = Field(..., description='Device name and store number', example='Store')
+    id: str = Field(..., description="Unique device identifier", example="RT-ATL-001")
+    name: str = Field(..., description="Device name and store number", example="Store")
     location: str = Field(
-        ..., description='Physical location of the device', example='Atlanta, GA'
+        ..., description="Physical location of the device", example="Atlanta, GA"
     )
     currentTemp: float = Field(
-        ..., description='Current temperature in Fahrenheit', example=72.4
+        ..., description="Current temperature in Fahrenheit", example=72.4
     )
-    status: Status = Field(..., description='Current device status', example='normal')
+    status: Status = Field(..., description="Current device status", example="normal")
     lastUpdate: str = Field(
-        ..., description='Human-readable time since last update', example='2 min ago'
+        ..., description="Human-readable time since last update", example="2 min ago"
     )
     lastUpdateTimestamp: Optional[datetime] = Field(
         None,
-        description='ISO 8601 timestamp of last update',
-        example='2025-10-28T14:30:00Z',
+        description="ISO 8601 timestamp of last update",
+        example="2025-10-28T14:30:00Z",
     )
 
 
 class TemperatureDataPoint(BaseModel):
-    time: str = Field(..., description='Time label for the data point', example='14:00')
+    time: str = Field(..., description="Time label for the data point", example="14:00")
     temperature: float = Field(
-        ..., description='Temperature in Fahrenheit', example=72.4
+        ..., description="Temperature in Fahrenheit", example=72.4
     )
     humidity: float = Field(
-        ..., description='Relative humidity percentage', example=55.2
+        ..., description="Relative humidity percentage", example=55.2
     )
     timestamp: Optional[datetime] = Field(
-        None, description='ISO 8601 timestamp', example='2025-10-28T14:00:00Z'
+        None, description="ISO 8601 timestamp", example="2025-10-28T14:00:00Z"
     )
 
 
 class DeviceStats(BaseModel):
     normalCount: int = Field(
-        ..., description='Number of devices with normal status', example=4
+        ..., description="Number of devices with normal status", example=4
     )
     warningCount: int = Field(
-        ..., description='Number of devices with warning status', example=1
+        ..., description="Number of devices with warning status", example=1
     )
     criticalCount: int = Field(
-        ..., description='Number of devices with critical status', example=1
+        ..., description="Number of devices with critical status", example=1
     )
     avgTemp: str = Field(
-        ..., description='Average temperature across all devices', example='75.4'
+        ..., description="Average temperature across all devices", example="75.4"
     )
     totalDevices: int = Field(
-        ..., description='Total number of monitored devices', example=6
+        ..., description="Total number of monitored devices", example=6
     )
 
 
 class Type(Enum):
-    critical = 'critical'
-    warning = 'warning'
-    info = 'info'
+    critical = "critical"
+    warning = "warning"
+    info = "info"
 
 
 class Alert(BaseModel):
     id: str = Field(
-        ..., description='Unique alert identifier', example='RT-ATL-001-critical'
+        ..., description="Unique alert identifier", example="RT-ATL-001-critical"
     )
-    type: Type = Field(..., description='Alert severity level', example='critical')
-    device: str = Field(..., description='Associated device name', example='Store')
-    location: str = Field(..., description='Location of the alert', example='Tampa, FL')
+    type: Type = Field(..., description="Alert severity level", example="critical")
+    device: str = Field(..., description="Associated device name", example="Store")
+    location: str = Field(..., description="Location of the alert", example="Tampa, FL")
     message: str = Field(
         ...,
-        description='Alert message',
-        example='Temperature critically high at 91.5°F',
+        description="Alert message",
+        example="Temperature critically high at 91.5°F",
     )
     time: str = Field(
         ...,
-        description='Human-readable time since alert creation',
-        example='30 sec ago',
+        description="Human-readable time since alert creation",
+        example="30 sec ago",
     )
     action: str = Field(
-        ..., description='Recommended action', example='Check HVAC system immediately'
+        ..., description="Recommended action", example="Check HVAC system immediately"
     )
     timestamp: Optional[datetime] = Field(
         None,
-        description='ISO 8601 timestamp of alert creation',
-        example='2025-10-28T14:31:30Z',
+        description="ISO 8601 timestamp of alert creation",
+        example="2025-10-28T14:31:30Z",
     )
 
 
 class StateDistribution(BaseModel):
-    state: str = Field(..., description='Two-letter state code', example='GA')
-    name: str = Field(..., description='Full state name', example='Georgia')
+    state: str = Field(..., description="Two-letter state code", example="GA")
+    name: str = Field(..., description="Full state name", example="Georgia")
     count: int = Field(
-        ..., description='Number of plates detected from this state', example=342
+        ..., description="Number of plates detected from this state", example=342
     )
     percentage: float = Field(
-        ..., description='Percentage of total detections', example=28.5
+        ..., description="Percentage of total detections", example=28.5
     )
     color: str = Field(
-        ..., description='Hex color code for visualization', example='#dc2626'
+        ..., description="Hex color code for visualization", example="#dc2626"
     )
 
 
 class RecentPlate(BaseModel):
-    id: int = Field(..., description='Unique detection identifier', example=1)
-    state: str = Field(..., description='Two-letter state code', example='GA')
+    id: int = Field(..., description="Unique detection identifier", example=1)
+    state: str = Field(..., description="Two-letter state code", example="GA")
     plateNumber: str = Field(
-        ..., description='Partially masked plate number', example='ABC***'
+        ..., description="Partially masked plate number", example="ABC***"
     )
     location: str = Field(
-        ..., description='Detection location (store and pump)', example='Store'
+        ..., description="Detection location (store and pump)", example="Store"
     )
     time: str = Field(
-        ..., description='Human-readable time since detection', example='15 sec ago'
+        ..., description="Human-readable time since detection", example="15 sec ago"
     )
     confidence: int = Field(
-        ..., description='Detection confidence percentage (0-100)', example=99
+        ..., description="Detection confidence percentage (0-100)", example=99
     )
     timestamp: Optional[datetime] = Field(
         None,
-        description='ISO 8601 timestamp of detection',
-        example='2025-10-28T14:31:45Z',
+        description="ISO 8601 timestamp of detection",
+        example="2025-10-28T14:31:45Z",
     )
 
 
 class StateStats(BaseModel):
     totalDetected: int = Field(
-        ..., description='Total number of plates detected', example=1200
+        ..., description="Total number of plates detected", example=1200
     )
     uniqueStates: int = Field(
-        ..., description='Number of unique states detected', example=24
+        ..., description="Number of unique states detected", example=24
     )
     averagePerHour: int = Field(
-        ..., description='Average detections per hour', example=50
+        ..., description="Average detections per hour", example=50
     )
     trend: str = Field(
-        ..., description='Trend indicator (e.g., +15%, -5%)', example='+15%'
+        ..., description="Trend indicator (e.g., +15%, -5%)", example="+15%"
     )
 
 
 class ObjectDetection(BaseModel):
-    object: str = Field(..., description='Type of object detected', example='Vehicles')
-    count: int = Field(..., description='Number of detections', example=1247)
+    object: str = Field(..., description="Type of object detected", example="Vehicles")
+    count: int = Field(..., description="Number of detections", example=1247)
     trend: str = Field(
-        ..., description='Trend indicator (e.g., +12%, -3%)', example='+12%'
+        ..., description="Trend indicator (e.g., +12%, -3%)", example="+12%"
     )
-    icon: str = Field(..., description='Icon name for UI display', example='Car')
+    icon: str = Field(..., description="Icon name for UI display", example="Car")
     color: str = Field(
-        ..., description='Hex color code for visualization', example='#3b82f6'
+        ..., description="Hex color code for visualization", example="#3b82f6"
     )
 
 
 class HourlyDetection(BaseModel):
-    hour: str = Field(..., description='Hour label (24-hour format)', example='14:00')
+    hour: str = Field(..., description="Hour label (24-hour format)", example="14:00")
     count: int = Field(
-        ..., description='Number of detections in this hour', example=176
+        ..., description="Number of detections in this hour", example=176
     )
     timestamp: Optional[datetime] = Field(
         None,
-        description='ISO 8601 timestamp for the hour',
-        example='2025-10-28T14:00:00Z',
+        description="ISO 8601 timestamp for the hour",
+        example="2025-10-28T14:00:00Z",
     )
 
 
 class RecentDetection(BaseModel):
-    id: int = Field(..., description='Unique detection identifier', example=1)
-    type: str = Field(..., description='Type of object detected', example='Vehicle')
+    id: int = Field(..., description="Unique detection identifier", example=1)
+    type: str = Field(..., description="Type of object detected", example="Vehicle")
     location: str = Field(
-        ..., description='Detection location (store and area)', example='Store'
+        ..., description="Detection location (store and area)", example="Store"
     )
     time: str = Field(
-        ..., description='Human-readable time since detection', example='30 sec ago'
+        ..., description="Human-readable time since detection", example="30 sec ago"
     )
     confidence: int = Field(
-        ..., description='Detection confidence percentage (0-100)', example=98
+        ..., description="Detection confidence percentage (0-100)", example=98
     )
     timestamp: Optional[datetime] = Field(
         None,
-        description='ISO 8601 timestamp of detection',
-        example='2025-10-28T14:31:30Z',
+        description="ISO 8601 timestamp of detection",
+        example="2025-10-28T14:31:30Z",
     )
 
 
 class Error1(BaseModel):
-    code: str = Field(..., description='Error code', example='DEVICE_NOT_FOUND')
+    code: str = Field(..., description="Error code", example="DEVICE_NOT_FOUND")
     message: str = Field(
         ...,
-        description='Human-readable error message',
-        example='Device with ID RT-ATL-999 not found',
+        description="Human-readable error message",
+        example="Device with ID RT-ATL-999 not found",
     )
     details: Optional[Dict[str, Any]] = Field(
-        None, description='Additional error details'
+        None, description="Additional error details"
     )
 
 
@@ -245,16 +245,16 @@ class AlertsGetResponse(BaseModel):
 
 class Data(BaseModel):
     criticalCount: Optional[int] = Field(
-        None, description='Number of critical alerts', example=1
+        None, description="Number of critical alerts", example=1
     )
     warningCount: Optional[int] = Field(
-        None, description='Number of warning alerts', example=2
+        None, description="Number of warning alerts", example=2
     )
     infoCount: Optional[int] = Field(
-        None, description='Number of informational alerts', example=3
+        None, description="Number of informational alerts", example=3
     )
     totalCount: Optional[int] = Field(
-        None, description='Total number of alerts', example=6
+        None, description="Total number of alerts", example=6
     )
 
 
@@ -264,9 +264,9 @@ class AlertsStatsGetResponse(BaseModel):
 
 
 class Period(Enum):
-    today = 'today'
-    week = 'week'
-    month = 'month'
+    today = "today"
+    week = "week"
+    month = "month"
 
 
 class LicensePlatesDistributionGetResponse(BaseModel):
@@ -300,33 +300,33 @@ class ObjectDetectionRecentGetResponse(BaseModel):
 
 
 class Context(BaseModel):
-    currentView: Optional[str] = Field(None, example='overview')
-    selectedDevice: Optional[str] = Field(None, example='RT-ATL-001')
+    currentView: Optional[str] = Field(None, example="overview")
+    selectedDevice: Optional[str] = Field(None, example="RT-ATL-001")
 
 
 class AiChatPostRequest(BaseModel):
     message: str = Field(
         ...,
-        description='User message to the AI assistant',
+        description="User message to the AI assistant",
         example="What's the current temperature status?",
     )
     context: Optional[Context] = Field(
         None,
-        description='Optional context information to help AI generate better responses',
+        description="Optional context information to help AI generate better responses",
     )
 
 
 class Data1(BaseModel):
     response: Optional[str] = Field(
         None,
-        description='AI-generated response',
-        example='The average temperature across all monitored locations is currently 75.4°F. Store',
+        description="AI-generated response",
+        example="The average temperature across all monitored locations is currently 75.4°F. Store",
     )
     confidence: Optional[float] = Field(
-        None, description='Confidence score of the response (0-1)', example=0.95
+        None, description="Confidence score of the response (0-1)", example=0.95
     )
     timestamp: Optional[datetime] = Field(
-        None, description='Response timestamp', example='2025-10-28T14:32:00Z'
+        None, description="Response timestamp", example="2025-10-28T14:32:00Z"
     )
 
 
@@ -336,53 +336,53 @@ class AiChatPostResponse(BaseModel):
 
 
 class SortDirection(Enum):
-    asc = 'asc'
-    desc = 'desc'
+    asc = "asc"
+    desc = "desc"
 
 
 class ApiSearchGetResponse(BaseModel):
     columns: Optional[List[str]] = Field(
         None,
-        description='Column names for the result set',
-        example=['device_id', 'location', 'temperature', 'status'],
+        description="Column names for the result set",
+        example=["device_id", "location", "temperature", "status"],
     )
     data: Optional[List[Dict[str, Any]]] = Field(
         None,
-        description='Array of data rows',
+        description="Array of data rows",
         example=[
             {
-                'device_id': 'RT-ATL-001',
-                'location': 'Atlanta, GA',
-                'temperature': 72.4,
-                'status': 'normal',
+                "device_id": "RT-ATL-001",
+                "location": "Atlanta, GA",
+                "temperature": 72.4,
+                "status": "normal",
             },
             {
-                'device_id': 'RT-HOU-002',
-                'location': 'Houston, TX',
-                'temperature': 85.3,
-                'status': 'warning',
+                "device_id": "RT-HOU-002",
+                "location": "Houston, TX",
+                "temperature": 85.3,
+                "status": "warning",
             },
         ],
     )
     sql: Optional[str] = Field(
         None,
-        description='Executed SQL query',
-        example='SELECT * FROM devices WHERE temperature > 70 ORDER BY temperature DESC LIMIT 50 OFFSET 0',
+        description="Executed SQL query",
+        example="SELECT * FROM devices WHERE temperature > 70 ORDER BY temperature DESC LIMIT 50 OFFSET 0",
     )
     description: Optional[str] = Field(
         None,
-        description='Description of the query',
-        example='Total number of devices with temperature above 70 degrees',
+        description="Description of the query",
+        example="Total number of devices with temperature above 70 degrees",
     )
     total: Optional[int] = Field(
-        None, description='Total number of records matching the query', example=500
+        None, description="Total number of records matching the query", example=500
     )
     offset: Optional[int] = Field(
-        None, description='Current offset in the result set', example=0
+        None, description="Current offset in the result set", example=0
     )
     limit: Optional[int] = Field(
-        None, description='Number of records returned in this response', example=50
+        None, description="Number of records returned in this response", example=50
     )
     hasMore: Optional[bool] = Field(
-        None, description='Whether there are more records available', example=True
+        None, description="Whether there are more records available", example=True
     )

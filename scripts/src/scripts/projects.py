@@ -170,7 +170,9 @@ class Project:
                 pyproject_text += "\n"
             pyproject_doc = tomlkit.parse(pyproject_text)
         except Exception as e:
-            raise ValueError(f"Project {PYPROJECT_FILE_NAME} error - path:{self.pyproject_file} error:{e}")
+            raise ValueError(
+                f"Project {PYPROJECT_FILE_NAME} error - path:{self.pyproject_file} error:{e}"
+            )
         # Use benedict for dynamic attribute access and easy merging
         self.pyproject = benedict(pyproject_doc, keyattr_dynamic=True)
 

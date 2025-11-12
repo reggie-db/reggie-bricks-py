@@ -11,5 +11,3 @@ if __name__ == "__main__":
     print(spark())
     print(spark())
     print(workspace_client().catalogs.list(max_results=10))
-
-

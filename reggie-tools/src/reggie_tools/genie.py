@@ -61,8 +61,7 @@ class Service:
             GenieMessage object containing the conversation ID and initial response
         """
         return self.genie.start_conversation_and_wait(
-            space_id=self.space_id,
-            content=content
+            space_id=self.space_id, content=content
         )
 
     def create_message(self, conversation_id: str, content: str) -> str:
@@ -80,9 +79,7 @@ class Service:
             ID of the created message
         """
         create_message_wait = self.genie.create_message(
-            space_id=self.space_id,
-            conversation_id=conversation_id,
-            content=content
+            space_id=self.space_id, conversation_id=conversation_id, content=content
         )
         return create_message_wait.response.id
 
@@ -100,7 +97,7 @@ class Service:
         return self.genie.get_message(
             space_id=self.space_id,
             conversation_id=conversation_id,
-            message_id=message_id
+            message_id=message_id,
         )
 
     def chat(self, conversation_id: str, content: str) -> Iterable["GenieResponse"]:
@@ -128,7 +125,10 @@ class Service:
                 current_response = response
                 yield response
             # Stop polling when Genie has finished processing
-            if response.message.status in (MessageStatus.COMPLETED, MessageStatus.FAILED):
+            if response.message.status in (
+                MessageStatus.COMPLETED,
+                MessageStatus.FAILED,
+            ):
                 break
 
 
@@ -238,7 +238,9 @@ def main():
             break
         # Create conversation on first request
         if conversation_id is None:
-            conversation_id = service.create_conversation("Questions about image detections").conversation_id
+            conversation_id = service.create_conversation(
+                "Questions about image detections"
+            ).conversation_id
         # Stream responses as Genie processes the request
         for response in service.chat(conversation_id, request):
             print(f"msg:{response.message}")

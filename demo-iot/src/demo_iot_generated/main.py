@@ -70,7 +70,7 @@ class APIContract(ABC):
         limit: Optional[conint(ge=1, le=1000)] = 50,
         offset: Optional[conint(ge=0)] = 0,
         sort_column: Optional[str] = None,
-        sort_direction: Optional[SortDirection] = 'asc',
+        sort_direction: Optional[SortDirection] = "asc",
     ) -> Union[ApiSearchGetResponse, Error]:
         """Search data with natural language"""
         raise NotImplementedError
@@ -91,7 +91,7 @@ class APIContract(ABC):
 
     @abstractmethod
     def get_device_by_id(
-        self, device_id: str = Path(..., alias='deviceId')
+        self, device_id: str = Path(..., alias="deviceId")
     ) -> Union[DevicesDeviceIdGetResponse, Error]:
         """Get device by ID"""
         raise NotImplementedError
@@ -99,7 +99,7 @@ class APIContract(ABC):
     @abstractmethod
     def get_device_history(
         self,
-        device_id: str = Path(..., alias='deviceId'),
+        device_id: str = Path(..., alias="deviceId"),
         hours: Optional[conint(ge=1, le=168)] = 24,
         interval: Optional[Interval] = 60,
     ) -> Union[DevicesDeviceIdHistoryGetResponse, Error]:
@@ -108,7 +108,7 @@ class APIContract(ABC):
 
     @abstractmethod
     def get_license_plate_distribution(
-        self, period: Optional[Period] = 'today'
+        self, period: Optional[Period] = "today"
     ) -> Union[LicensePlatesDistributionGetResponse, Error]:
         """Get license plate state distribution"""
         raise NotImplementedError
@@ -143,7 +143,7 @@ class APIContract(ABC):
 
     @abstractmethod
     def get_object_detection_summary(
-        self, period: Optional[Period] = 'today'
+        self, period: Optional[Period] = "today"
     ) -> Union[ObjectDetectionSummaryGetResponse, Error]:
         """Get object detection summary"""
         raise NotImplementedError
@@ -161,7 +161,7 @@ class GeneratedRouter:
             "/ai/chat",
             response_model=AiChatPostResponse,
             responses={"400": {"model": Error}, "500": {"model": Error}},
-            tags=['AI Chat'],
+            tags=["AI Chat"],
         )
         def _send_chat_message(body: AiChatPostRequest):
             LOG.log(
@@ -176,7 +176,7 @@ class GeneratedRouter:
             "/alerts",
             response_model=AlertsGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Alerts'],
+            tags=["Alerts"],
         )
         def _get_alerts(
             type: Optional[Type] = None, limit: Optional[conint(ge=1, le=100)] = 50
@@ -193,7 +193,7 @@ class GeneratedRouter:
             "/alerts/stats",
             response_model=AlertsStatsGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Alerts'],
+            tags=["Alerts"],
         )
         def _get_alert_stats():
             LOG.log(self.log_level, "api request:%s args=%s", "get_alert_stats", {})
@@ -203,14 +203,14 @@ class GeneratedRouter:
             "/api/search",
             response_model=ApiSearchGetResponse,
             responses={"400": {"model": Error}, "500": {"model": Error}},
-            tags=['Search'],
+            tags=["Search"],
         )
         def _search_data(
             q: str,
             limit: Optional[conint(ge=1, le=1000)] = 50,
             offset: Optional[conint(ge=0)] = 0,
             sort_column: Optional[str] = None,
-            sort_direction: Optional[SortDirection] = 'asc',
+            sort_direction: Optional[SortDirection] = "asc",
         ):
             LOG.log(
                 self.log_level,
@@ -232,7 +232,7 @@ class GeneratedRouter:
             "/devices",
             response_model=DevicesGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Devices'],
+            tags=["Devices"],
         )
         def _get_devices():
             LOG.log(self.log_level, "api request:%s args=%s", "get_devices", {})
@@ -242,7 +242,7 @@ class GeneratedRouter:
             "/devices/stats",
             response_model=DevicesStatsGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Devices'],
+            tags=["Devices"],
         )
         def _get_device_stats():
             LOG.log(self.log_level, "api request:%s args=%s", "get_device_stats", {})
@@ -252,9 +252,9 @@ class GeneratedRouter:
             "/devices/{deviceId}",
             response_model=DevicesDeviceIdGetResponse,
             responses={"404": {"model": Error}, "500": {"model": Error}},
-            tags=['Devices'],
+            tags=["Devices"],
         )
-        def _get_device_by_id(device_id: str = Path(..., alias='deviceId')):
+        def _get_device_by_id(device_id: str = Path(..., alias="deviceId")):
             LOG.log(
                 self.log_level,
                 "api request:%s args=%s",
@@ -267,10 +267,10 @@ class GeneratedRouter:
             "/devices/{deviceId}/history",
             response_model=DevicesDeviceIdHistoryGetResponse,
             responses={"404": {"model": Error}, "500": {"model": Error}},
-            tags=['Devices'],
+            tags=["Devices"],
         )
         def _get_device_history(
-            device_id: str = Path(..., alias='deviceId'),
+            device_id: str = Path(..., alias="deviceId"),
             hours: Optional[conint(ge=1, le=168)] = 24,
             interval: Optional[Interval] = 60,
         ):
@@ -286,9 +286,9 @@ class GeneratedRouter:
             "/license-plates/distribution",
             response_model=LicensePlatesDistributionGetResponse,
             responses={"500": {"model": Error}},
-            tags=['License Plates'],
+            tags=["License Plates"],
         )
-        def _get_license_plate_distribution(period: Optional[Period] = 'today'):
+        def _get_license_plate_distribution(period: Optional[Period] = "today"):
             LOG.log(
                 self.log_level,
                 "api request:%s args=%s",
@@ -301,7 +301,7 @@ class GeneratedRouter:
             "/license-plates/recent",
             response_model=LicensePlatesRecentGetResponse,
             responses={"500": {"model": Error}},
-            tags=['License Plates'],
+            tags=["License Plates"],
         )
         def _get_recent_plates(limit: Optional[conint(ge=1, le=100)] = 20):
             LOG.log(
@@ -316,7 +316,7 @@ class GeneratedRouter:
             "/license-plates/stats",
             response_model=LicensePlatesStatsGetResponse,
             responses={"500": {"model": Error}},
-            tags=['License Plates'],
+            tags=["License Plates"],
         )
         def _get_license_plate_stats():
             LOG.log(
@@ -328,7 +328,7 @@ class GeneratedRouter:
             "/object-detection/hourly",
             response_model=ObjectDetectionHourlyGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Object Detection'],
+            tags=["Object Detection"],
         )
         def _get_hourly_detections(date: Optional[date] = None):
             LOG.log(
@@ -343,7 +343,7 @@ class GeneratedRouter:
             "/object-detection/recent",
             response_model=ObjectDetectionRecentGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Object Detection'],
+            tags=["Object Detection"],
         )
         def _get_recent_detections(limit: Optional[conint(ge=1, le=100)] = 20):
             LOG.log(
@@ -358,9 +358,9 @@ class GeneratedRouter:
             "/object-detection/summary",
             response_model=ObjectDetectionSummaryGetResponse,
             responses={"500": {"model": Error}},
-            tags=['Object Detection'],
+            tags=["Object Detection"],
         )
-        def _get_object_detection_summary(period: Optional[Period] = 'today'):
+        def _get_object_detection_summary(period: Optional[Period] = "today"):
             LOG.log(
                 self.log_level,
                 "api request:%s args=%s",

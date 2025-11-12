@@ -93,10 +93,10 @@ def token(config: Config = None) -> str:
 
 
 def config_value(
-        name: str,
-        default: Any = None,
-        spark: SparkSession = None,
-        config_value_sources: list["ConfigValueSource"] = None,
+    name: str,
+    default: Any = None,
+    spark: SparkSession = None,
+    config_value_sources: list["ConfigValueSource"] = None,
 ) -> Any:
     """Fetch a configuration value by checking the configured sources in order.
     The first loader that returns a truthy value wins. Callers can pass a subset of sources to control resolution order.
@@ -109,8 +109,8 @@ def config_value(
     dbutils = (
         runtimes.dbutils(spark)
         if (
-                ConfigValueSource.WIDGETS in config_value_sources
-                or ConfigValueSource.SECRETS in config_value_sources
+            ConfigValueSource.WIDGETS in config_value_sources
+            or ConfigValueSource.SECRETS in config_value_sources
         )
         else None
     )
@@ -135,6 +135,7 @@ def config_value(
                 secrets = getattr(dbutils, "secrets", None)
                 if secrets:
                     if catalog_schema := catalogs.catalog_schema(spark):
+
                         def _load_secret(key: str) -> str:
                             return secrets.get(scope=str(catalog_schema), key=key)
 
@@ -154,12 +155,12 @@ def config_value(
 
 
 def _cli_run(
-        *popenargs,
-        profile=None,
-        stdout=subprocess.PIPE,
-        stderr=None,
-        check=False,
-        timeout=None,
+    *popenargs,
+    profile=None,
+    stdout=subprocess.PIPE,
+    stderr=None,
+    check=False,
+    timeout=None,
 ) -> tuple[dict[str, Any], subprocess.CompletedProcess]:
     """Execute the Databricks CLI and return the parsed JSON payload and process."""
     version = runtimes.version()

@@ -7,5 +7,3 @@ from reggie_tools.runtimes import ipython
 
 if __name__ == "__main__":
     print(ipython())
-
-

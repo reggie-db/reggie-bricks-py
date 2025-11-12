@@ -44,7 +44,10 @@ from demo_iot_generated.models import (
     StateStats,
     HourlyDetection,
     RecentDetection,
-    Data, Error, Status, ObjectDetection,
+    Data,
+    Error,
+    Status,
+    ObjectDetection,
 )
 from reggie_concurio import caches
 from reggie_core import objects, paths
@@ -57,12 +60,20 @@ class APIImplementation(APIContract):
     def __init__(self, config: Config):
         self.config = config
         self.spark = clients.spark(config)
-        self.genie_service = genie.Service(clients.workspace_client(config),
-                                           os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"))
-        self.detection_table_name = str(catalogs.catalog_schema_table("detections", self.spark))
-        self.query_cache = caches.DiskCache(paths.temp_dir() / f"{__class__.__name__}_v2")
+        self.genie_service = genie.Service(
+            clients.workspace_client(config),
+            os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"),
+        )
+        self.detection_table_name = str(
+            catalogs.catalog_schema_table("detections", self.spark)
+        )
+        self.query_cache = caches.DiskCache(
+            paths.temp_dir() / f"{__class__.__name__}_v2"
+        )
 
-    def send_chat_message(self, body: AiChatPostRequest) -> Union[AiChatPostResponse, Error]:
+    def send_chat_message(
+        self, body: AiChatPostRequest
+    ) -> Union[AiChatPostResponse, Error]:
         resp = AiChatPostResponse(
             success=True,
             data={
@@ -73,8 +84,9 @@ class APIImplementation(APIContract):
         )
         return resp
 
-    def get_alerts(self, type: Optional[Type] = None, limit: Optional[conint(ge=1, le=100)] = 50) -> Union[
-        AlertsGetResponse, Error]:
+    def get_alerts(
+        self, type: Optional[Type] = None, limit: Optional[conint(ge=1, le=100)] = 50
+    ) -> Union[AlertsGetResponse, Error]:
         alert_types = ["critical", "warning", "info"]
         devices = ["Refrigerator", "HVAC", "Pump", "Camera"]
         locations = ["Atlanta, GA", "Tampa, FL", "Dallas, TX", "Orlando, FL"]
@@ -110,12 +122,18 @@ class APIImplementation(APIContract):
         )
         return AlertsStatsGetResponse(success=True, data=data)
 
-    def search_data(self, q: str, limit: Optional[conint(ge=1, le=1000)] = 50, offset: Optional[conint(ge=0)] = 0,
-                    sort_column: Optional[str] = None, sort_direction: Optional[SortDirection] = 'asc') -> Union[
-        ApiSearchGetResponse, Error]:
-
+    def search_data(
+        self,
+        q: str,
+        limit: Optional[conint(ge=1, le=1000)] = 50,
+        offset: Optional[conint(ge=0)] = 0,
+        sort_column: Optional[str] = None,
+        sort_direction: Optional[SortDirection] = "asc",
+    ) -> Union[ApiSearchGetResponse, Error]:
         def _load_sql():
-            conv_id = self.genie_service.create_conversation("User search on detection data").conversation_id
+            conv_id = self.genie_service.create_conversation(
+                "User search on detection data"
+            ).conversation_id
             sql_query = None
             description = None
             for msg in self.genie_service.chat(conv_id, q):
@@ -125,21 +143,30 @@ class APIImplementation(APIContract):
                     description = msg_description
             return sql_query, description
 
-        sql, description = self.query_cache.get_or_load(objects.hash(["sql_description", q]).hexdigest(),
-                                                        _load_sql).value
+        sql, description = self.query_cache.get_or_load(
+            objects.hash(["sql_description", q]).hexdigest(), _load_sql
+        ).value
         print(f"sql: {sql}, description: {description}")
         if not sql:
             columns, rows, total = [], [], 0
         else:
+
             def _load_total():
                 count_sql = f"SELECT COUNT(*) AS total FROM ({re.sub(r'\\s*;\\s*$', '', sql)}) AS subq"
                 return self.spark.sql(count_sql).collect()[0]["total"]
 
-            total = self.query_cache.get_or_load(objects.hash(["total", sql]).hexdigest(), _load_total, expire=20).value
+            total = self.query_cache.get_or_load(
+                objects.hash(["total", sql]).hexdigest(), _load_total, expire=20
+            ).value
 
             # Add sorting if requested
             if sort_column:
-                direction = "ASC" if sort_direction is not None and str(sort_direction).lower() == "asc" else "DESC"
+                direction = (
+                    "ASC"
+                    if sort_direction is not None
+                    and str(sort_direction).lower() == "asc"
+                    else "DESC"
+                )
                 sql = f"SELECT * FROM ({sql}) AS subq ORDER BY `{sort_column}` {direction}"
             sql_df = self.spark.sql(sql)
             if sort_column:
@@ -174,7 +201,8 @@ class APIImplementation(APIContract):
                 currentTemp=random.uniform(70, 95),
                 status=random.choice(list(Status)),
                 lastUpdate=f"{random.randint(1, 60)} min ago",
-                lastUpdateTimestamp=datetime.utcnow() - timedelta(minutes=random.randint(0, 60)),
+                lastUpdateTimestamp=datetime.utcnow()
+                - timedelta(minutes=random.randint(0, 60)),
             )
             for i in range(6)
         ]
@@ -190,8 +218,9 @@ class APIImplementation(APIContract):
         )
         return DevicesStatsGetResponse(success=True, data=stats)
 
-    def get_device_by_id(self, device_id: str = Path(..., alias='deviceId')) -> Union[
-        DevicesDeviceIdGetResponse, Error]:
+    def get_device_by_id(
+        self, device_id: str = Path(..., alias="deviceId")
+    ) -> Union[DevicesDeviceIdGetResponse, Error]:
         device = Device(
             id=device_id,
             name="Store-001",
@@ -203,9 +232,12 @@ class APIImplementation(APIContract):
         )
         return DevicesDeviceIdGetResponse(success=True, data=device)
 
-    def get_device_history(self, device_id: str = Path(..., alias='deviceId'),
-                           hours: Optional[conint(ge=1, le=168)] = 24, interval: Optional[Interval] = 60) -> Union[
-        DevicesDeviceIdHistoryGetResponse, Error]:
+    def get_device_history(
+        self,
+        device_id: str = Path(..., alias="deviceId"),
+        hours: Optional[conint(ge=1, le=168)] = 24,
+        interval: Optional[Interval] = 60,
+    ) -> Union[DevicesDeviceIdHistoryGetResponse, Error]:
         now = datetime.utcnow()
         history = [
             TemperatureDataPoint(
@@ -218,8 +250,9 @@ class APIImplementation(APIContract):
         ]
         return DevicesDeviceIdHistoryGetResponse(success=True, data=history)
 
-    def get_license_plate_distribution(self, period: Optional[Period] = 'today') -> Union[
-        LicensePlatesDistributionGetResponse, Error]:
+    def get_license_plate_distribution(
+        self, period: Optional[Period] = "today"
+    ) -> Union[LicensePlatesDistributionGetResponse, Error]:
         states = [
             StateDistribution(
                 state=code,
@@ -232,8 +265,9 @@ class APIImplementation(APIContract):
         ]
         return LicensePlatesDistributionGetResponse(success=True, data=states)
 
-    def get_recent_plates(self, limit: Optional[conint(ge=1, le=100)] = 20) -> Union[
-        LicensePlatesRecentGetResponse, Error]:
+    def get_recent_plates(
+        self, limit: Optional[conint(ge=1, le=100)] = 20
+    ) -> Union[LicensePlatesRecentGetResponse, Error]:
         plates = [
             RecentPlate(
                 id=i,
@@ -249,19 +283,27 @@ class APIImplementation(APIContract):
         return LicensePlatesRecentGetResponse(success=True, data=plates)
 
     def get_license_plate_stats(self) -> Union[LicensePlatesStatsGetResponse, Error]:
-        stats = StateStats(totalDetected=1200, uniqueStates=24, averagePerHour=50, trend="+15%")
+        stats = StateStats(
+            totalDetected=1200, uniqueStates=24, averagePerHour=50, trend="+15%"
+        )
         return LicensePlatesStatsGetResponse(success=True, data=stats)
 
-    def get_hourly_detections(self, date: Optional[date] = None) -> Union[ObjectDetectionHourlyGetResponse, Error]:
+    def get_hourly_detections(
+        self, date: Optional[date] = None
+    ) -> Union[ObjectDetectionHourlyGetResponse, Error]:
         detections = [
-            HourlyDetection(hour=f"{i:02d}:00", count=random.randint(50, 200),
-                            timestamp=datetime.utcnow() - timedelta(hours=i))
+            HourlyDetection(
+                hour=f"{i:02d}:00",
+                count=random.randint(50, 200),
+                timestamp=datetime.utcnow() - timedelta(hours=i),
+            )
             for i in range(10)
         ]
         return ObjectDetectionHourlyGetResponse(success=True, data=detections)
 
-    def get_recent_detections(self, limit: Optional[conint(ge=1, le=100)] = 20) -> Union[
-        ObjectDetectionRecentGetResponse, Error]:
+    def get_recent_detections(
+        self, limit: Optional[conint(ge=1, le=100)] = 20
+    ) -> Union[ObjectDetectionRecentGetResponse, Error]:
         detections_df = (
             self.spark.table(str(catalogs.catalog_schema_table("detections")))
             .where(F.col("store_id") != 1)
@@ -272,19 +314,24 @@ class APIImplementation(APIContract):
         )
         data = []
         for idx, detection in enumerate(detections_df.collect()):
-            data.append(RecentDetection(
-                id=idx,
-                type=detection.label,
-                location="Store",
-                time=humanize.naturaltime(datetime.utcnow() - detection.timestamp),
-                confidence=int(detection.score * 100) if detection.score < 1 else int(detection.score),
-                timestamp=detection.timestamp,
-            ))
+            data.append(
+                RecentDetection(
+                    id=idx,
+                    type=detection.label,
+                    location="Store",
+                    time=humanize.naturaltime(datetime.utcnow() - detection.timestamp),
+                    confidence=int(detection.score * 100)
+                    if detection.score < 1
+                    else int(detection.score),
+                    timestamp=detection.timestamp,
+                )
+            )
         return ObjectDetectionRecentGetResponse(success=True, data=data)
 
     # noinspection SqlNoDataSourceInspection
-    def get_object_detection_summary(self, period: Optional[Period] = 'today') -> Union[
-        ObjectDetectionSummaryGetResponse, Error]:
+    def get_object_detection_summary(
+        self, period: Optional[Period] = "today"
+    ) -> Union[ObjectDetectionSummaryGetResponse, Error]:
         spark = self.spark
         table = self.detection_table_name
 
@@ -327,9 +374,12 @@ class APIImplementation(APIContract):
                 F.col("l.label").alias("object"),
                 F.col("a.total_count"),
                 F.col("l.latest_ts").alias("latest_detection"),
-                F.coalesce(F.col("c.count_last_7_days"), F.lit(0)).alias("count_last_7_days"),
+                F.coalesce(F.col("c.count_last_7_days"), F.lit(0)).alias(
+                    "count_last_7_days"
+                ),
                 F.round(
-                    F.coalesce(F.col("c.count_last_7_days"), F.lit(0)) * 100.0
+                    F.coalesce(F.col("c.count_last_7_days"), F.lit(0))
+                    * 100.0
                     / F.nullif(F.col("a.total_count"), F.lit(0)),
                     1,
                 ).alias("trend"),
@@ -359,7 +409,14 @@ class APIImplementation(APIContract):
             trend = row["trend"]
             trend = f"+{trend}%" if trend else ""
             objects.append(
-                ObjectDetection(object=row.object, count=row.total_count, trend=trend, icon=row.icon, color=row.color))
+                ObjectDetection(
+                    object=row.object,
+                    count=row.total_count,
+                    trend=trend,
+                    icon=row.icon,
+                    color=row.color,
+                )
+            )
 
         return ObjectDetectionSummaryGetResponse(success=True, data=objects)
 

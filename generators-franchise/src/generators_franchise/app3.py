@@ -57,15 +57,17 @@ def scrape_winsipedia_games(school: str) -> pd.DataFrame:
         cols = [c.get_text(strip=True) for c in row.find_all("td")]
         if len(cols) >= 6:
             result, date, opponent, score, location, notes = cols[:6]
-            rows.append({
-                "school": school,
-                "result": result,
-                "date": date,
-                "opponent": opponent,
-                "score": score,
-                "location": location,
-                "notes": notes
-            })
+            rows.append(
+                {
+                    "school": school,
+                    "result": result,
+                    "date": date,
+                    "opponent": opponent,
+                    "score": score,
+                    "location": location,
+                    "notes": notes,
+                }
+            )
 
     return pd.DataFrame(rows)
 
