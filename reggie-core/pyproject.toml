@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-core"
-version = "0.0.1+gfba684f"
+version = "0.0.1+gdf5981e"
 dependencies = [
     "sitecustomize-entrypoints",
 ]

@@ -135,7 +135,7 @@ class APIImplementation(APIContract):
                 count_sql = f"SELECT COUNT(*) AS total FROM ({re.sub(r'\\s*;\\s*$', '', sql)}) AS subq"
                 return self.spark.sql(count_sql).collect()[0]["total"]
 
-            total = self.query_cache.get_or_load(objects.hash(["total", sql]).hexdigest(), _load_total).value
+            total = self.query_cache.get_or_load(objects.hash(["total", sql]).hexdigest(), _load_total, expire=20).value
 
             # Add sorting if requested
             if sort_column:

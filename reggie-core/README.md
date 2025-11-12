@@ -34,10 +34,16 @@ Environment variables:
 
 Utilities for converting objects to dictionaries and JSON:
 
-- **Dataclass support**: Automatic conversion of dataclasses to dictionaries
-- **Property extraction**: Optionally include `@property` values in serialization
-- **JSON encoding**: Custom JSON encoders with ISO date handling
-- **Hashing**: SHA-256 hashing with optional pickle support and key sorting
+- **dump()**: Convert objects to dictionaries using multiple strategies:
+  - Checks for common dump methods (`model_dump`, `as_dict`, `to_dict`, etc.)
+  - Uses `__dict__` if available
+  - Extracts class members (properties and non-callable attributes)
+  - Supports recursive conversion of nested objects
+- **Property extraction**: Optionally include `@property` values and class members
+- **JSON encoding**: Custom JSON encoders with ISO date handling and member property support
+- **Hashing**: SHA-256 hashing using JSON serialization with optional key sorting
+- **remove_keys()**: Recursively remove keys from dictionaries and nested structures
+- **call()**: Call functions with argument padding for flexible invocation
 
 ### Path Utilities (`paths.py`)
 
@@ -89,8 +95,18 @@ log = logs.logger(__name__)
 log.info("Message")
 
 # Object serialization
-data = objects.dump(my_object, member_properties=True)
-json_str = objects.to_json(data)
+data = objects.dump(my_object, member_properties=True, recursive=True)
+json_str = objects.to_json(data, member_properties=True)
+
+# Hash objects deterministically
+obj_hash = objects.hash(my_object, sort_keys=True)
+print(obj_hash.hexdigest())
+
+# Remove keys from nested dictionaries
+objects.remove_keys(config_dict, "password", "secret")
+
+# Call functions with flexible arguments
+result = objects.call(some_function, arg1, arg2, arg3)
 
 # Path resolution
 config_path = paths.path("~/config", "settings.json", exists=True)

@@ -324,7 +324,16 @@ def clean_build_artifacts():
 
 
 def _git_version() -> str | None:
-    """Build a workspace version string of the form 0.0.1+g<rev> when git is available."""
+    """
+    Build a workspace version string from git commit hash.
+
+    Constructs a version string in the format <default_version>+g<short_rev> using
+    the current git commit hash. Returns None if git is unavailable or the command
+    fails.
+
+    Returns:
+        Version string like "0.0.1+g767bd46" or None if git is unavailable
+    """
     try:
         rev = subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
