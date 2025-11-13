@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 {{imports}}
 
+import contextvars
 from abc import ABC, abstractmethod
 from fastapi import APIRouter
 from typing import Any
@@ -20,7 +21,7 @@ class APIContract(ABC):
     @abstractmethod
     def {{operation.function_name}}(self, {{operation.snake_case_arguments}}) -> {{operation.return_type}}:
         """{{operation.summary or ''}}"""
-        raise NotImplementedError
+        ...
 {% endfor %}
 
 
@@ -29,8 +30,9 @@ class GeneratedRouter:
 
     def __init__(self, contract: APIContract, log_level = None):
         self.contract = contract
-        self.router = APIRouter()
         self.log_level = logs.get_level(log_level, logging.DEBUG)[0]
+        self.router = APIRouter()
+
 
 {% for operation in operations %}
 {% set sorted_arguments = operation.__class__.merge_arguments_with_union(operation.arguments_list) %}

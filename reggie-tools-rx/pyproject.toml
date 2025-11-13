@@ -3,16 +3,12 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "reggie-zerobus"
+name = "reggie-tools-rx"
 version = "0.0.1+g9559681"
 requires-python = ">=3.12"
 dependencies = [
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
-]
-
-[project.optional-dependencies]
-prpr = [
-    "databricks-zerobus @ file:${PROJECT_ROOT}/prpr/databricks_zerobus-0.0.16-py3-none-any.whl",
+    "aioreactive"
 ]
 
 [tool.uv.sources.reggie-tools]

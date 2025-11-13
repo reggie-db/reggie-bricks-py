@@ -12,8 +12,8 @@ dependencies = [
     "urllib3",
     "pydantic",
 ]
-version = "0.0.1+g823dfd2"
-requires-python = ">=3.10,<3.13"
+version = "0.0.1+g9559681"
+requires-python = ">=3.12"
 
 [tool.uv.sources.reggie-core]
 workspace = true

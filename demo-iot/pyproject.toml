@@ -4,13 +4,15 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+g823dfd2"
-requires-python = ">=3.10,<3.13"
+version = "0.0.1+g9559681"
+requires-python = ">=3.12"
 dependencies = [
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
     "reggie-concurio @ file://${PROJECT_ROOT}/../reggie-concurio",
-    "uvicorn",
+    "uvicorn-hmr",
     "fastapi",
+    "websockets",
+    "aioreactive",
     "humanize"
 ]
 
