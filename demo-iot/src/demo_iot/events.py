@@ -1,11 +1,13 @@
 import asyncio
+import inspect
 import random
 import uuid
-from typing import Any, AsyncIterable
+from typing import Any, AsyncIterable, Callable
 from urllib.parse import urlencode, urlparse
 
 import aioreactive
 import websockets
+from expression.system import AsyncDisposable
 from pydantic import BaseModel, Field
 
 
@@ -38,10 +40,11 @@ async def publisher(
 
     pong_task = asyncio.create_task(_pong())
 
-    async def _on_close():
-        await ws.close()
-        ping_task.cancel()
-        pong_task.cancel()
+    on_close = AsyncDisposable.composite(
+        AsyncDisposable.create(ws.close),
+        _disposable(pong_task.cancel),
+        _disposable(ping_task.cancel),
+    )
 
     async def _send(msg: InMessage):
         msg_json = msg.model_dump_json()
@@ -49,10 +52,10 @@ async def publisher(
         await ws.send(msg_json)
 
     async def _throw(e: Exception):
-        await _on_close()
+        await on_close.dispose_async()
 
     async def _close():
-        await _on_close()
+        await on_close.dispose_async()
 
     await subject.subscribe_async(_send, _throw, _close)
 
@@ -92,6 +95,21 @@ def _ws_url(url: str, topic: str, **params):
         query_params["clientId"] = f"ws_{uuid.uuid4().hex}"
 
     return f"{scheme}://{u.netloc}{u.path}?{urlencode(query_params)}"
+
+
+def _disposable(action: Callable[[], Any]):
+    """
+    Wrap a sync function so that it becomes an async disposable.
+    The returned object has an aclose coroutine that runs the sync function.
+    """
+
+    async def aclose(_self):
+        if action is not None:
+            result = action()
+            if inspect.isawaitable(result):
+                await result
+
+    return type("AsyncDisposable", (), {"aclose": aclose})()
 
 
 class Header(BaseModel):
