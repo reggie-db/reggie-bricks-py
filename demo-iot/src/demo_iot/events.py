@@ -4,24 +4,59 @@ import uuid
 from typing import Any, AsyncIterable
 from urllib.parse import urlencode, urlparse
 
+import aioreactive
 import websockets
 from pydantic import BaseModel, Field
 
 
 async def publisher(
-    msgs: AsyncIterable["InMessage"],
     url: str = "ws://localhost:8078/socket/in",
     topic: str = "events",
     **params,
 ):
     ws_url = _ws_url(url, topic, **params)
-    print(f"publisher:{ws_url}")
+    subject = aioreactive.AsyncSubject()
 
-    async with websockets.connect(ws_url) as ws:
-        async for msg in msgs:
-            msg_json = msg.model_dump_json()
-            print(f"send:{msg_json}")
-            await ws.send(msg_json)  # FIXED: no text=True
+    ws = await websockets.connect(ws_url)
+
+    async def _ping():
+        try:
+            while True:
+                await asyncio.sleep(10)
+                await ws.ping()
+        except Exception:
+            await ws.close()
+
+    ping_task = asyncio.create_task(_ping())
+
+    async def _pong():
+        try:
+            async for _ in ws:
+                pass  # discard server messages
+        except websockets.ConnectionClosed:
+            pass
+
+    pong_task = asyncio.create_task(_pong())
+
+    async def _on_close():
+        await ws.close()
+        ping_task.cancel()
+        pong_task.cancel()
+
+    async def _send(msg: InMessage):
+        msg_json = msg.model_dump_json()
+        print(f"send:{msg_json}")
+        await ws.send(msg_json)
+
+    async def _throw(e: Exception):
+        await _on_close()
+
+    async def _close():
+        await _on_close()
+
+    await subject.subscribe_async(_send, _throw, _close)
+
+    return subject
 
 
 async def subscribe(
@@ -36,12 +71,8 @@ async def subscribe(
         topic,
         **{"offsetResetStrategy": offset_reset_strategy, "keyType": key_type, **params},
     )
-
-    print(f"subscriber:{ws_url}")
-
     async with websockets.connect(ws_url) as ws:
         async for msg in ws:
-            print(f"recv raw:{msg}")
             yield OutMessage.model_validate_json(msg)
 
 
@@ -106,13 +137,14 @@ class OutMessage(Message):
 
 
 async def main():
-    async def emitter():
-        while True:
-            await asyncio.sleep(random.uniform(1, 3))
-            yield InMessage(value=FieldValue(value="cool dude"))
-
     async def _publish():
-        await publisher(emitter())
+        subject = await publisher()
+        try:
+            while True:
+                await asyncio.sleep(random.uniform(1, 3))
+                await subject.asend(InMessage(value=FieldValue(value="cool dude")))
+        finally:
+            await subject.aclose()
 
     async def _subscribe():
         async for msg in subscribe():
