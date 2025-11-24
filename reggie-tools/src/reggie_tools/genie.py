@@ -14,8 +14,10 @@ from typing import Iterable
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.dashboards import GenieMessage, MessageStatus
 
-from reggie_core import objects
+from reggie_core import logs, objects
 from reggie_tools import clients, configs
+
+LOG = logs.logger(__file__)
 
 
 class Service:
@@ -232,7 +234,7 @@ def main():
     conversation_id: str | None = None
     current_query: str | None = None
     while True:
-        print("enter request")
+        LOG.info("enter request")
         request = sys.stdin.readline().strip()
         if not request:
             break
@@ -243,17 +245,17 @@ def main():
             ).conversation_id
         # Stream responses as Genie processes the request
         for response in service.chat(conversation_id, request):
-            print(f"msg:{response.message}")
+            LOG.info(f"msg:{response.message}")
             # Display query descriptions
             for v in response.descriptions:
-                print(f"description:{v}")
+                LOG.info(f"description:{v}")
             # Execute new queries as they appear
             for query in response.queries:
                 if current_query != query:
                     current_query = query
                     spark.sql(query).show()
 
-        print("done\n")
+        LOG.info("done\n")
 
 
 if __name__ == "__main__":

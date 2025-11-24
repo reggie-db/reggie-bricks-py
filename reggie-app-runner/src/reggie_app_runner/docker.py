@@ -5,9 +5,11 @@ import platform
 import shutil
 
 import sh
-from reggie_core import paths
+from reggie_core import logs, paths
 
 from reggie_app_runner import conda
+
+LOG = logs.logger(__file__)
 
 _CONDA_ENV_NAME = "_docker"
 _UDOCKER_NAME = "udocker"
@@ -102,11 +104,13 @@ def _image_name_mirror(image_name: str):
 
 
 if __name__ == "__main__":
-    print(runtime_path())
-    print(command())
-    print(image_hash("plexinc/pms-docker"))
-    print(image_hash("plexinc/pms-docker:1.42.2.10156-f737b826c"))
+    LOG.info(f"Runtime path: {runtime_path()}")
+    LOG.info(f"Command: {command()}")
+    LOG.info(f"Image hash: {image_hash('plexinc/pms-docker')}")
+    LOG.info(
+        f"Image hash (with tag): {image_hash('plexinc/pms-docker:1.42.2.10156-f737b826c')}"
+    )
     pull("plexinc/pms-docker")
-    print(command()("version", _bg=True).wait())
-    print(command()("run", "hello-world", _bg=True).wait())
-    print(command()("run", "ealen/echo-server", _bg=True).wait())
+    LOG.info(f"Version check: {command()('version', _bg=True).wait()}")
+    LOG.info(f"Hello world: {command()('run', 'hello-world', _bg=True).wait()}")
+    LOG.info(f"Echo server: {command()('run', 'ealen/echo-server', _bg=True).wait()}")

@@ -157,8 +157,6 @@ def _auto_config_handlers() -> Iterable[logging.Handler]:
 
 
 def _auto_config_handler(stream, error: bool) -> logging.Handler:
-    from reggie_core.logs import Formatter, Handler
-
     handler = Handler(stream=stream)
     handler.auto_config_mark = _AUTO_CONFIG_MARK
     handler.setFormatter(Formatter(stream=stream))

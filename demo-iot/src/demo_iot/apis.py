@@ -47,8 +47,10 @@ from demo_iot_generated.models import (
     ObjectDetection,
 )
 from reggie_concurio import caches
-from reggie_core import objects, paths
+from reggie_core import logs, objects, paths
 from reggie_tools import clients, catalogs, genie
+
+LOG = logs.logger(__file__)
 
 
 class APIImplementation(APIContract):
@@ -178,13 +180,14 @@ class APIImplementation(APIContract):
         sql, description = self.query_cache.get_or_load(
             objects.hash(["sql_description", q]).hexdigest(), _load_sql
         ).value
-        print(f"sql: {sql}, description: {description}")
+        LOG.info(f"sql: {sql}, description: {description}")
         if not sql:
             columns, rows, total = [], [], 0
         else:
 
             def _load_total():
-                count_sql = f"SELECT COUNT(*) AS total FROM ({re.sub(r'\\s*;\\s*$', '', sql)}) AS subq"
+                clean_sql = re.sub(r"\s*;\s*$", "", sql)
+                count_sql = f"SELECT COUNT(*) AS total FROM ({clean_sql}) AS subq"
                 return self.spark.sql(count_sql).collect()[0]["total"]
 
             total = self.query_cache.get_or_load(
@@ -212,7 +215,7 @@ class APIImplementation(APIContract):
             columns = rows_df.columns
             rows = [row.asDict() for row in rows_df.collect()]
 
-        print(len(rows))
+        LOG.info(f"Returning {len(rows)} rows")
         return ApiSearchGetResponse(
             columns=columns,
             data=rows,

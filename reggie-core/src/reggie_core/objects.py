@@ -8,6 +8,10 @@ from array import array
 from collections import deque
 from typing import Any, Callable, Iterable, TypeVar
 
+from reggie_core import logs
+
+LOG = logs.logger(__file__)
+
 T = TypeVar("T")
 _DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict"]
 _DESCRIPTOR_ATTRS = ["__get__", "__set__", "__delete__"]
@@ -268,16 +272,16 @@ class _JSONMemberPropertiesEncoder(json.JSONEncoder):
 
 
 if __name__ == "__main__":
-    print(dump({"neat": 1, "cool": "wow"}))
-    print(dump("ok"))
-    print(hash({"neat": 1, "cool": "wow"}).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}).hexdigest())
-    print(hash({"neat": 1, "cool": "wow"}).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}).hexdigest())
-    print(hash({"neat": 1, "cool": "wow"}, sort_keys=False).hexdigest())
-    print(hash({"cool": "wow", "neat": 1}, sort_keys=False).hexdigest())
-    print(hash(1).hexdigest())
-    print(hash("1").hexdigest())
-    print(hash(datetime.datetime.now()).hexdigest())
-    call(lambda x: print(f"suh {x}"), "wow", "cool", "neat")
-    call(lambda x, y: print(f"suh {x} {y}"), "wow")
+    LOG.info(dump({"neat": 1, "cool": "wow"}))
+    LOG.info(dump("ok"))
+    LOG.info(hash({"neat": 1, "cool": "wow"}).hexdigest())
+    LOG.info(hash({"cool": "wow", "neat": 1}).hexdigest())
+    LOG.info(hash({"neat": 1, "cool": "wow"}).hexdigest())
+    LOG.info(hash({"cool": "wow", "neat": 1}).hexdigest())
+    LOG.info(hash({"neat": 1, "cool": "wow"}, sort_keys=False).hexdigest())
+    LOG.info(hash({"cool": "wow", "neat": 1}, sort_keys=False).hexdigest())
+    LOG.info(hash(1).hexdigest())
+    LOG.info(hash("1").hexdigest())
+    LOG.info(hash(datetime.datetime.now()).hexdigest())
+    call(lambda x: LOG.info(f"suh {x}"), "wow", "cool", "neat")
+    call(lambda x, y: LOG.info(f"suh {x} {y}"), "wow")

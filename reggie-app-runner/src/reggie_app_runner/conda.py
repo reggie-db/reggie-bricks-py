@@ -176,4 +176,5 @@ def _run_arg_preprocess(env_name: str, args, kwargs):
 
 
 if __name__ == "__main__":
-    print(exec())
+    LOG = logs.logger(__file__)
+    LOG.info(exec())

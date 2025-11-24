@@ -3,6 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from pathlib import Path
+from reggie_core import logs
+
+LOG = logs.logger(__file__)
 
 BASE_URL = "https://www.winsipedia.com"
 DATA_DIR = Path("dev-local/winsipedia_data")
@@ -81,15 +84,15 @@ def main():
         csv_path = DATA_DIR / f"{safe_name}.csv"
         if csv_path.exists():
             continue
-        print(f"Fetching {team_name}...")
+        LOG.info(f"Fetching {team_name}...")
         try:
             df = scrape_winsipedia_games(team_name)
             if df.empty:
                 raise ValueError("empty result set failed")
             df.to_csv(csv_path, index=False)
-            print(f"Saved {csv_path}")
+            LOG.info(f"Saved {csv_path}")
         except Exception as e:
-            print(f"Failed {team_name}: {e}")
+            LOG.error(f"Failed {team_name}: {e}")
 
 
 if __name__ == "__main__":

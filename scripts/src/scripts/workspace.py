@@ -20,15 +20,16 @@ import click
 import tomlkit
 import typer
 from benedict.dicts import benedict
+from reggie_core import logs
 
-from scripts import projects, utils
+from scripts import projects
 from scripts.projects import Project
 
 # Default version string used when git version cannot be determined
 _DEFAULT_VERSION = "0.0.1"
 
 
-LOG = utils.logger()
+LOG = logs.logger(__file__)
 
 
 def _sync_projects_option_callback(ctx: typer.Context, sync_projects: Iterable[Any]):
@@ -282,7 +283,7 @@ def create_member(
     project_dir = path.parent
     project_dir.mkdir(parents=True, exist_ok=True)
     project_name = project_dir.name
-    print(f"Creating member project - name:{project_name} dir:{project_dir}")
+    LOG.info(f"Creating member project - name:{project_name} dir:{project_dir}")
     # Initialize pyproject.toml with basic structure
     pyproject_toml = benedict(tomlkit.document(), keyattr_dynamic=True)
     pyproject_toml["build-system"] = {}
@@ -338,7 +339,7 @@ def clean_build_artifacts():
         # Delete matching directories
         if any(f(path) for f in matchers):
             dir_names[:] = []
-            print(f"Deleting directory:{path}")
+            LOG.info(f"Deleting directory:{path}")
             shutil.rmtree(path)
 
 
@@ -442,7 +443,7 @@ def _persist_projects(projs: Iterable[Any] = None, prune: bool = True):
         # Only write if content has changed
         if text != current_text:
             file.write_text(text)
-            print(f"Project updated:{file}")
+            LOG.info(f"Project updated:{file}")
 
 
 def _projects(projs: Iterable[Any] = None) -> Iterable[Project]:
@@ -466,9 +467,9 @@ def _projects(projs: Iterable[Any] = None) -> Iterable[Project]:
         projs = projects.root().members()
     for proj in projs:
         if not isinstance(proj, Project):
-            print(proj)
+            LOG.debug(f"Resolving project identifier: {proj}")
             project_dir = projects.dir(proj)
-            print(project_dir.absolute())
+            LOG.debug(f"Resolved project directory: {project_dir.absolute()}")
             if not project_dir:
                 raise ValueError(f"Project {proj} not found - sync_projects: {projs}")
             proj = Project(project_dir)

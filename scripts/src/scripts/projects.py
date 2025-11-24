@@ -14,7 +14,10 @@ from os import PathLike
 from typing import Iterable
 
 from benedict.dicts import benedict
+from reggie_core import logs
 import tomlkit
+
+LOG = logs.logger(__file__)
 
 # Standard filename for Python project configuration files
 PYPROJECT_FILE_NAME = "pyproject.toml"
@@ -271,12 +274,12 @@ class Project:
 
 
 if __name__ == "__main__":
-    print("-")
-    print(root().name)
-    print(root().pyproject)
-    print(list(m.name for m in root().members()))
-    print(scripts_dir())
+    LOG.info("-")
+    LOG.info(root().name)
+    LOG.info(root().pyproject)
+    LOG.info(list(m.name for m in root().members()))
+    LOG.info(scripts_dir())
     p = Project(root_dir() / "reggie-tools")
     p.pyproject.tool.test.example = "xyz12"
-    print(p.name)
-    print(tomlkit.dumps(p.pyproject))
+    LOG.info(p.name)
+    LOG.info(tomlkit.dumps(p.pyproject))

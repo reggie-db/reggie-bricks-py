@@ -9,14 +9,20 @@ import aioreactive
 import websockets
 from expression.system import AsyncDisposable
 from pydantic import BaseModel, Field
+from reggie_core import logs
+
+LOG = logs.logger(__file__)
+
+_URL = "wss://kws.lfpconnect.io"
+_TOPIC = "events"
 
 
 async def publisher(
-    url: str = "ws://localhost:8078/socket/in",
-    topic: str = "events",
+    url: str = None,
+    topic: str = None,
     **params,
 ):
-    ws_url = _ws_url(url, topic, **params)
+    ws_url = _ws_url(url or f"{_URL}/in", topic or _TOPIC, **params)
     subject = aioreactive.AsyncSubject()
 
     ws = await websockets.connect(ws_url)
@@ -26,8 +32,8 @@ async def publisher(
             while True:
                 await asyncio.sleep(10)
                 await ws.ping()
-        except Exception:
-            await ws.close()
+        except websockets.ConnectionClosed:
+            pass
 
     ping_task = asyncio.create_task(_ping())
 
@@ -42,16 +48,15 @@ async def publisher(
 
     on_close = AsyncDisposable.composite(
         AsyncDisposable.create(ws.close),
-        _disposable(pong_task.cancel),
         _disposable(ping_task.cancel),
+        _disposable(pong_task.cancel),
     )
 
     async def _send(msg: InMessage):
         msg_json = msg.model_dump_json()
-        print(f"send:{msg_json}")
         await ws.send(msg_json)
 
-    async def _throw(e: Exception):
+    async def _throw(_):
         await on_close.dispose_async()
 
     async def _close():
@@ -63,15 +68,15 @@ async def publisher(
 
 
 async def subscribe(
-    url: str = "ws://localhost:8078/socket/out",
-    topic: str = "events",
+    url: str = None,
+    topic: str = None,
     key_type: str = "string",
     offset_reset_strategy: str = "latest",
     **params,
 ) -> AsyncIterable["OutMessage"]:
     ws_url = _ws_url(
-        url,
-        topic,
+        url or f"{_URL}/out",
+        topic or _TOPIC,
         **{"offsetResetStrategy": offset_reset_strategy, "keyType": key_type, **params},
     )
     async with websockets.connect(ws_url) as ws:
@@ -106,7 +111,7 @@ def _disposable(action: Callable[[], Any]):
     async def aclose(_self):
         if action is not None:
             result = action()
-            if inspect.isawaitable(result):
+            if result is not None and inspect.isawaitable(result):
                 await result
 
     return type("AsyncDisposable", (), {"aclose": aclose})()
@@ -166,7 +171,7 @@ async def main():
 
     async def _subscribe():
         async for msg in subscribe():
-            print(f"received:{msg.value.value}")
+            LOG.info(f"received:{msg.value.value}")
 
     tasks = []
     if True:

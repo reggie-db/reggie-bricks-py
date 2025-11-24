@@ -7,11 +7,15 @@ Generates FastAPI code from OpenAPI specs and syncs generated files with change 
 import hashlib
 import re
 import shutil
+import warnings
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+from reggie_core import logs
+
 import utils
+
 from scripts import projects
-import warnings
 
 warnings.filterwarnings(
     "ignore",
@@ -21,8 +25,7 @@ warnings.filterwarnings(
 )
 import fastapi_code_generator.__main__ as fastapi_code_generator_main  # noqa: E402
 
-
-LOG = utils.logger()
+LOG = logs.logger(__file__)
 _TIMESTAMP_RE = re.compile(rb"^\s*#\s*timestamp:.*$")
 
 

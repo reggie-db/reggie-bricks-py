@@ -6,9 +6,11 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
-from reggie_core import objects, paths
+from reggie_core import logs, objects, paths
 
 from reggie_concurio import caches
+
+LOG = logs.logger(__file__)
 
 type InstallSource = Callable[[...], PathLike] | PathLike | str
 
@@ -79,8 +81,8 @@ class InstallPath(Path):
 
 
 if __name__ == "__main__":
-    print("suh")
+    LOG.info("suh")
     source = "https://github.com/regclient/regclient/releases/download/v0.9.2/regctl-darwin-arm64"
     resource = _install(source)
-    print(resource)
+    LOG.info(f"Installed resource: {resource}")
     # resource.complete()

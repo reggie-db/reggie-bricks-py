@@ -1,12 +1,14 @@
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, Generic
 
 import reggie_core.paths as paths
 from diskcache import Cache
 from fasteners import InterProcessLock
-from reggie_core import objects, strs
+from reggie_core import logs, objects, strs
+
+LOG = logs.logger(__file__)
 
 """
 Disk backed cache utilities built on diskcache with inter process locking.
@@ -18,7 +20,7 @@ T = TypeVar("T")
 
 
 @dataclass
-class DiskCacheValue[T]:
+class DiskCacheValue(Generic[T]):
     """Encapsulates a cached value and the timestamp when it was loaded."""
 
     value: T = field(default=None)
@@ -106,7 +108,7 @@ class DiskCache(Cache):
             directory_paths.append(directory)
         directory_paths.append(name)
         kwargs["directory"] = str(paths.path(*directory_paths, mkdir=True))
-        print(kwargs)
+        LOG.debug(f"Cache kwargs: {kwargs}")
         return args, kwargs
 
     @staticmethod
@@ -123,7 +125,7 @@ class DiskCache(Cache):
 
 if __name__ == "__main__":
     cache = DiskCache(directory=__file__)
-    print(f"Cache directory: {cache.directory}")
+    LOG.info(f"Cache directory: {cache.directory}")
     result = cache.get_or_load("test", loader=lambda: "this is a value", expire=10)
-    print(result)
-    print(result.load_timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+    LOG.info(f"Cache result: {result}")
+    LOG.info(f"Load timestamp: {result.load_timestamp.strftime('%Y-%m-%d %H:%M:%S')}")

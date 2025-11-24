@@ -3,13 +3,13 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "reggie-tools-rx"
+name = "demo-cam"
 version = "0.0.1+g24bc8fe"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
-    "aioreactive"
+    "reggie-tools-rx @ file://${PROJECT_ROOT}/../reggie-tools-rx",
+    "opencv-python-headless",
 ]
 
-[tool.uv.sources.reggie-tools]
+[tool.uv.sources.reggie-tools-rx]
 workspace = true

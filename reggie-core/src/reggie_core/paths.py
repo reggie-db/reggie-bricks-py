@@ -82,13 +82,16 @@ def temp_dir() -> Path:
 
 
 if __name__ == "__main__":
-    print(path(pathlib.Path("~/Desktop"), "/test.txt", absolute=True))
-    print(path(pathlib.Path("~/Desktop"), "test.txt", absolute=True))
-    print(path(pathlib.Path("~/Desktop"), "test.txt", 2, absolute=True))
-    print(path("~/Desktop", "../test.txt", absolute=True))
-    print(path("~/Desktop", "../test.txt", absolute=False))
-    print(path("./test.txt", resolve=False, absolute=True))
-    print(path("./test.txt", resolve=False, absolute=False))
-    print(path("./test.txt", resolve=False, absolute=True))
-    print(path("~/Desktop", absolute=True, exists=True))
-    print(path("~/Desktop", absolute=True, exists=True, resolve=True))
+    from reggie_core import logs
+
+    LOG = logs.logger(__file__)
+    LOG.info(path(pathlib.Path("~/Desktop"), "/test.txt", absolute=True))
+    LOG.info(path(pathlib.Path("~/Desktop"), "test.txt", absolute=True))
+    LOG.info(path(pathlib.Path("~/Desktop"), "test.txt", 2, absolute=True))
+    LOG.info(path("~/Desktop", "../test.txt", absolute=True))
+    LOG.info(path("~/Desktop", "../test.txt", absolute=False))
+    LOG.info(path("./test.txt", resolve=False, absolute=True))
+    LOG.info(path("./test.txt", resolve=False, absolute=False))
+    LOG.info(path("./test.txt", resolve=False, absolute=True))
+    LOG.info(path("~/Desktop", absolute=True, exists=True))
+    LOG.info(path("~/Desktop", absolute=True, exists=True, resolve=True))

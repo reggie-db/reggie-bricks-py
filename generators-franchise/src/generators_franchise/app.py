@@ -203,7 +203,7 @@ def main():
             counter += 1
             LOG.info(f"Uploaded pdf {counter} of {total} - file_name: {fut.result()}")
 
-    print(f"Total: {total}")
+    LOG.info(f"Total: {total}")
 
 
 if __name__ == "__main__":
