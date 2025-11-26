@@ -3,17 +3,12 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "reggie-tools"
-dependencies = [
-    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
-    "databricks-sdk",
-      "databricks-connect>=17.0,<18.0",
-    "requests",
-    "urllib3",
-    "pydantic",
-]
+name = "meraki-cloud"
 version = "0.0.1+g23770fa"
 requires-python = ">=3.12,<3.13"
+dependencies = [
+    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+]
 
 [tool.uv.sources.reggie-core]
 workspace = true
