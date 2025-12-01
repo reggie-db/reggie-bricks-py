@@ -7,12 +7,12 @@ name = "reggie-tools"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "databricks-sdk",
-      "databricks-connect>=17.0,<18.0",
+    "databricks-connect>=17.0,<17.3",
     "requests",
     "urllib3",
     "pydantic",
 ]
-version = "0.0.1+g23770fa"
+version = "0.0.1+gf80bd6d"
 requires-python = ">=3.12,<3.13"
 
 [tool.uv.sources.reggie-core]
