@@ -256,9 +256,7 @@ def _json_encoder_default(self: json.JSONEncoder, o: Any) -> Any:
     else:
         data = dump(o, recursive=False)
         if isinstance(data, dict):
-            for k, v in data.items():
-                data[k] = self.encode(v)
-            return data
+            return {k: self.default(v) for k, v in data.items()}
     return str(o)
 
 
