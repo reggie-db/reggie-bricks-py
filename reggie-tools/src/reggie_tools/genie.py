@@ -129,7 +129,10 @@ class Service:
                 current_response = response
                 yield response
             # Stop polling when Genie has finished processing
-            if response.message.status in (
+            response_message_status = (
+                response.message.status if response.message else None
+            )
+            if response_message_status in (
                 MessageStatus.COMPLETED,
                 MessageStatus.FAILED,
             ):
