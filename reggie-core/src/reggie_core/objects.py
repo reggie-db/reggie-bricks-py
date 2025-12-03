@@ -142,8 +142,6 @@ def dump(
                             continue
                     else:
                         dump_value = dump_attr
-                        if not recursive and isinstance(dump_value, dict):
-                            dump_value = dump_value.copy()
                     if dump_value is not None:
                         return _dump(dump_value) if recursive else dump_value
             out = None
