@@ -254,9 +254,9 @@ def _json_encoder_default(self: json.JSONEncoder, o: Any) -> Any:
     elif hasattr(o, "isoformat") and callable(o.isoformat):
         return o.isoformat()
     else:
-        data = dump(o, recursive=False)
+        data = dump(o)
         if isinstance(data, dict):
-            return {k: self.default(v) for k, v in data.items()}
+            return data
     return str(o)
 
 
