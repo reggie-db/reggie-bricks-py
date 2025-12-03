@@ -196,6 +196,37 @@ class GenieResponse:
         """
         return self._attachment_values("query", "query")
 
+    @property
+    def status_display(self) -> str | None:
+        status = self.message.status
+        if status:
+            match status:
+                case MessageStatus.FETCHING_METADATA:
+                    return "Fetching metadata"
+                case MessageStatus.FILTERING_CONTEXT:
+                    return "Filtering context"
+                case MessageStatus.ASKING_AI:
+                    return "Asking AI"
+                case MessageStatus.PENDING_WAREHOUSE:
+                    return "Pending warehouse"
+                case MessageStatus.EXECUTING_QUERY:
+                    return "Executing query"
+                case MessageStatus.FAILED:
+                    return "Failed"
+                case MessageStatus.COMPLETED:
+                    return "Completed"
+                case MessageStatus.SUBMITTED:
+                    return "Submitted"
+                case MessageStatus.QUERY_RESULT_EXPIRED:
+                    return "Query result expired"
+                case MessageStatus.CANCELLED:
+                    return "Cancelled"
+        if status:
+            cleaned = "".join(ch if ch.isalnum() else " " for ch in str(status))
+            cleaned = " ".join(cleaned.split())
+            return cleaned or str(status)
+        return None
+
     def _attachment_values(self, *keys: str):
         """
         Extract nested values from message attachments by traversing attribute keys.
