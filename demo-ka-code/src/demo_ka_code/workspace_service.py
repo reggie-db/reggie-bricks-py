@@ -43,12 +43,12 @@ class WorkspaceExport:
 
 
 if __name__ == "__main__":
-    os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "FIELD-ENG-EAST")
+    os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "RACETRAC-DEV")
     dir = paths.temp_dir() / "workspace_export" / str(int(time.time() * 1000))
     dir.mkdir(parents=True, exist_ok=True)
     for resp in export(
-        "/Workspace/Users/reggie.pierce@databricks.com",
-        filter=lambda obj: "race" in obj.path.lower(),
+        "/Workspace/live/Gulf/notebooks",
+        # filter=lambda obj: "race" in obj.path.lower(),
     ):
         content_str = resp.content_str()
         if content_str:

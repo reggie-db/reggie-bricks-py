@@ -7,12 +7,14 @@ creating conversations, sending messages, and streaming responses as Genie proce
 requests.
 """
 
+import json
 import os
 import sys
-from typing import Iterable
+from dataclasses import dataclass, field
+from typing import Iterable, Dict, Any
 
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.service.dashboards import GenieMessage, MessageStatus
+from databricks.sdk.service.dashboards import GenieMessage, MessageStatus, GenieSpace
 
 from reggie_core import logs, objects
 from reggie_tools import clients, configs
@@ -40,14 +42,14 @@ class Service:
         self.genie = workspace_client.genie
         self.space_id = genie_space_id
 
-    def get_space(self):
+    def get_space(self) -> "GenieSpaceExt":
         """
         Fetch details about the Genie space.
 
         Returns:
             Space details object containing metadata about the Genie space
         """
-        return self.genie.get_space(space_id=self.space_id)
+        return self.genie.get_space(self.space_id)
 
     def create_conversation(self, content: str) -> GenieMessage:
         """
@@ -218,6 +220,26 @@ class GenieResponse:
                         break
                 if value:
                     yield value
+
+    def __str__(self):
+        return f"GenieResponse: hash:{self.hash} queries:{list(self.queries)} descriptions:{list(self.descriptions)} message:{self.message}"
+
+
+@dataclass
+class GenieSpaceExt(GenieSpace):
+    data: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> GenieSpace:
+        """Deserializes the GenieSpace from a dictionary."""
+        serialized_space = d.get("serialized_space", None)
+        return cls(
+            description=d.get("description", None),
+            space_id=d.get("space_id", None),
+            title=d.get("title", None),
+            warehouse_id=d.get("warehouse_id", None),
+            data=json.loads(serialized_space) if serialized_space else {},
+        )
 
 
 def main():
