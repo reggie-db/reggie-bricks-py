@@ -125,7 +125,7 @@ def dump(
                 return out
             else:
                 return value
-        else:
+        elif not isinstance(value, enum.Enum):
             for attr in _DUMP_ATTRS:
                 if hasattr(value, attr):
                     dump_attr = getattr(value, attr)
