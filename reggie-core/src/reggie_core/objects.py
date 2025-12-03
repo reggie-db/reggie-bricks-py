@@ -151,7 +151,9 @@ def dump(
                 if out is None:
                     out = {}
                 out[k] = _dump(v) if recursive else v
-            return out if out is not None else value
+            if out is not None:
+                return out
+        return value
 
     return _dump(obj)
 

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-cam"
-version = "0.0.1+ga09713f"
+version = "0.0.1+g72f7371"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "reggie-tools-rx @ file://${PROJECT_ROOT}/../reggie-tools-rx",
