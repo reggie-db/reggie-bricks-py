@@ -130,7 +130,16 @@ def dump(
                 if hasattr(value, attr):
                     dump_attr = getattr(value, attr)
                     if callable(dump_attr):
-                        dump_value = dump_attr(value)
+                        sig = inspect.signature(dump_attr)
+                        arg_count = 0
+                        for _ in sig.parameters.values():
+                            arg_count += 1
+                            if arg_count > 1:
+                                break
+                        if arg_count == 1:
+                            dump_value = dump_attr(value)
+                        else:
+                            continue
                     else:
                         dump_value = dump_attr
                         if not recursive and isinstance(dump_value, dict):
