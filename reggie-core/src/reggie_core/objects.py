@@ -1,6 +1,7 @@
 """Serialization helpers for dataclasses, objects, and JSON encoding."""
 
 import datetime
+import enum
 import hashlib
 import inspect
 import json
@@ -14,6 +15,7 @@ LOG = logs.logger(__file__)
 
 T = TypeVar("T")
 _DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict", "__dict__"]
+_ENUM_ATTRS = ["name", "value"]
 _DESCRIPTOR_ATTRS = ["__get__", "__set__", "__delete__"]
 _COLLECTION_TYPES = (list, tuple, set, dict, frozenset, deque, array, range)
 
@@ -228,6 +230,7 @@ def _properties(obj: Any, member_properties: bool = True) -> Iterable[tuple[str,
                 and k not in keys
                 and not callable(v)
                 and not any(hasattr(v, m) for m in _DESCRIPTOR_ATTRS)
+                and not (isinstance(obj, enum.Enum) and k in _ENUM_ATTRS)
             ):
                 keys.add(k)
                 yield k, v
