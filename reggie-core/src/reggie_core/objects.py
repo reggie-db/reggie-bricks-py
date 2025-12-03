@@ -13,7 +13,7 @@ from reggie_core import logs
 LOG = logs.logger(__file__)
 
 T = TypeVar("T")
-_DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict"]
+_DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict", "__dict__"]
 _DESCRIPTOR_ATTRS = ["__get__", "__set__", "__delete__"]
 _COLLECTION_TYPES = (list, tuple, set, dict, frozenset, deque, array, range)
 
@@ -103,6 +103,11 @@ def dump(
 
     seen = set()
 
+    def _dump_copy(value) -> Any:
+        if isinstance(value, dict):
+            return value.copy()
+        return value
+
     def _dump(value):
         if value is None or id(value) in seen:
             return value
@@ -127,13 +132,14 @@ def dump(
             for attr in _DUMP_ATTRS:
                 if hasattr(value, attr):
                     dump_attr = getattr(value, attr)
-                    v = dump_attr() if callable(dump_attr) else None
-                    if v is not None:
-                        return _dump(v) if recursive else v
-            if hasattr(value, "__dict__"):
-                v = value.__dict__
-                if v is not None:
-                    return _dump(v) if recursive else v
+                    if callable(dump_attr):
+                        dump_value = dump_attr(value)
+                    else:
+                        dump_value = dump_attr
+                        if isinstance(dump_value, dict):
+                            dump_value = dump_value.copy()
+                    if dump_value is not None:
+                        return _dump(dump_value) if recursive else dump_value
             out = None
             for k, v in _properties(value, member_properties):
                 if out is None:
