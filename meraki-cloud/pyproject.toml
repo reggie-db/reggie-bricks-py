@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "meraki-cloud"
-version = "0.0.1+g7970205"
+version = "0.0.1+g316602a"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",

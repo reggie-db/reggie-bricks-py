@@ -257,8 +257,6 @@ def _json_encoder_default(self: json.JSONEncoder, o: Any) -> Any:
             for k, v in data.items():
                 data[k] = self.encode(v)
             return data
-    if isinstance(o, enum.Enum):
-        return o.name
     return str(o)
 
 

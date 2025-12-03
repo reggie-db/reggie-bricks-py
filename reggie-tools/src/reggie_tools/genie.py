@@ -11,6 +11,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Iterable, Dict, Any
 
 from databricks.sdk import WorkspaceClient
@@ -173,8 +174,8 @@ class GenieResponse:
             self._hash = objects.hash(self.message).hexdigest()
         return self._hash
 
-    @property
-    def descriptions(self) -> Iterable[str]:
+    @cached_property
+    def descriptions(self) -> list[str]:
         """
         Extract query descriptions from message attachments.
 
@@ -184,10 +185,10 @@ class GenieResponse:
         Yields:
             Description strings for queries found in message attachments
         """
-        return self._attachment_values("query", "description")
+        return list(self._attachment_values("query", "description"))
 
-    @property
-    def queries(self) -> Iterable[str]:
+    @cached_property
+    def queries(self) -> list[str]:
         """
         Extract SQL queries from message attachments.
 
@@ -197,7 +198,7 @@ class GenieResponse:
         Yields:
             SQL query strings found in message attachments
         """
-        return self._attachment_values("query", "query")
+        return list(self._attachment_values("query", "query"))
 
     @property
     def status_display(self) -> str | None:
