@@ -103,11 +103,6 @@ def dump(
 
     seen = set()
 
-    def _dump_copy(value) -> Any:
-        if isinstance(value, dict):
-            return value.copy()
-        return value
-
     def _dump(value):
         if value is None or id(value) in seen:
             return value
@@ -136,7 +131,7 @@ def dump(
                         dump_value = dump_attr(value)
                     else:
                         dump_value = dump_attr
-                        if isinstance(dump_value, dict):
+                        if not recursive and isinstance(dump_value, dict):
                             dump_value = dump_value.copy()
                     if dump_value is not None:
                         return _dump(dump_value) if recursive else dump_value
