@@ -11,7 +11,6 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from functools import cached_property
 from typing import Iterable, Dict, Any
 
 from databricks.sdk import WorkspaceClient
@@ -174,8 +173,7 @@ class GenieResponse:
             self._hash = objects.hash(self.message).hexdigest()
         return self._hash
 
-    @cached_property
-    def descriptions(self) -> list[str]:
+    def descriptions(self) -> Iterable[str]:
         """
         Extract query descriptions from message attachments.
 
@@ -185,10 +183,9 @@ class GenieResponse:
         Yields:
             Description strings for queries found in message attachments
         """
-        return list(self._attachment_values("query", "description"))
+        return self._attachment_values("query", "description")
 
-    @cached_property
-    def queries(self) -> list[str]:
+    def queries(self) -> Iterable[str]:
         """
         Extract SQL queries from message attachments.
 
@@ -198,7 +195,7 @@ class GenieResponse:
         Yields:
             SQL query strings found in message attachments
         """
-        return list(self._attachment_values("query", "query"))
+        return self._attachment_values("query", "query")
 
     @property
     def status_display(self) -> str | None:
@@ -231,7 +228,7 @@ class GenieResponse:
             return cleaned or str(status)
         return None
 
-    def _attachment_values(self, *keys: str):
+    def _attachment_values(self, *keys: str) -> Iterable[Any]:
         """
         Extract nested values from message attachments by traversing attribute keys.
 
@@ -256,8 +253,8 @@ class GenieResponse:
                 if value:
                     yield value
 
-    def __str__(self):
-        return f"GenieResponse: hash:{self.hash} queries:{list(self.queries)} descriptions:{list(self.descriptions)} message:{self.message}"
+    def __str__(self) -> str:
+        return f"GenieResponse: hash:{self.hash} queries:{list(self.queries())} descriptions:{list(self.descriptions())} message:{self.message}"
 
 
 @dataclass
@@ -265,19 +262,17 @@ class GenieSpaceExt(GenieSpace):
     data: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> GenieSpace:
+    def from_dict(cls, d: Dict[str, Any]) -> "GenieSpaceExt":
         """Deserializes the GenieSpace from a dictionary."""
-        serialized_space = d.get("serialized_space", None)
+        genie_space = GenieSpace.from_dict(d)
+        serialized_space: str | None = d.get("serialized_space", None)
         return cls(
-            description=d.get("description", None),
-            space_id=d.get("space_id", None),
-            title=d.get("title", None),
-            warehouse_id=d.get("warehouse_id", None),
             data=json.loads(serialized_space) if serialized_space else {},
+            **genie_space.__dict__,
         )
 
 
-def main():
+def main() -> None:
     """
     Interactive command-line interface for chatting with Genie.
 

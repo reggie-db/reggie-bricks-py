@@ -127,7 +127,7 @@ from reggie_tools import genie
 service = genie.Service(clients.workspace_client(), "space-id")
 conversation = service.create_conversation("Initial question")
 for response in service.chat(conversation.conversation_id, "Follow-up question"):
-    for query in response.queries:
+    for query in response.queries():
         spark.sql(query).show()
 ```
 

@@ -165,11 +165,11 @@ class APIImplementation(APIContract):
 
             for msg in self.genie_service.chat(conv_id, q):
                 LOG.info("genie msg: %s", msg)
-                for msg_query in msg.queries:
+                for msg_query in msg.queries():
                     sql_query = re.sub(r"\s*;\s*$", "", msg_query).strip() or sql_query
                     if sql_query and not sql_query_found:
                         sql_query_found = time.time()
-                for msg_description in msg.descriptions:
+                for msg_description in msg.descriptions():
                     description = msg_description
                 if (sql_query and description) or (
                     sql_query_found and (time.time() - sql_query_found > 3)
