@@ -1,5 +1,6 @@
 import asyncio
 import contextvars
+import os
 
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
@@ -39,4 +40,5 @@ def main():
 
 
 if __name__ == "__main__":
+    os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "E2-DOGFOOD")
     main()

@@ -156,6 +156,15 @@ def dump(
     return _dump(obj)
 
 
+def to_list[T](obj: Iterable[T] | T) -> list[T]:
+    if isinstance(obj, list):
+        return obj
+    elif isinstance(obj, _COLLECTION_TYPES):
+        return list(obj)
+    else:
+        return [obj]
+
+
 def to_json(obj: Any, member_properties: bool = True, **kwargs) -> Any:
     """
     Serialize an object to JSON while automatically handling dataclasses and ISO dates.

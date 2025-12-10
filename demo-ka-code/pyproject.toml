@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-ka-code"
-version = "0.0.1+g0f12611"
+version = "0.0.1+g5e69af9"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",

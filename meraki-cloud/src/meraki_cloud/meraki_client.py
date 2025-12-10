@@ -1,41 +1,36 @@
 """
 Client for interacting with the Meraki Dashboard API.
 
-This module provides a client interface for requesting camera snapshots from
-Meraki devices via the Meraki Dashboard API. It handles authentication, API
-requests, and image retrieval.
+Provides methods to request camera snapshots from Meraki devices.
+Handles authentication, API requests, and image retrieval.
 
 Environment Variables:
-    MERAKI_API_KEY: Meraki API token for authentication (optional if provided to constructor)
-    MERAKI_CAMERA_SERIAL: Default camera device serial number (optional, used in __main__)
-
-Example:
-    >>> client = MerakiClient(api_token="your_api_token")
-    >>> image_bytes = client.request_snapshot(device_serial="Q2XX-XXXX-XXXX")
+    MERAKI_API_KEY: Meraki API token (optional if provided to constructor)
+    MERAKI_CAMERA_SERIAL: Default camera device serial (optional, used in __main__)
 """
 
-import os
-import time
 import base64
-import requests
+import os
+import pathlib
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
 from typing import Optional
+
+import requests
 
 
 class MerakiClient:
     """
     Client for interacting with the Meraki Dashboard API.
 
-    This client provides methods to request camera snapshots from Meraki devices.
-    It manages authentication headers and HTTP session handling for API requests.
+    Manages authentication and HTTP session for requesting camera snapshots.
 
     Attributes:
         BASE_URL: Base URL for the Meraki API v1 endpoint
-        api_token: Meraki API token used for authentication
-        session: Requests session object with pre-configured authentication headers
-
-    Example:
-        >>> client = MerakiClient(api_token="your_api_token")
-        >>> snapshot = client.request_snapshot(device_serial="Q2XX-XXXX-XXXX")
+        api_token: Meraki API token for authentication
+        session: Requests session with pre-configured auth headers
     """
 
     BASE_URL = "https://api.meraki.com/api/v1"
@@ -49,9 +44,6 @@ class MerakiClient:
 
         Raises:
             ValueError: If api_token is empty or None
-
-        Example:
-            >>> client = MerakiClient(api_token="your_api_token")
         """
         if not api_token:
             raise ValueError("Missing Meraki API token")
@@ -62,7 +54,8 @@ class MerakiClient:
         self.session.headers.update(
             {
                 "Authorization": f"Bearer {self.api_token}",
-                "ContentType": "application/json",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
             }
         )
 
@@ -75,12 +68,6 @@ class MerakiClient:
 
         Returns:
             Full URL string combining BASE_URL with the endpoint
-
-        Example:
-            >>> client = MerakiClient(api_token="token")
-            >>> url = client.create_url("devices/123/camera/generateSnapshot")
-            >>> print(url)
-            https://api.meraki.com/api/v1/devices/123/camera/generateSnapshot
         """
         return f"{self.BASE_URL}/{endpoint}"
 
@@ -93,17 +80,13 @@ class MerakiClient:
         """
         Request a camera snapshot from a Meraki device.
 
-        This method requests a snapshot generation from the Meraki API, then
-        retrieves the actual image data from the returned URL. The snapshot
-        generation is asynchronous, so the API returns a URL that can be used
-        to fetch the image once it's ready.
+        Requests snapshot generation from the Meraki API, then polls the returned URL
+        to retrieve the image data. Snapshot generation is asynchronous.
 
         Args:
             device_serial: Serial number of the Meraki camera device (e.g., "Q2XX-XXXX-XXXX")
-            timestamp: Optional ISO 8601 timestamp string for requesting a snapshot at a specific time.
-                      If None, requests a snapshot at the current time.
+            timestamp: Optional ISO 8601 timestamp string. If None, requests current snapshot.
             fullframe: Whether to request a full-frame snapshot (default: True).
-                      If False, may return a cropped or optimized version.
 
         Returns:
             Raw image bytes (typically JPEG format) from the camera snapshot
@@ -111,16 +94,7 @@ class MerakiClient:
         Raises:
             requests.HTTPError: If the API request fails or returns an error status code
             requests.RequestException: If there's a network error or connection issue
-
-        Example:
-            >>> client = MerakiClient(api_token="your_api_token")
-            >>> # Request current snapshot
-            >>> image_bytes = client.request_snapshot(device_serial="Q2XX-XXXX-XXXX")
-            >>> # Request snapshot at specific time
-            >>> image_bytes = client.request_snapshot(
-            ...     device_serial="Q2XX-XXXX-XXXX",
-            ...     timestamp="2024-01-01T12:00:00Z"
-            ... )
+            ValueError: If the API response doesn't contain a valid image URL
         """
         # Build request payload with optional parameters
         payload = {}
@@ -132,16 +106,69 @@ class MerakiClient:
         endpoint = f"devices/{device_serial}/camera/generateSnapshot"
         url = self.create_url(endpoint)
 
-        resp = self.session.post(url, json=payload)
-        resp.raise_for_status()
+        # Post with a timeout to avoid hangs and capture response body on error
+        resp = self.session.post(url, json=payload, timeout=10)
+
+        # If there's a 4xx/5xx, show body to help diagnose
+        if resp.status_code >= 400:
+            # try to show JSON error, fall back to text
+            try:
+                err = resp.json()
+            except ValueError:
+                err = resp.text
+            raise requests.HTTPError(
+                f"Snapshot generation failed: {resp.status_code} - {err}", response=resp
+            )
 
         # Extract the image URL from the snapshot generation response
         snapshot_info = resp.json()
-        image_url = snapshot_info["url"]
+        image_url = snapshot_info.get("url")
+        if not image_url:
+            raise ValueError("API response missing 'url' field")
 
-        # Fetch the actual image data from the provided URL
-        img_resp = self.session.get(image_url)
-        img_resp.raise_for_status()
+        expiry = snapshot_info.get("expiry")
+
+        # Parse expiry if present so we don't poll past it
+        exp_dt = None
+        if expiry:
+            try:
+                # Convert "2025-12-08T15:26:54-08:00" into aware datetime
+                exp_dt = datetime.fromisoformat(expiry)
+                if exp_dt.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                exp_dt = None
+
+        # Try polling the returned URL a few times (stop early if expiry passed)
+        img_resp = None
+        for _ in range(16):  # increase attempts if needed
+            if exp_dt and datetime.now(tz=exp_dt.tzinfo) >= exp_dt:
+                break
+            try:
+                img_resp = requests.get(image_url, timeout=15)
+            except requests.RequestException:
+                img_resp = None
+            if img_resp is not None and img_resp.status_code == 200:
+                return img_resp.content
+            time.sleep(0.5)
+
+        # If plain GET fails, try using the session as a fallback (some hosts may require auth)
+        try:
+            img_resp = self.session.get(image_url, timeout=15)
+        except requests.RequestException as exc:
+            raise requests.HTTPError(f"Failed to fetch snapshot URL: {exc}") from exc
+
+        # Raise with body to aid debugging
+        if img_resp.status_code >= 400:
+            try:
+                body = img_resp.json()
+            except ValueError:
+                body = img_resp.text
+            raise requests.HTTPError(
+                f"Fetching snapshot failed: {img_resp.status_code} - {body}",
+                response=img_resp,
+            )
+
         return img_resp.content
 
 
@@ -150,10 +177,8 @@ if __name__ == "__main__":
     Example script that requests camera snapshots and saves the last successful
     snapshot as an HTML file with embedded base64 image.
 
-    This script will:
-    1. Prompt for API token and device serial if not provided via environment variables
-    2. Request 10 snapshots (one per second)
-    3. Save the last successful snapshot as snapshot.html
+    Prompts for API token and device serial if not provided via environment variables,
+    requests 10 snapshots (one per second), and saves the last successful snapshot.
     """
 
     def _read_input(prompt: str) -> str:
@@ -193,5 +218,15 @@ if __name__ == "__main__":
         </html>
         """
 
-        with open("snapshot.html", "w") as f:
-            f.write(html)
+        # Ensure we write to a writable location (use temp or user home)
+        out_dir = pathlib.Path(tempfile.gettempdir())
+        out_file = out_dir / "snapshot.html"
+        print("Writing snapshot to:", out_file, "cwd:", pathlib.Path.cwd())
+
+        try:
+            out_file.write_text(html, encoding="utf8")
+        except PermissionError:
+            # fallback: try user home
+            home_file = pathlib.Path.home() / "snapshot.html"
+            print("Permission denied; trying home:", home_file, file=sys.stderr)
+            home_file.write_text(html, encoding="utf8")
