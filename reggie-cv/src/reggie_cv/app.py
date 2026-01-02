@@ -1,4 +1,5 @@
 import hashlib
+import subprocess
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -15,16 +16,68 @@ T = TypeVar("T")
 
 LOG = logs.logger(__file__)
 
-rtsp_url = "rtsp://192.168.7.63:9000/live"
+rtsp_url = "rtsp://localhost:8554/cam"
+
+
+cmd = [
+    "ffmpeg",
+    "-rtsp_transport",
+    "tcp",
+    "-i",
+    rtsp_url,
+    "-vf",
+    "fps=1,scale=-1:640",
+    "-q:v",
+    "2",
+    "-f",
+    "mjpeg",
+    "-",
+]
+
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
+buffer = b""
+
+while True:
+    chunk = proc.stdout.read(4096)
+    if not chunk:
+        break
+
+    buffer += chunk
+
+    # Look for JPEG start and end markers
+    start = buffer.find(b"\xff\xd8")
+    end = buffer.find(b"\xff\xd9")
+
+    if start != -1 and end != -1:
+        jpeg = buffer[start : end + 2]
+        buffer = buffer[end + 2 :]
+
+        frame = cv2.imdecode(np.frombuffer(jpeg, np.uint8), cv2.IMREAD_COLOR)
+        if frame is not None:
+            print("Frame OK")
+            cv2.imshow("frame", frame)
+        if cv2.waitKey(1) == 27:
+            break
 
 cap = cv2.VideoCapture(rtsp_url)
 
-W = 1280
-H = 720
+MAX_SIDE = 640
 
 
-def resize_for_display(frame: np.ndarray) -> np.ndarray:
-    return cv2.resize(frame, (W, H))
+def resize_for_display(frame: np.ndarray) -> tuple[np.ndarray, float, float]:
+    h, w = frame.shape[:2]
+
+    scale = MAX_SIDE / max(w, h)
+    if scale >= 1:
+        return frame, 1.0, 1.0
+
+    new_w = int(w * scale)
+    new_h = int(h * scale)
+
+    resized = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    return resized, scale, scale
 
 
 @dataclass
@@ -215,7 +268,7 @@ try:
             continue
 
         # Display live feed at full FPS
-        live_frame = resize_for_display(frame)
+        live_frame, scale_x, scale_y = resize_for_display(frame)
         cv2.imshow("Live Feed", live_frame)
 
         now = time.time()
@@ -225,18 +278,18 @@ try:
             if changed:
                 change_counts[svc.name] += 1
                 last_change_map[svc.name] = svc.last_change_ts
-                display_frame = resize_for_display(frame)
+
+                # Use the SAME resized frame and scale factors for display and boxes
+                display_frame, scale_x, scale_y = resize_for_display(frame)
 
                 # Draw bounding boxes if available
                 if states and states[1].bounding_boxes:
                     for x, y, w, h in states[1].bounding_boxes:
-                        # Scale bounding box coordinates to display size
-                        scale_x = W / frame.shape[1]
-                        scale_y = H / frame.shape[0]
                         x_scaled = int(x * scale_x)
                         y_scaled = int(y * scale_y)
                         w_scaled = int(w * scale_x)
                         h_scaled = int(h * scale_y)
+
                         cv2.rectangle(
                             display_frame,
                             (x_scaled, y_scaled),

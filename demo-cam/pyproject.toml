@@ -4,11 +4,12 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-cam"
-version = "0.0.1+g5e69af9"
+version = "0.0.1+g071d676"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "reggie-tools-rx @ file://${PROJECT_ROOT}/../reggie-tools-rx",
     "opencv-python-headless",
+    "scikit-learn>=1.3"
 ]
 
 [tool.uv.sources.reggie-tools-rx]

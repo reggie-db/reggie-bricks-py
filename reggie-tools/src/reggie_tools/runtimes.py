@@ -19,18 +19,15 @@ def version() -> str | None:
 
 def ipython() -> Any | None:
     """Return the active IPython instance when executing inside a notebook."""
-    get_ipython_function = _get_ipython_function()
-    if get_ipython_function:
-        ip = get_ipython_function()
-        if ip:
+    if get_ipython_function := _get_ipython_function():
+        if ip := get_ipython_function():
             return ip
     return None
 
 
 def ipython_user_ns(name: str) -> Any | None:
     """Look up ``name`` within the IPython user namespace, if available."""
-    ip = ipython()
-    if ip:
+    if ip := ipython():
         return ip.user_ns.get(name)
     return None
 
@@ -38,15 +35,12 @@ def ipython_user_ns(name: str) -> Any | None:
 def dbutils(spark: SparkSession = None):
     """Return the ``DBUtils`` handle associated with the current Spark session."""
     if not spark:
-        dbutils = ipython_user_ns("dbutils")
-        if dbutils:
+        if dbutils := ipython_user_ns("dbutils"):
             return dbutils
         spark = clients.spark()
-    dbutils_class = _dbutils_class()
-    if dbutils_class:
+    if dbutils_class := _dbutils_class():
         # Construct DBUtils using the detected class for the current session
-        dbutils = dbutils_class(spark)
-        if dbutils:
+        if dbutils := dbutils_class(spark):
             return dbutils
     return None
 
@@ -54,8 +48,7 @@ def dbutils(spark: SparkSession = None):
 def context(spark: SparkSession = None) -> dict[str, Any]:
     """Assemble runtime context information from notebook and Spark sources."""
     contexts: list[dict[str, Any]] = []
-    get_context_function = _get_context_function()
-    if get_context_function:
+    if get_context_function := _get_context_function():
         contexts.append(get_context_function().__dict__)
     context_dbutils = dbutils(spark)
     if context_dbutils and hasattr(context_dbutils, "entry_point"):

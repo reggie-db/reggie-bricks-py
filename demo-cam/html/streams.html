@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Camera Streams</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 12px;
+        padding: 12px;
+        box-sizing: border-box;
+      }
+
+      .tile {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        overflow: hidden;
+      }
+
+      video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="grid">
+      <div class="tile"><video id="meraki" controls muted playsinline></video></div>
+      <div class="tile"><video id="s1" controls muted playsinline></video></div>
+      <div class="tile"><video id="s2" controls muted playsinline></video></div>
+      <div class="tile"><video id="s3" controls muted playsinline></video></div>
+      <div class="tile"><video id="s4" controls muted playsinline></video></div>
+    </div>
+
+    <script>
+      const username = "cam"
+      const password = "guest"
+      const authHeader = "Basic " + btoa(username + ":" + password)
+
+      function attachHls(videoId, url) {
+        const video = document.getElementById(videoId)
+
+        if (Hls.isSupported()) {
+          const hls = new Hls({
+            xhrSetup(xhr) {
+              xhr.setRequestHeader("Authorization", authHeader)
+            }
+          })
+          hls.loadSource(url)
+          hls.attachMedia(video)
+          hls.on(Hls.Events.MANIFEST_PARSED, () => video.play())
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = url
+          video.play()
+        }
+      }
+
+      attachHls("meraki", "https://hls.lfpconnect.io/meraki/")
+      attachHls("s1", "https://hls.lfpconnect.io/stream01/")
+      attachHls("s2", "https://hls.lfpconnect.io/stream02/")
+      attachHls("s3", "https://hls.lfpconnect.io/stream03/")
+      attachHls("s4", "https://hls.lfpconnect.io/stream04/")
+    </script>
+  </body>
+</html>

@@ -13,7 +13,7 @@ import platform
 import sys
 from collections.abc import Callable, Iterable
 
-from reggie_core import inputs, parsers, paths
+from reggie_core import parsers, paths
 
 _LOGGING_AUTO_CONFIG = parsers.to_bool(os.getenv("LOGGING_AUTO_CONFIG", True))
 _LOGGING_SERVER = parsers.to_bool(os.getenv("LOGGING_SERVER"))
@@ -199,7 +199,7 @@ def _is_server(stream=None) -> bool:
     if parsers.to_bool(os.getenv("ENABLE_REPL_LOGGING")):
         return False
     # If stdout/stderr is not attached to a TTY, assume non-interactive (daemon, cron, etc.).
-    if not inputs.is_interactive(stream):
+    if not _is_interactive(stream):
         return True
     # Lack of DISPLAY or WAYLAND_DISPLAY means no GUI session; likely a headless server.
     if not (os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY")):
@@ -212,6 +212,15 @@ def _is_server(stream=None) -> bool:
         return True
     # Fallback: treat system accounts (UID < 1000) as server processes.
     return _is_system_account()
+
+
+def _is_interactive(stream=None) -> bool:
+    """Return ``True`` when the current process can safely prompt the user."""
+    if stream is None:
+        if "PYCHARM_HOSTED" in os.environ:
+            return True
+        stream = sys.stdin
+    return getattr(stream, "isatty", None) or False
 
 
 class Handler(logging.StreamHandler):
@@ -268,7 +277,7 @@ class Handler(logging.StreamHandler):
         TTY and TERM are checked on Unix.
         On Windows, colorama presence or known terminals enable ANSI.
         """
-        if not inputs.is_interactive(self.stream):
+        if not _is_interactive(self.stream):
             return False
         term = os.getenv("TERM", "")
         for dumb_term in ("dumb", "", "unknown"):

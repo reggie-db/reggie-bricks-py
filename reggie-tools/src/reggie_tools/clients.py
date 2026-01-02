@@ -51,9 +51,9 @@ def _databricks_session_default() -> SparkSession:
     """Initialize and memoize the default Databricks Connect Spark session."""
     config = configs.get()
     log = logs.logger(__name__, __file__)
-    log.info("databricks connect session initializing")
+    log.info("Databricks connect session initializing")
     start_time = datetime.now()
     sess = DatabricksSession.builder.sdkConfig(config).getOrCreate()
     elapsed = (datetime.now() - start_time).total_seconds()
-    log.info(f"databricks connect session created in {elapsed:.2f}s")
+    log.info(f"Databricks connect session created in {elapsed:.2f}s")
     return sess
