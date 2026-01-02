@@ -10,7 +10,7 @@ dependencies = [
     "databricks-connect>=17.0,<17.3",
     "pydantic",
 ]
-version = "0.0.1+g071d676"
+version = "0.0.1+gb4d8575"
 requires-python = ">=3.12,<3.13"
 
 [tool.uv.sources.reggie-core]
