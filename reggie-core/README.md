@@ -1,6 +1,6 @@
 # reggie-core
 
-Lightweight shared utilities intended to be reused by higher-level modules without
+Lightweight shared utilities intended to be reused by high level modules without
 carrying heavy dependencies. This module provides foundational functionality for
 logging, object serialization, path handling, and common parsing operations.
 
@@ -17,73 +17,74 @@ across Databricks development workflows.
 
 Automatic logging configuration with intelligent server vs. interactive detection:
 
-- **Auto-configuration**: Automatically configures logging handlers based on runtime
+* **Auto-configuration**: Automatically configures logging handlers based on runtime
   environment (server vs. interactive terminal)
-- **Smart routing**: Routes INFO logs via `print()` in interactive environments for
+* **Smart routing**: Routes INFO logs via `print()` in interactive environments for
   better notebook/UI integration
-- **Color support**: ANSI color coding by log level when supported
-- **Server detection**: Automatically detects server environments (CI, containers,
+* **Color support**: ANSI color coding by log level when supported
+* **Server detection**: Automatically detects server environments (CI, containers,
   Databricks jobs) and adjusts formatting accordingly
 
 Environment variables:
-- `LOGGING_SERVER`: Force server mode even if TTY exists
-- `LOGGING_PRINT`: Enable print routing for INFO logs on interactive terminals
-- `LOGGING_AUTO_CONFIG`: Enable/disable automatic logging configuration
+
+* `LOGGING_SERVER`: Force server mode even if TTY exists
+* `LOGGING_PRINT`: Enable print routing for INFO logs on interactive terminals
+* `LOGGING_AUTO_CONFIG`: Enable/disable automatic logging configuration
 
 ### Object Serialization (`objects.py`)
 
 Utilities for converting objects to dictionaries and JSON:
 
-- **dump()**: Convert objects to dictionaries using multiple strategies:
-  - Checks for common dump methods (`model_dump`, `as_dict`, `to_dict`, etc.)
-  - Uses `__dict__` if available
-  - Extracts class members (properties and non-callable attributes)
-  - Supports recursive conversion of nested objects
-- **Property extraction**: Optionally include `@property` values and class members
-- **JSON encoding**: Custom JSON encoders with ISO date handling and member property support
-- **Hashing**: SHA-256 hashing using JSON serialization with optional key sorting
-- **remove_keys()**: Recursively remove keys from dictionaries and nested structures
-- **call()**: Call functions with argument padding for flexible invocation
+* **dump()**: Convert objects to dictionaries using multiple strategies:
+    * Checks for common dump methods (`model_dump`, `as_dict`, `to_dict`, etc.)
+    * Uses `__dict__` if available
+    * Extracts class members (properties and non-callable attributes)
+    * Supports recursive conversion of nested objects
+* **Property extraction**: Optionally include `@property` values and class members
+* **JSON encoding**: Custom JSON encoders with ISO date handling and member property support
+* **Hashing**: SHA-256 hashing using JSON serialization with optional key sorting
+* **remove_keys()**: Recursively remove keys from dictionaries and nested structures
+* **call()**: Call functions with argument padding for flexible invocation
 
 ### Path Utilities (`paths.py`)
 
-Cross-platform path resolution and directory discovery:
+Cross platform path resolution and directory discovery:
 
-- **Path resolution**: Best-effort conversion of inputs to `Path` objects with
+* **Path resolution**: Best effort conversion of inputs to `Path` objects with
   validation
-- **Home directory**: User home directory resolution with temp fallback
-- **Temp directory**: Reliable temporary directory access across platforms
+* **Home directory**: User home directory resolution with temp fallback
+* **Temp directory**: Reliable temporary directory access across platforms
 
 ### Input Handling (`inputs.py`)
 
 Interactive user input utilities:
 
-- **TTY detection**: Determine if a process can safely prompt for user input
-- **Choice selection**: Numbered menu system for user selection in interactive
+* **TTY detection**: Determine if a process can safely prompt for user input
+* **Choice selection**: Numbered menu system for user selection in interactive
   environments
 
 ### Parsing (`parsers.py`)
 
 Common value coercion utilities:
 
-- **Boolean parsing**: Flexible boolean conversion from strings, integers, and other
+* **Boolean parsing**: Flexible boolean conversion from strings, integers, and other
   types with configurable defaults
 
 ### Project Discovery (`projects.py`)
 
 Project name resolution from various sources:
 
-- **Module detection**: Extract project names from Python modules
-- **Git integration**: Derive project names from git remote URLs
-- **pyproject.toml**: Read project names from `pyproject.toml` files
+* **Module detection**: Extract project names from Python modules
+* **Git integration**: Derive project names from git remote URLs
+* **pyproject.toml**: Read project names from `pyproject.toml` files
 
 ### String Utilities (`strs.py`)
 
 Tokenization helpers for names and identifiers:
 
-- **Tokenization**: Split strings on non-alphanumeric characters and camelCase
+* **Tokenization**: Split strings on non-alphanumeric characters and camelCase
   boundaries
-- **Normalization**: Lowercase and normalize token fragments
+* **Normalization**: Lowercase and normalize token fragments
 
 ## Usage
 
@@ -114,10 +115,10 @@ config_path = paths.path("~/config", "settings.json", exists=True)
 
 ## Dependencies
 
-- `sitecustomize-entrypoints` - For automatic logging configuration via entry points
+* `sitecustomize-entrypoints` (for automatic logging configuration via entry points)
 
 ## Entry Points
 
-- `logs_auto_config`: Automatically configures logging when the module is imported
+* `logs_auto_config`: Automatically configures logging when the module is imported
   (can be disabled via `LOGGING_AUTO_CONFIG` environment variable)
 
