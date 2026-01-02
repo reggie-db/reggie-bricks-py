@@ -55,14 +55,6 @@ Cross platform path resolution and directory discovery:
 * **Home directory**: User home directory resolution with temp fallback
 * **Temp directory**: Reliable temporary directory access across platforms
 
-### Input Handling (`inputs.py`)
-
-Interactive user input utilities:
-
-* **TTY detection**: Determine if a process can safely prompt for user input
-* **Choice selection**: Numbered menu system for user selection in interactive
-  environments
-
 ### Parsing (`parsers.py`)
 
 Common value coercion utilities:
