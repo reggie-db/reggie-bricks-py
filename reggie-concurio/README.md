@@ -1,12 +1,12 @@
 # reggie-concurio
 
-Disk-backed caching utilities and executable installation helpers with inter-process
-locking support. This module provides thread-safe caching and resource management
+Disk backed caching utilities and executable installation helpers with interprocess
+locking support. This module provides thread safe caching and resource management
 for concurrent execution scenarios.
 
 ## Overview
 
-`reggie-concurio` provides disk-backed caching built on `diskcache` with inter-process
+`reggie-concurio` provides disk backed caching built on `diskcache` with interprocess
 locking via `fasteners`. It also includes utilities for downloading and installing
 executables with caching support. The module is designed for scenarios where multiple
 processes need to coordinate access to shared cached resources.
@@ -15,32 +15,33 @@ processes need to coordinate access to shared cached resources.
 
 ### Disk Caching (`caches.py`)
 
-Thread-safe disk-backed cache with expiration and locking:
+Thread safe disk backed cache with expiration and locking:
 
-- **DiskCache**: Extended `diskcache.Cache` with additional features:
-  - **On-demand loading**: `get_or_load()` method for compute-or-load semantics
-  - **Expiration support**: Optional time-based cache expiration
-  - **Inter-process locking**: Per-key file locks to prevent concurrent writes
-  - **Automatic directory management**: Smart cache directory resolution with
-    fallbacks
+* **DiskCache**: Extended `diskcache.Cache` with additional features:
+    * **On demand loading**: `get_or_load()` method for compute or load semantics
+    * **Expiration support**: Optional time based cache expiration
+    * **Interprocess locking**: Per key file locks to prevent concurrent writes
+    * **Automatic directory management**: Smart cache directory resolution with
+      fallbacks
 
-- **DiskCacheValue**: Typed wrapper for cached values with load timestamps
+* **DiskCacheValue**: Typed wrapper for cached values with load timestamps
 
 Key features:
-- Fast-path reads avoid locking when cache is valid
-- Process-wide locks prevent concurrent loading of the same key
-- Automatic staleness detection based on expiration time
-- Safe directory resolution with temp fallback
+
+* Fast path reads avoid locking when cache is valid
+* Process wide locks prevent concurrent loading of the same key
+* Automatic staleness detection based on expiration time
+* Safe directory resolution with temp fallback
 
 ### Executable Installation (`execs.py`)
 
 Cached executable download and installation:
 
-- **executable()**: Download and cache executables from URLs or local paths
-- **InstallPath**: Extended `Path` class with completion callbacks for cleanup
-- **Automatic caching**: Executables are cached by identifier hash to avoid
+* **executable()**: Download and cache executables from URLs or local paths
+* **InstallPath**: Extended `Path` class with completion callbacks for cleanup
+* **Automatic caching**: Executables are cached by identifier hash to avoid
   redundant downloads
-- **Permission handling**: Automatically sets executable permissions on downloaded
+* **Permission handling**: Automatically sets executable permissions on downloaded
   files
 
 ## Usage
@@ -85,9 +86,9 @@ executable_path.complete()
 
 ## Dependencies
 
-- `reggie-core` - Base utilities (workspace dependency)
-- `diskcache` - Disk-backed cache implementation
-- `fasteners` - Inter-process locking support
+* `reggie-core` (workspace dependency)
+* `diskcache`
+* `fasteners`
 
 ## Cache Directory Resolution
 
@@ -102,15 +103,15 @@ All directories are created automatically if they don't exist.
 
 ## Thread Safety
 
-- **Read operations**: Lock-free when cache is valid (fast path)
-- **Write operations**: Protected by per-key file locks using `fasteners.InterProcessLock`
-- **Concurrent access**: Multiple processes can safely access the same cache
-- **Lock files**: Stored in `.key-locks` subdirectory of cache directory
+* **Read operations**: Lock free when cache is valid (fast path)
+* **Write operations**: Protected by per key file locks using `fasteners.InterProcessLock`
+* **Concurrent access**: Multiple processes can safely access the same cache
+* **Lock files**: Stored in `.key-locks` subdirectory of cache directory
 
 ## Use Cases
 
-- Caching expensive computations across process restarts
-- Sharing cached data between multiple processes
-- Downloading and caching external tools/executables
-- Coordinating resource access in distributed environments
+* Caching expensive computations across process restarts
+* Sharing cached data between multiple processes
+* Downloading and caching external tools or executables
+* Coordinating resource access in distributed environments
 

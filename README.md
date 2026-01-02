@@ -1,17 +1,41 @@
 # reggie-bricks
 
-A multi-module Python workspace managed with uv. This repository contains
+A multimodule Python workspace managed with uv. This repository contains
 multiple related projects organized as workspace members, each with its own
 `pyproject.toml` and documentation.
 
 ## Overview
 
-This repository breaks down different development needs at Databricks into
-separate, focused sub-projects. Each sub-project addresses specific use cases
+This repository breaks down different development needs into
+separate, focused subprojects. Each subproject addresses specific use cases
 with minimal code and minimal dependency sharing, allowing projects to remain
 lightweight and focused. By organizing functionality into discrete modules, we
 avoid unnecessary dependencies and keep each project's scope clear and
 maintainable.
+
+## Workspace Members
+
+The following projects are included in this workspace:
+
+### Core Modules
+
+* `reggie-core`: Lightweight shared utilities for logging, object serialization, path handling, and common parsing operations.
+* `reggie-tools`: Databricks specific utilities for Spark sessions, configuration management, catalog access, and Genie API integration.
+* `reggie-concurio`: Execution and caching logic using `diskcache` and file locking.
+
+### Applications and Orchestration
+
+* `reggie-app-runner`: Tools for orchestrating applications including Caddy, Docker, Conda, and Git management.
+* `reggie-reflex`: Web applications and components built with the Reflex framework.
+* `reggie-cv`: Computer vision utilities using OpenCV and image hashing.
+
+### Examples and Demos
+
+* `demo-iot`: An IoT demonstration project featuring FastAPI, Kafka integration, and reactive programming.
+
+### Management
+
+* `scripts`: Internal workspace management and utility scripts.
 
 ## Repository Structure
 
@@ -20,13 +44,13 @@ each member project has its own `pyproject.toml` that relies on the root for
 shared `tool.uv.sources` configuration, allowing workspace dependencies to
 resolve without duplicating configuration.
 
-Each sub-project contains its own README with project-specific documentation.
+Each subproject contains its own README with project specific documentation.
 See individual project directories for details.
 
 ## Prerequisites
 
-- Python 3.12+
-- [uv](https://github.com/astral-sh/uv)
+* Python 3.12+
+* [uv](https://github.com/astral-sh/uv)
 
 ## Local Setup
 
@@ -54,10 +78,19 @@ Workspace management scripts can be invoked using the `scripts.sh` wrapper:
 ./scripts.sh <script-name> [args...]
 ```
 
-Run `./scripts.sh --help` for more information about available scripts and their
-usage.
+For example, to manage the workspace projects:
+
+```bash
+./scripts.sh workspace --help
+```
+
+Available scripts in the `scripts` module include:
+
+* `workspace`: Sync project configurations, create new projects, and clean build artifacts.
+* `openapi`: Generate OpenAPI specifications and router code.
+* `projects`: Utility functions for project discovery.
 
 ## Additional Notes
 
-- Use `uv run --project <member>` for ad-hoc commands inside a specific module.
-- See individual project READMEs for project-specific documentation and usage.
+* Use `uv run --project <member>` for ad-hoc commands inside a specific module.
+* See individual project READMEs for project specific documentation and usage.
