@@ -8,6 +8,13 @@ Custom components and event handling utilities for applications built with the R
 
 ## Features
 
+### Web Application (`app.py`)
+
+The main entry point for the Reflex application:
+
+* **Page Definitions**: Defines the index page and routing for the application.
+* **Interactive UI**: Implements auto bound search and sort controls using Reflex state management.
+
 ### Components (`components.py`)
 
 Advanced UI components:

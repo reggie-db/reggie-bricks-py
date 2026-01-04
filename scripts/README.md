@@ -30,6 +30,13 @@ Shared logic for project discovery:
 * **Root Discovery**: Locate the workspace root directory.
 * **Project Models**: Object oriented representation of workspace projects and their `pyproject.toml` files.
 
+### Support Utilities (`utils.py`)
+
+Internal helper functions:
+
+* **File Watching**: Utility to watch files for changes and trigger actions.
+* **Workspace Logging**: Consistent logging configuration for management scripts.
+
 ## Usage
 
 Workspace scripts are typically invoked via the root `scripts.sh` wrapper:
@@ -46,9 +53,10 @@ To synchronize all projects:
 
 ## Dependencies
 
-* `reggie-core` (workspace dependency)
-* `typer`
 * `tomlkit`
-* `benedict`
+* `python-benedict`
+* `packaging`
+* `click`
+* `typer`
 * `fastapi-code-generator`
 

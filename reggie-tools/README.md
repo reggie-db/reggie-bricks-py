@@ -136,8 +136,6 @@ for response in service.chat(conversation.conversation_id, "Follow-up question")
 * `reggie-core` (workspace dependency)
 * `databricks-sdk`
 * `databricks-connect`
-* `requests`
-* `urllib3`
 * `pydantic`
 
 ## Configuration Sources

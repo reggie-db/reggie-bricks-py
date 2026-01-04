@@ -39,6 +39,4 @@ from reggie_cv import cams
 * `scikit-image`
 * `imagehash`
 * `opencv-python-headless`
-* `numpy`
-* `Pillow`
 

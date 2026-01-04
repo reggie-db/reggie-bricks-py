@@ -8,7 +8,16 @@ Tools for orchestrating and running applications with support for Caddy, Docker,
 
 ## Features
 
-### App Runner (`app_runner.py`)
+### Application Lifecycle (`app.py`)
+
+Main entry point for running applications:
+
+* **Process Management**: Orchestrates the startup and shutdown of multiple application processes.
+* **Async Execution**: Uses `asyncio` to run applications concurrently with intelligent error handling.
+* **Process Cleanup**: Ensures clean shutdown of application processes and their children.
+* **Caddy Integration**: Automatically configures and runs Caddy as a reverse proxy for all active applications.
+
+### App Runner Configuration (`app_runner.py`)
 
 Unified application configuration and execution:
 
@@ -64,6 +73,7 @@ for config in configs:
 * `reggie-core` (workspace dependency)
 * `reggie-tools` (workspace dependency)
 * `dynaconf`
+* `pyaml`
 * `sh`
 * `psutil`
 * `requirements-parser`
