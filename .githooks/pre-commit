@@ -2,7 +2,8 @@
 set -e
 
 # Run updates (updates pyproject files)
-./scripts.sh workspace sync all
+uv run reggie-build sync
+uv run reggie-build readme update-cmd
 
 # Stage any changes made by the sync so they land in THIS commit
 git add -A
