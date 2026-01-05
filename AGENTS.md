@@ -2,11 +2,11 @@
 
 ## Project Structure and Module Organization
 
-The repository is a uv workspace containing multiple Python projects. Each project is located in its own directory at the root and follows the src layout. Shared utilities live in `reggie-core`, while Databricks specific tools are in `reggie-tools`. Management scripts are found in the `scripts` module. Build artifacts and wheels are stored in the `dist` directory.
+The repository is a uv workspace containing multiple Python projects. Each project is located in its own directory at the root and follows the src layout. Shared utilities live in `reggie-core`, while Databricks specific tools are in `reggie-tools`. Build artifacts and wheels are stored in the `dist` directory.
 
 ## Build, Test, and Development Commands
 
-Use `uv sync --workspace` to install all dependencies. Individual projects can be run using `uv run --project <project-name>`. For workspace management, use the `./scripts.sh` wrapper. Tests are executed using `pytest` within each project directory or across the workspace.
+Use `uv sync --workspace` to install all dependencies. Individual projects can be run using `uv run --project <project-name>`. Tests are executed using `pytest` within each project directory or across the workspace.
 
 ## Coding Style and Naming Conventions
 

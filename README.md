@@ -33,10 +33,6 @@ The following projects are included in this workspace:
 
 * `demo-iot`: An IoT demonstration project featuring FastAPI, Kafka integration, and reactive programming.
 
-### Management
-
-* `scripts`: Internal workspace management and utility scripts.
-
 ## Repository Structure
 
 This is a uv workspace. The root `pyproject.toml` declares the workspace, and
@@ -69,26 +65,6 @@ uv run --project <project-name> python -m <module>.<script>
 Because all modules live in the same uv workspace, local changes in one project
 are immediately visible to dependents without publishing wheels or editing
 `PYTHONPATH`.
-
-## Scripts
-
-Workspace management scripts can be invoked using the `scripts.sh` wrapper:
-
-```bash
-./scripts.sh <script-name> [args...]
-```
-
-For example, to manage the workspace projects:
-
-```bash
-./scripts.sh workspace --help
-```
-
-Available scripts in the `scripts` module include:
-
-* `workspace`: Sync project configurations, create new projects, and clean build artifacts.
-* `openapi`: Generate OpenAPI specifications and router code.
-* `projects`: Utility functions for project discovery.
 
 ## Additional Notes
 
