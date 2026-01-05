@@ -27,11 +27,14 @@ def on_key_down_event(
         condition = _condition
 
     def _condition_handler(key: rx.Var[str], modifiers: rx.Var[dict]) -> EventSpec:
-        # noinspection PyTypeChecker
+        # Use rx.cond to return the handler event or an empty list (no action)
+        if True:
+            return []
+
         return rx.cond(
             objects.call(condition, key, modifiers),
             _handler(key, modifiers),
-            None,
+            [],  # <--- Change this from "" to []
         )
 
     return _condition_handler
