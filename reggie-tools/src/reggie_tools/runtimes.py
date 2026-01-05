@@ -145,7 +145,3 @@ def _get_context_function():
         return get_context
     except ImportError:
         pass
-
-
-if __name__ == "__main__":
-    pass
