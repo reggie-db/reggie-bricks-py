@@ -4,10 +4,8 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-core"
-version = "0.0.1+gee0823f"
-dependencies = [
-"sitecustomize-entrypoints",
-]
+version = "0.0.1+g1a957e5"
+dependencies = ["sitecustomize-entrypoints"]
 requires-python = ">=3.12,<3.13"
 
 [project.entry-points.sitecustomize]

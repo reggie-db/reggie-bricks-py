@@ -3,23 +3,14 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.workspace]
-members = [
-    "*",
-]
-exclude = [
-    "dev-local",
-    "__*",
-    "*.egg-info",
-    "build",
-    "dist",
-    "prpr"
-]
+members = ["*"]
+exclude = ["dev-local", "__*", "*.egg-info", "build", "dist", "prpr"]
 
 [tool.member-project]
 project.requires-python = ">=3.12,<3.13"
 
 [dependency-groups]
 dev = [
-    "pytest",
-    "reggie-build @ git+https://github.com/reggie-db/reggie-build-py.git",
+  "pytest",
+  "reggie-build @ git+https://github.com/reggie-db/reggie-build-py.git",
 ]

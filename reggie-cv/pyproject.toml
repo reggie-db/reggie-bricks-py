@@ -4,13 +4,13 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-cv"
-version = "0.0.1+gee0823f"
+version = "0.0.1+g1a957e5"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-"reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
-"scikit-image",
-"imagehash",
-"opencv_python_headless"
+  "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+  "scikit-image",
+  "imagehash",
+  "opencv_python_headless",
 ]
 
 [tool.uv.sources.reggie-core]
