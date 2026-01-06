@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-reflex"
-version = "0.0.1+g587579a"
+version = "0.0.1+g6402d9a"
 requires-python = ">=3.12,<3.13"
 dependencies = [
 #    "reflex>=0.7.0,<0.8.0",
@@ -18,6 +18,3 @@ package-dir = "."
 packages = [
     { include = "reggie_reflex" }
 ]
-
-[tool.member-project]
-project.requires-python = ">=3.12,<3.13"
