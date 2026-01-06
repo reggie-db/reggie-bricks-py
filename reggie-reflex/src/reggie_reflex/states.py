@@ -8,7 +8,7 @@ from reflex.event import EventSpec
 def set_query_param(
     state: rx.State, name: str, value: str | None, replace: bool = True
 ) -> EventSpec:
-    params = state.router.page.params
+    params = dict(state.router.url.query_parameters)
     modified = False
     if value:
         if name not in params or params[name] != value:
@@ -24,6 +24,6 @@ def set_query_param(
         return []
     else:
         qs = urlencode(params)
-        url = state.router.page.path + (f"?{qs}" if qs else "")
+        url = state.router.url.path + (f"?{qs}" if qs else "")
         print(f"redirect to: url{url} replace:{replace}")
         return rx.redirect(url, replace=replace)

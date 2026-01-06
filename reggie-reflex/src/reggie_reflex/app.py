@@ -6,7 +6,7 @@ from reggie_reflex import states, events
 class SortState(rx.State):
     @rx.var
     def sort(self) -> str:
-        return self.router.page.params.get("sort", "asc").lower()
+        return self.router.url.query_parameters.get("sort", "asc").lower()
 
     def set_sort(self, value: str):
         return states.set_query_param(self, "sort", value)
@@ -17,7 +17,7 @@ class SearchState(rx.State):
 
     @rx.var
     def q(self) -> str:
-        return self.router.page.params.get("q", "")
+        return self.router.url.query_parameters.get("q", "")
 
     def set_q(self, value: str):
         return states.set_query_param(self, "q", value)
