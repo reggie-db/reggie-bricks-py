@@ -21,4 +21,5 @@ project.requires-python = ">=3.12,<3.13"
 [dependency-groups]
 dev = [
     "pytest",
+    "reggie-build @ git+https://github.com/reggie-db/reggie-build-py.git",
 ]
