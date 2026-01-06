@@ -3,6 +3,10 @@ from urllib.parse import urlencode
 import reflex as rx
 from reflex.event import EventSpec
 
+from reggie_core import logs
+
+LOG = logs.logger(__name__)
+
 
 # noinspection PyTypeChecker
 def set_query_param(
@@ -25,5 +29,5 @@ def set_query_param(
     else:
         qs = urlencode(params)
         url = state.router.url.path + (f"?{qs}" if qs else "")
-        print(f"redirect to: url{url} replace:{replace}")
+        LOG.info(f"redirect to: url{url} replace:{replace}")
         return rx.redirect(url, replace=replace)
