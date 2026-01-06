@@ -2,8 +2,8 @@
 set -e
 
 # Run updates (updates pyproject files)
-uv run --group build reggie-build sync
-uv run --group build reggie-build readme update-cmd
+./reggie-build.sh sync
+./reggie-build.sh readme update-cmd
 
 # Stage any changes made by the sync so they land in THIS commit
 git add -A
