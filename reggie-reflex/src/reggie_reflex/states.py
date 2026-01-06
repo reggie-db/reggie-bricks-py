@@ -2,7 +2,6 @@ from urllib.parse import urlencode
 
 import reflex as rx
 from reflex.event import EventSpec
-
 from reggie_core import logs
 
 LOG = logs.logger(__name__)

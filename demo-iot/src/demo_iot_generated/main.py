@@ -4,11 +4,10 @@
 
 from __future__ import annotations
 
-import contextvars
 import logging
 from abc import ABC, abstractmethod
 from datetime import date
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from fastapi import APIRouter, FastAPI, Path
 from pydantic import conint
@@ -44,23 +43,21 @@ class APIContract(ABC):
     """Abstract base class defining the API contract."""
 
     @abstractmethod
-    def send_chat_message(
-        self, body: AiChatPostRequest
-    ) -> Union[AiChatPostResponse, Error]:
+    def send_chat_message(self, body: AiChatPostRequest) -> AiChatPostResponse | Error:
         """Send chat message to AI assistant"""
         ...
 
     @abstractmethod
     def get_alerts(
         self, type: Optional[Type] = None, limit: Optional[conint(ge=1, le=100)] = 50
-    ) -> Union[AlertsGetResponse, Error]:
+    ) -> AlertsGetResponse | Error:
         """Get all alerts"""
         ...
 
     @abstractmethod
     def get_alert_stats(
         self,
-    ) -> Union[AlertsStatsGetResponse, Error]:
+    ) -> AlertsStatsGetResponse | Error:
         """Get alert statistics"""
         ...
 
@@ -72,28 +69,28 @@ class APIContract(ABC):
         offset: Optional[conint(ge=0)] = 0,
         sort_column: Optional[str] = None,
         sort_direction: Optional[SortDirection] = "asc",
-    ) -> Union[ApiSearchGetResponse, Error]:
+    ) -> ApiSearchGetResponse | Error:
         """Search data with natural language"""
         ...
 
     @abstractmethod
     def get_devices(
         self,
-    ) -> Union[DevicesGetResponse, Error]:
+    ) -> DevicesGetResponse | Error:
         """Get all devices"""
         ...
 
     @abstractmethod
     def get_device_stats(
         self,
-    ) -> Union[DevicesStatsGetResponse, Error]:
+    ) -> DevicesStatsGetResponse | Error:
         """Get device statistics"""
         ...
 
     @abstractmethod
     def get_device_by_id(
         self, device_id: str = Path(..., alias="deviceId")
-    ) -> Union[DevicesDeviceIdGetResponse, Error]:
+    ) -> DevicesDeviceIdGetResponse | Error:
         """Get device by ID"""
         ...
 
@@ -103,49 +100,49 @@ class APIContract(ABC):
         device_id: str = Path(..., alias="deviceId"),
         hours: Optional[conint(ge=1, le=168)] = 24,
         interval: Optional[Interval] = 60,
-    ) -> Union[DevicesDeviceIdHistoryGetResponse, Error]:
+    ) -> DevicesDeviceIdHistoryGetResponse | Error:
         """Get device historical data"""
         ...
 
     @abstractmethod
     def get_license_plate_distribution(
         self, period: Optional[Period] = "today"
-    ) -> Union[LicensePlatesDistributionGetResponse, Error]:
+    ) -> LicensePlatesDistributionGetResponse | Error:
         """Get license plate state distribution"""
         ...
 
     @abstractmethod
     def get_recent_plates(
         self, limit: Optional[conint(ge=1, le=100)] = 20
-    ) -> Union[LicensePlatesRecentGetResponse, Error]:
+    ) -> LicensePlatesRecentGetResponse | Error:
         """Get recent license plate detections"""
         ...
 
     @abstractmethod
     def get_license_plate_stats(
         self,
-    ) -> Union[LicensePlatesStatsGetResponse, Error]:
+    ) -> LicensePlatesStatsGetResponse | Error:
         """Get license plate statistics"""
         ...
 
     @abstractmethod
     def get_hourly_detections(
         self, date: Optional[date] = None
-    ) -> Union[ObjectDetectionHourlyGetResponse, Error]:
+    ) -> ObjectDetectionHourlyGetResponse | Error:
         """Get hourly detection activity"""
         ...
 
     @abstractmethod
     def get_recent_detections(
         self, limit: Optional[conint(ge=1, le=100)] = 20
-    ) -> Union[ObjectDetectionRecentGetResponse, Error]:
+    ) -> ObjectDetectionRecentGetResponse | Error:
         """Get recent object detections"""
         ...
 
     @abstractmethod
     def get_object_detection_summary(
         self, period: Optional[Period] = "today"
-    ) -> Union[ObjectDetectionSummaryGetResponse, Error]:
+    ) -> ObjectDetectionSummaryGetResponse | Error:
         """Get object detection summary"""
         ...
 

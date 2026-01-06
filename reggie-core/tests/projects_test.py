@@ -7,8 +7,7 @@ to avoid execution in the library module itself.
 
 from pathlib import Path
 
-from reggie_core.projects import name, _remote_origin_name
-
+from reggie_core.projects import _remote_origin_name, name
 
 if __name__ == "__main__":
     print(name())

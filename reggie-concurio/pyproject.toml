@@ -4,11 +4,11 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-concurio"
-version = "0.0.1+g70239fb"
+version = "0.0.1+gee0823f"
 dependencies = [
-    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
-    "diskcache",
-    "fasteners",
+"reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+"diskcache",
+"fasteners",
 ]
 requires-python = ">=3.12,<3.13"
 

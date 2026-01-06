@@ -4,17 +4,17 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+g70239fb"
+version = "0.0.1+gee0823f"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
-    "reggie-concurio @ file://${PROJECT_ROOT}/../reggie-concurio",
-    "uvicorn",
-    "fastapi",
-    "websockets",
-    "aioreactive",
-    "humanize",
-    "kafka-python"
+"reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
+"reggie-concurio @ file://${PROJECT_ROOT}/../reggie-concurio",
+"uvicorn",
+"fastapi",
+"websockets",
+"aioreactive",
+"humanize",
+"kafka-python"
 ]
 
 [tool.uv.sources.reggie-tools]

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -202,7 +202,7 @@ class Error1(BaseModel):
         description="Human-readable error message",
         example="Device with ID RT-ATL-999 not found",
     )
-    details: Optional[Dict[str, Any]] = Field(
+    details: Optional[dict[str, Any]] = Field(
         None, description="Additional error details"
     )
 
@@ -214,7 +214,7 @@ class Error(BaseModel):
 
 class DevicesGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[Device]] = None
+    data: Optional[list[Device]] = None
 
 
 class DevicesDeviceIdGetResponse(BaseModel):
@@ -230,7 +230,7 @@ class Interval(Enum):
 
 class DevicesDeviceIdHistoryGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[TemperatureDataPoint]] = None
+    data: Optional[list[TemperatureDataPoint]] = None
 
 
 class DevicesStatsGetResponse(BaseModel):
@@ -240,7 +240,7 @@ class DevicesStatsGetResponse(BaseModel):
 
 class AlertsGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[Alert]] = None
+    data: Optional[list[Alert]] = None
 
 
 class Data(BaseModel):
@@ -271,12 +271,12 @@ class Period(Enum):
 
 class LicensePlatesDistributionGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[StateDistribution]] = None
+    data: Optional[list[StateDistribution]] = None
 
 
 class LicensePlatesRecentGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[RecentPlate]] = None
+    data: Optional[list[RecentPlate]] = None
 
 
 class LicensePlatesStatsGetResponse(BaseModel):
@@ -286,17 +286,17 @@ class LicensePlatesStatsGetResponse(BaseModel):
 
 class ObjectDetectionSummaryGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[ObjectDetection]] = None
+    data: Optional[list[ObjectDetection]] = None
 
 
 class ObjectDetectionHourlyGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[HourlyDetection]] = None
+    data: Optional[list[HourlyDetection]] = None
 
 
 class ObjectDetectionRecentGetResponse(BaseModel):
     success: Optional[bool] = Field(None, example=True)
-    data: Optional[List[RecentDetection]] = None
+    data: Optional[list[RecentDetection]] = None
 
 
 class Context(BaseModel):
@@ -341,12 +341,12 @@ class SortDirection(Enum):
 
 
 class ApiSearchGetResponse(BaseModel):
-    columns: Optional[List[str]] = Field(
+    columns: Optional[list[str]] = Field(
         None,
         description="Column names for the result set",
         example=["device_id", "location", "temperature", "status"],
     )
-    data: Optional[List[Dict[str, Any]]] = Field(
+    data: Optional[list[dict[str, Any]]] = Field(
         None,
         description="Array of data rows",
         example=[

@@ -1,7 +1,7 @@
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, TypeVar, Generic
+from typing import Any, Callable, Generic, TypeVar
 
 import reggie_core.paths as paths
 from diskcache import Cache

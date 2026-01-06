@@ -4,7 +4,7 @@ import logging
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 import sh
 from reggie_core import logs, objects, paths
@@ -24,7 +24,7 @@ def command() -> sh.Command:
     return conda.run(_conda_env_name()).bake("caddy")
 
 
-def run(config: Union[Path, dict[str, Any], str], *args, **kwargs) -> sh.RunningCommand:
+def run(config: Path | dict[str, Any] | str, *args, **kwargs) -> sh.RunningCommand:
     """Run Caddy with a provided config path, dict, or Caddyfile string.
     Creates a temporary config file when given a dict or string and streams logs, mapping JSON lines to appropriate log levels and triggering cleanup on exit codes.
     """
@@ -79,11 +79,11 @@ def _conda_env_name():
     return _CONDA_ENV_NAME
 
 
-def _to_caddy_file(config: Union[str, Path, dict[str, Any]]) -> Path:
+def _to_caddy_file(config: str | Path | dict[str, Any]) -> Path:
     """Materialize a Caddy configuration to a file and return its path."""
     if isinstance(config, Path):
         return config
-    elif isinstance(config, Dict):
+    elif isinstance(config, dict):
         # Serialize dict configs to JSON content
         config_content = objects.to_json(config, indent=2)
         config_extension = "json"

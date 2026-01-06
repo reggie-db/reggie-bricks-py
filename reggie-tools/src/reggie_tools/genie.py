@@ -11,12 +11,12 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from typing import Iterable, Dict, Any
+from typing import Any, Iterable
 
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.service.dashboards import GenieMessage, MessageStatus, GenieSpace
-
+from databricks.sdk.service.dashboards import GenieMessage, GenieSpace, MessageStatus
 from reggie_core import logs, objects
+
 from reggie_tools import clients, configs
 
 LOG = logs.logger(__file__)
@@ -262,7 +262,7 @@ class GenieSpaceExt(GenieSpace):
     data: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "GenieSpaceExt":
+    def from_dict(cls, d: dict[str, Any]) -> "GenieSpaceExt":
         """Deserializes the GenieSpace from a dictionary."""
         genie_space = GenieSpace.from_dict(d)
         serialized_space: str | None = d.get("serialized_space", None)

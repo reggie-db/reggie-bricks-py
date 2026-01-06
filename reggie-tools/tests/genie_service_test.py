@@ -1,7 +1,7 @@
 import json
 import os
 
-from reggie_tools import clients, genie
+from reggie_tools import clients
 
 if __name__ == "__main__":
     os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "FIELD-ENG-EAST")

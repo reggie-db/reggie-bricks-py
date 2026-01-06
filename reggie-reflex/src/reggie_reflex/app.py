@@ -1,6 +1,6 @@
 import reflex as rx
 
-from reggie_reflex import states, events
+from reggie_reflex import events, states
 
 
 class SortState(rx.State):

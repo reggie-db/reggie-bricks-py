@@ -12,7 +12,7 @@ from reggie_concurio import caches
 
 LOG = logs.logger(__file__)
 
-type InstallSource = Callable[[...], PathLike] | PathLike | str
+type InstallSource = Callable[[Path], PathLike] | PathLike | str
 
 _CACHE = caches.DiskCache(__file__)
 
@@ -24,8 +24,9 @@ def executable(source: InstallSource, identifier: Any | None = None) -> "Install
 
             def _download_source(destination: Path):
                 urlretrieve(source, destination)
+                return destination
 
-            source = _download_source
+            return executable(_download_source, identifier)
     if identifier is None:
         identifier = source
     cache_key = objects.hash(identifier).hexdigest()
@@ -47,14 +48,16 @@ def _install(source: "InstallSource", eget: bool = True) -> "InstallPath":
 
                 return InstallPath(path=temp_path, on_complete=_on_complete)
 
-            source = _download_source
+            result_source = _download_source
         else:
 
             def _path_source():
                 return path
 
-            source = _path_source
-    result = objects.call(source)
+            result_source = _path_source
+    else:
+        result_source = source
+    result = objects.call(result_source)
     if not isinstance(result, InstallPath):
         result = InstallPath(path=result)
     if not os.access(result, os.X_OK):
@@ -83,6 +86,6 @@ class InstallPath(Path):
 if __name__ == "__main__":
     LOG.info("suh")
     source = "https://github.com/regclient/regclient/releases/download/v0.9.2/regctl-darwin-arm64"
-    resource = _install(source)
+    resource = executable(source)
     LOG.info(f"Installed resource: {resource}")
     # resource.complete()

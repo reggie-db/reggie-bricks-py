@@ -1,54 +1,53 @@
 import os
+import random
 import re
 import time
 from datetime import date, datetime, timedelta
-from typing import Optional, Union, Callable
-import random
+from typing import Callable, Optional
 
 import humanize
 from databricks.sdk.config import Config
-from fastapi import Request, Path
-from pydantic import conint
-from pyspark.sql import functions as F
-
 from demo_iot_generated.main import APIContract
 from demo_iot_generated.models import (
-    Period,
-    ObjectDetectionSummaryGetResponse,
-    ObjectDetectionRecentGetResponse,
-    ObjectDetectionHourlyGetResponse,
-    LicensePlatesStatsGetResponse,
-    LicensePlatesRecentGetResponse,
-    LicensePlatesDistributionGetResponse,
-    Interval,
-    DevicesDeviceIdHistoryGetResponse,
-    DevicesDeviceIdGetResponse,
-    DevicesStatsGetResponse,
-    DevicesGetResponse,
-    SortDirection,
-    ApiSearchGetResponse,
-    AlertsStatsGetResponse,
-    Type,
-    AlertsGetResponse,
     AiChatPostRequest,
     AiChatPostResponse,
     Alert,
-    Device,
-    DeviceStats,
-    TemperatureDataPoint,
-    StateDistribution,
-    RecentPlate,
-    StateStats,
-    HourlyDetection,
-    RecentDetection,
+    AlertsGetResponse,
+    AlertsStatsGetResponse,
+    ApiSearchGetResponse,
     Data,
+    Device,
+    DevicesDeviceIdGetResponse,
+    DevicesDeviceIdHistoryGetResponse,
+    DevicesGetResponse,
+    DevicesStatsGetResponse,
+    DeviceStats,
     Error,
-    Status,
+    HourlyDetection,
+    Interval,
+    LicensePlatesDistributionGetResponse,
+    LicensePlatesRecentGetResponse,
+    LicensePlatesStatsGetResponse,
     ObjectDetection,
+    ObjectDetectionHourlyGetResponse,
+    ObjectDetectionRecentGetResponse,
+    ObjectDetectionSummaryGetResponse,
+    Period,
+    RecentDetection,
+    RecentPlate,
+    SortDirection,
+    StateDistribution,
+    StateStats,
+    Status,
+    TemperatureDataPoint,
+    Type,
 )
+from fastapi import Path, Request
+from pydantic import conint
+from pyspark.sql import functions as F
 from reggie_concurio import caches
 from reggie_core import logs, objects, paths
-from reggie_tools import clients, catalogs, genie
+from reggie_tools import catalogs, clients, genie
 
 LOG = logs.logger(__file__)
 
@@ -73,9 +72,7 @@ class APIImplementation(APIContract):
             paths.temp_dir() / f"{__class__.__name__}_v2"
         )
 
-    def send_chat_message(
-        self, body: AiChatPostRequest
-    ) -> Union[AiChatPostResponse, Error]:
+    def send_chat_message(self, body: AiChatPostRequest) -> AiChatPostResponse | Error:
         resp = AiChatPostResponse(
             success=True,
             data={
@@ -88,7 +85,7 @@ class APIImplementation(APIContract):
 
     def get_alerts(
         self, type: Optional[Type] = None, limit: Optional[conint(ge=1, le=100)] = 50
-    ) -> Union[AlertsGetResponse, Error]:
+    ) -> AlertsGetResponse | Error:
         alert_types = ["critical", "warning", "info"]
         devices = ["Refrigerator", "HVAC", "Pump", "Camera"]
         locations = ["Atlanta, GA", "Tampa, FL", "Dallas, TX", "Orlando, FL"]
@@ -115,7 +112,7 @@ class APIImplementation(APIContract):
             alerts.append(alert)
         return AlertsGetResponse(success=True, data=alerts)
 
-    def get_alert_stats(self) -> Union[AlertsStatsGetResponse, Error]:
+    def get_alert_stats(self) -> AlertsStatsGetResponse | Error:
         data = Data(
             criticalCount=3,
             warningCount=4,
@@ -131,7 +128,7 @@ class APIImplementation(APIContract):
         offset: Optional[conint(ge=0)] = 0,
         sort_column: Optional[str] = None,
         sort_direction: Optional[SortDirection] = "asc",
-    ) -> Union[ApiSearchGetResponse, Error]:
+    ) -> ApiSearchGetResponse | Error:
         def _conversation_id():
             request = self.current_request()
             session_id = (
@@ -227,7 +224,7 @@ class APIImplementation(APIContract):
             hasMore=(offset + len(rows)) < total,
         )
 
-    def get_devices(self) -> Union[DevicesGetResponse, Error]:
+    def get_devices(self) -> DevicesGetResponse | Error:
         devices = [
             Device(
                 id=f"RT-ATL-{i:03d}",
@@ -243,7 +240,7 @@ class APIImplementation(APIContract):
         ]
         return DevicesGetResponse(success=True, data=devices)
 
-    def get_device_stats(self) -> Union[DevicesStatsGetResponse, Error]:
+    def get_device_stats(self) -> DevicesStatsGetResponse | Error:
         stats = DeviceStats(
             normalCount=4,
             warningCount=1,
@@ -255,7 +252,7 @@ class APIImplementation(APIContract):
 
     def get_device_by_id(
         self, device_id: str = Path(..., alias="deviceId")
-    ) -> Union[DevicesDeviceIdGetResponse, Error]:
+    ) -> DevicesDeviceIdGetResponse | Error:
         device = Device(
             id=device_id,
             name="Store-001",
@@ -272,7 +269,7 @@ class APIImplementation(APIContract):
         device_id: str = Path(..., alias="deviceId"),
         hours: Optional[conint(ge=1, le=168)] = 24,
         interval: Optional[Interval] = 60,
-    ) -> Union[DevicesDeviceIdHistoryGetResponse, Error]:
+    ) -> DevicesDeviceIdHistoryGetResponse | Error:
         now = datetime.utcnow()
         history = [
             TemperatureDataPoint(
@@ -287,7 +284,7 @@ class APIImplementation(APIContract):
 
     def get_license_plate_distribution(
         self, period: Optional[Period] = "today"
-    ) -> Union[LicensePlatesDistributionGetResponse, Error]:
+    ) -> LicensePlatesDistributionGetResponse | Error:
         states = [
             StateDistribution(
                 state=code,
@@ -302,7 +299,7 @@ class APIImplementation(APIContract):
 
     def get_recent_plates(
         self, limit: Optional[conint(ge=1, le=100)] = 20
-    ) -> Union[LicensePlatesRecentGetResponse, Error]:
+    ) -> LicensePlatesRecentGetResponse | Error:
         plates = [
             RecentPlate(
                 id=i,
@@ -317,7 +314,7 @@ class APIImplementation(APIContract):
         ]
         return LicensePlatesRecentGetResponse(success=True, data=plates)
 
-    def get_license_plate_stats(self) -> Union[LicensePlatesStatsGetResponse, Error]:
+    def get_license_plate_stats(self) -> LicensePlatesStatsGetResponse | Error:
         stats = StateStats(
             totalDetected=1200, uniqueStates=24, averagePerHour=50, trend="+15%"
         )
@@ -325,7 +322,7 @@ class APIImplementation(APIContract):
 
     def get_hourly_detections(
         self, date: Optional[date] = None
-    ) -> Union[ObjectDetectionHourlyGetResponse, Error]:
+    ) -> ObjectDetectionHourlyGetResponse | Error:
         detections = [
             HourlyDetection(
                 hour=f"{i:02d}:00",
@@ -338,7 +335,7 @@ class APIImplementation(APIContract):
 
     def get_recent_detections(
         self, limit: Optional[conint(ge=1, le=100)] = 20
-    ) -> Union[ObjectDetectionRecentGetResponse, Error]:
+    ) -> ObjectDetectionRecentGetResponse | Error:
         detections_df = (
             self.spark.table(str(catalogs.catalog_schema_table("detections")))
             .where(F.col("store_id") != 1)
@@ -366,7 +363,7 @@ class APIImplementation(APIContract):
     # noinspection SqlNoDataSourceInspection
     def get_object_detection_summary(
         self, period: Optional[Period] = "today"
-    ) -> Union[ObjectDetectionSummaryGetResponse, Error]:
+    ) -> ObjectDetectionSummaryGetResponse | Error:
         spark = self.spark
         table = self.detection_table_name
 
