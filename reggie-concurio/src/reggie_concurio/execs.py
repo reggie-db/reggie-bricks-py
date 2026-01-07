@@ -12,21 +12,12 @@ from reggie_concurio import caches
 
 LOG = logs.logger(__file__)
 
-type InstallSource = Callable[[Path], PathLike] | PathLike | str
+type InstallSource = Callable[[], PathLike] | PathLike | str
 
 _CACHE = caches.DiskCache(__file__)
 
 
 def executable(source: InstallSource, identifier: Any | None = None) -> "InstallPath":
-    if isinstance(source, str):
-        path = paths.path(source, exists=True)
-        if path is None:
-
-            def _download_source(destination: Path):
-                urlretrieve(source, destination)
-                return destination
-
-            return executable(_download_source, identifier)
     if identifier is None:
         identifier = source
     cache_key = objects.hash(identifier).hexdigest()

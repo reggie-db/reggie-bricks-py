@@ -126,6 +126,6 @@ class DiskCache(Cache):
 if __name__ == "__main__":
     cache = DiskCache(directory=__file__)
     LOG.info(f"Cache directory: {cache.directory}")
-    result = cache.get_or_load("test", loader=lambda: "this is a value", expire=10)
+    result = cache.get_or_load("test23a", loader=lambda: "this is a value31", expire=10)
     LOG.info(f"Cache result: {result}")
     LOG.info(f"Load timestamp: {result.load_timestamp.strftime('%Y-%m-%d %H:%M:%S')}")

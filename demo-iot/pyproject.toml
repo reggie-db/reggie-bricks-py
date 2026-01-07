@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+g1a957e5"
+version = "0.0.1+ge1a7bbc"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",

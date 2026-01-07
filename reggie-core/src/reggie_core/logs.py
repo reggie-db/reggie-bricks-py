@@ -9,11 +9,12 @@ Environment variables
 import functools
 import logging
 import os
+import pathlib
 import platform
 import sys
 from collections.abc import Callable, Iterable
 
-from reggie_core import parsers, paths
+from reggie_core import parsers
 
 _LOGGING_AUTO_CONFIG = parsers.to_bool(os.getenv("LOGGING_AUTO_CONFIG", True))
 _LOGGING_SERVER = parsers.to_bool(os.getenv("LOGGING_SERVER"))
@@ -104,7 +105,6 @@ def get_level(level, default=None) -> tuple[int, str]:
             return val, level
     level_names = get_levels()
     for val, name in level_names:
-        match = False
         if isinstance(level, int):
             match = val == level
         else:
@@ -139,13 +139,26 @@ def _logger_name(*names: str | None):
         def _is_name_valid(name: str) -> bool:
             return name and name != "__main__"
 
+        def _path_name(name: str) -> str | None:
+            if not name or "\0" in name or "://" in name:
+                return None
+            # Reject control characters
+            if any(ord(c) < 32 for c in name):
+                return None
+            try:
+                resolved_name = pathlib.Path(name).resolve().name
+                if _is_name_valid(resolved_name):
+                    return resolved_name
+            except Exception:
+                pass
+            return None
+
         for name in names:
+            name = name.strip()
             if not _is_name_valid(name):
                 continue
-            if file_path := paths.path(name):
-                name = os.path.splitext(os.path.basename(file_path.name))[0]
-                if not _is_name_valid(name):
-                    continue
+            if path_name := _path_name(name):
+                return path_name
             return name
     return None
 
@@ -168,7 +181,7 @@ def _auto_config_handler(stream, error: bool) -> logging.Handler:
 
 
 @functools.cache
-def _is_system_account() -> int:
+def _is_system_account() -> bool:
     """
     Heuristic: return True if this process runs as a system account.
 
