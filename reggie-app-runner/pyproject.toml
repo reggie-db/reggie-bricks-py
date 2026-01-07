@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+ge1a7bbc"
+version = "0.0.1+g67fc325"
 dependencies = [
   "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
   "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
