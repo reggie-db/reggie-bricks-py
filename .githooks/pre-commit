@@ -2,8 +2,8 @@
 set -e
 
 # Run updates (updates pyproject files)
-uv run --group dev reggie-build sync
-uv run --group dev reggie-build readme update-cmd
+uv run --group dev lfp-build sync
+uv run --group dev lfp-build readme
 
 # Stage any changes made by the sync so they land in THIS commit
 git add -A

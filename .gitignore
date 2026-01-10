@@ -188,3 +188,6 @@ prpr/
 **/*dev_local*
 
 nohup.out
+# pixi environments
+.pixi/*
+!.pixi/config.toml

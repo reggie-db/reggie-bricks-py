@@ -3,10 +3,9 @@
 import functools
 import importlib
 import subprocess
+import tomllib
 from pathlib import Path
 from types import ModuleType
-
-import tomllib
 
 from reggie_core import paths
 

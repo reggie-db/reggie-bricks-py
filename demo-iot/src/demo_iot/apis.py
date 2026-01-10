@@ -7,6 +7,13 @@ from typing import Callable, Optional
 
 import humanize
 from databricks.sdk.config import Config
+from fastapi import Path, Request
+from pydantic import conint
+from pyspark.sql import functions as F
+from reggie_concurio import caches
+from reggie_core import logs, objects, paths
+from reggie_tools import catalogs, clients, genie
+
 from demo_iot_generated.main import APIContract
 from demo_iot_generated.models import (
     AiChatPostRequest,
@@ -42,12 +49,6 @@ from demo_iot_generated.models import (
     TemperatureDataPoint,
     Type,
 )
-from fastapi import Path, Request
-from pydantic import conint
-from pyspark.sql import functions as F
-from reggie_concurio import caches
-from reggie_core import logs, objects, paths
-from reggie_tools import catalogs, clients, genie
 
 LOG = logs.logger(__file__)
 

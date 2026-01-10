@@ -5,7 +5,6 @@ import os
 from typing import Optional
 
 import uvicorn
-from demo_iot_generated.main import GeneratedRouter
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import StreamingResponse
 from kafka import TopicPartition
@@ -15,6 +14,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from demo_iot.apis import APIImplementation
 from demo_iot.kafka_consumer import create_consumer, get_latest_offset
+from demo_iot_generated.main import GeneratedRouter
 
 LOG = logs.logger(__file__)
 
