@@ -6,8 +6,8 @@ from datetime import datetime
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.config import Config
+from lfp_logging import logs
 from pyspark.sql import SparkSession
-from reggie_core import logs
 
 from reggie_tools import configs, runtimes
 
@@ -50,7 +50,7 @@ def spark(config: Config | None = None) -> SparkSession:
 def _databricks_session_default() -> SparkSession:
     """Initialize and memoize the default Databricks Connect Spark session."""
     config = configs.get()
-    log = logs.logger(__name__, __file__)
+    log = logs.logger()
     log.info("Databricks connect session initializing")
     start_time = datetime.now()
     sess = DatabricksSession.builder.sdkConfig(config).getOrCreate()

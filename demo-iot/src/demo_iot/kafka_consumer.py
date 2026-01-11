@@ -6,9 +6,9 @@ import os
 from typing import Optional
 
 from kafka import KafkaConsumer, TopicPartition
-from reggie_core import logs
+from lfp_logging import logs
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 # Global consumer instance (lazy loaded) - used for offset queries only
 _consumer: Optional[KafkaConsumer] = None

@@ -8,7 +8,7 @@ import uvicorn
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import StreamingResponse
 from kafka import TopicPartition
-from reggie_core import logs
+from lfp_logging import logs
 from reggie_tools import configs
 from starlette.middleware.cors import CORSMiddleware
 
@@ -16,7 +16,7 @@ from demo_iot.apis import APIImplementation
 from demo_iot.kafka_consumer import create_consumer, get_latest_offset
 from demo_iot_generated.main import GeneratedRouter
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 
 def main():

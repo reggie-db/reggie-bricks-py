@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Any
 
 import sh
-from reggie_core import logs, objects, paths
+from lfp_logging import logs
+from reggie_core import objects, paths
 
 from reggie_app_runner import conda
 
-LOG = logs.logger("caddy")
+LOG = logs.logger()
 
 _CONDA_ENV_NAME = "_caddy"
 _CONDA_PACKAGE_NAME = "caddy"
@@ -44,7 +45,7 @@ def run(config: Path | dict[str, Any] | str, *args, **kwargs) -> sh.RunningComma
         line = line.rstrip()
         if line:
             for match in _LOG_LEVEL_PATTERN.finditer(line):
-                line_levelno, _ = logs.get_level(match.group(1))
+                line_levelno = logs.log_level(match.group(1))[1]
                 if line_levelno:
                     levelno = line_levelno
                     break

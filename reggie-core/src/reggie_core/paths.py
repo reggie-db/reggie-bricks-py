@@ -82,9 +82,9 @@ def temp_dir() -> Path:
 
 
 if __name__ == "__main__":
-    from reggie_core import logs
+    from lfp_logging import logs
 
-    LOG = logs.logger(__file__)
+    LOG = logs.logger()
     LOG.info(path(pathlib.Path("~/Desktop"), "/test.txt", absolute=True))
     LOG.info(path(pathlib.Path("~/Desktop"), "test.txt", absolute=True))
     LOG.info(path(pathlib.Path("~/Desktop"), "test.txt", 2, absolute=True))

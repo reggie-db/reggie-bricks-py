@@ -5,11 +5,12 @@ import platform
 import shutil
 
 import sh
-from reggie_core import logs, paths
+from lfp_logging import logs
+from reggie_core import paths
 
 from reggie_app_runner import conda
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 _CONDA_ENV_NAME = "_docker"
 _UDOCKER_NAME = "udocker"

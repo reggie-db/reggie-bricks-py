@@ -13,12 +13,12 @@ from typing import Any, Callable, Iterable
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
+from lfp_logging import logs
 from pyspark.sql import SparkSession
-from reggie_core import logs
 
 from reggie_tools import catalogs, clients, runtimes
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME = "DEFAULT"
 _DATABRICKS_AUTH_LOGIN_LOCK = threading.Lock()

@@ -81,10 +81,11 @@ Tokenization helpers for names and identifiers:
 ## Usage
 
 ```python
-from reggie_core import logs, objects, paths
+from lfp_logging import logs
+from reggie_core import objects, paths
 
 # Automatic logging configuration
-log = logs.logger(__name__)
+log = logs.logger()
 log.info("Message")
 
 # Object serialization

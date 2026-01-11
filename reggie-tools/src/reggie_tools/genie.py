@@ -15,11 +15,12 @@ from typing import Any, Iterable
 
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.dashboards import GenieMessage, GenieSpace, MessageStatus
-from reggie_core import logs, objects
+from lfp_logging import logs
+from reggie_core import objects
 
 from reggie_tools import clients, configs
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 
 class Service:

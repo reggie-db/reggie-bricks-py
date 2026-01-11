@@ -8,11 +8,12 @@ import socket
 from typing import Iterable
 
 import dynaconf
-from reggie_core import logs, objects, parsers, strs
+from lfp_logging import logs
+from reggie_core import objects, parsers, strs
 
 from reggie_app_runner import conda, docker, git
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 
 DATABRICKS_APP_ENV_VAR_PREFIX = "DATABRICKS_"

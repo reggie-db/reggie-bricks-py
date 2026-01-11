@@ -1,21 +1,22 @@
+[project]
+name = "demo-iot"
+version = "0.0.1+gdbf25f2"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aioreactive",
+    "fastapi",
+    "humanize",
+    "kafka-python",
+    "reggie-concurio @ file://${PROJECT_ROOT}/../reggie-concurio",
+    "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
+    "uvicorn",
+    "websockets",
+]
+requires-puvrython = ">=3.12,<3.13"
+
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
-
-[project]
-name = "demo-iot"
-version = "0.0.1+g9afd6c1"
-requires-python = ">=3.12,<3.13"
-dependencies = [
-    "reggie-tools @ file://${PROJECT_ROOT}/../reggie-tools",
-    "reggie-concurio @ file://${PROJECT_ROOT}/../reggie-concurio",
-    "uvicorn",
-    "fastapi",
-    "websockets",
-    "aioreactive",
-    "humanize",
-    "kafka-python",
-]
 
 [tool.uv.sources.reggie-tools]
 workspace = true

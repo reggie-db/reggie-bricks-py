@@ -1,29 +1,17 @@
+[dependency-groups]
+dev = ["lfp-build @ git+https://github.com/regbo/lfp-build-py.git", "pytest"]
+
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.workspace]
-members = [
-    "demo-iot",
-    "reggie-app-runner",
-    "reggie-concurio",
-    "reggie-core",
-    "reggie-cv",
-    "reggie-reflex",
-    "reggie-tools",
-]
-exclude = ["prpr", "__*", "*.egg-info"]
-
 [tool.member-project]
-project.requires-python = ">=3.12,<3.13"
-
-[dependency-groups]
-dev = ["pytest", "lfp-build @ git+https://github.com/regbo/lfp-build-py.git"]
+project.requires-puvrython = ">=3.12,<3.13"
 
 [tool.pixi.workspace]
 name = "reggie-bricks-py"
 channels = ["conda-forge"]
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "linux-aarch64"]
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
@@ -36,3 +24,15 @@ uvm = "uv run -m"
 [tool.pixi.dependencies]
 ffmpeg = ">=8.0.1,<9"
 caddy = ">=2.10.0,<3"
+
+[tool.uv.workspace]
+members = [
+    "demo-iot",
+    "reggie-app-runner",
+    "reggie-concurio",
+    "reggie-core",
+    "reggie-cv",
+    "reggie-reflex",
+    "reggie-tools",
+]
+exclude = ["prpr", "__*", "*.egg-info"]

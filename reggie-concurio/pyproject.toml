@@ -1,16 +1,17 @@
+[project]
+name = "reggie-concurio"
+version = "0.0.1+gdbf25f2"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "diskcache",
+    "fasteners",
+    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+]
+requires-puvrython = ">=3.12,<3.13"
+
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
-
-[project]
-name = "reggie-concurio"
-version = "0.0.1+g9afd6c1"
-dependencies = [
-    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
-    "diskcache",
-    "fasteners",
-]
-requires-python = ">=3.12,<3.13"
 
 [tool.uv.sources.reggie-core]
 workspace = true

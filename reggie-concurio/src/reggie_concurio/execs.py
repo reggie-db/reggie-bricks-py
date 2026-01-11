@@ -6,11 +6,12 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
-from reggie_core import logs, objects, paths
+import lfp_logging.logs as logs
+from reggie_core import objects, paths
 
 from reggie_concurio import caches
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 type InstallSource = Callable[[], PathLike] | PathLike | str
 

@@ -4,7 +4,8 @@ from pathlib import Path
 import giturlparse
 import requirements
 import sh
-from reggie_core import logs, paths
+from lfp_logging import logs
+from reggie_core import paths
 from requirements.requirement import Requirement
 
 
@@ -43,7 +44,7 @@ def clone(source: str, dest: str | Path, token: str | None = None) -> None:
     remote_url = ssh_url(source)
     remote_revision = revision(source)
 
-    log = logs.logger("git_clone")
+    log = logs.logger()
 
     # Shallow single branch clone with progress logged to our logger
     _git_command(token)(

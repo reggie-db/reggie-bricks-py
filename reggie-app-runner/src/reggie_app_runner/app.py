@@ -11,13 +11,14 @@ from typing import Any, Sequence
 
 import psutil
 import sh
-from reggie_core import logs, objects, paths
+from lfp_logging import logs
+from reggie_core import objects, paths
 from sh import RunningCommand
 
 from reggie_app_runner import app_runner, caddy, conda, docker, git
 from reggie_app_runner.app_runner import AppRunnerConfig, AppRunnerSource
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 
 async def run():
@@ -197,7 +198,7 @@ def _build_caddy_config(
         "routes": routes,
     }
     if log_level is not None:
-        _, log_level_name = logs.get_level(log_level)
+        log_level_name = logs.log_level(log_level)[0]
     else:
         log_level_name = None
     if log_level_name:
@@ -312,7 +313,7 @@ def _shutdown_process(
 
 
 if __name__ == "__main__":
-    logs.auto_config()
+    # logs.auto_config()
     logs.logger().warning("info")
     os.environ["DATABRICKS_APP_PORT"] = "8000"
     os.environ["DATABRICKS_APP_NAME"] = "reggie_guy"

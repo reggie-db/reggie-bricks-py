@@ -3,6 +3,7 @@ import logging
 import os
 import platform
 import re
+import shutil
 import subprocess
 import uuid
 from collections.abc import Iterable
@@ -12,8 +13,9 @@ from urllib.request import urlretrieve
 
 import sh
 import yaml
+from lfp_logging import logs
 from reggie_concurio import caches
-from reggie_core import logs, paths
+from reggie_core import paths
 
 _CONDA_DIR = paths.path(paths.home() / ".miniforge3", mkdir=True)
 _CONDA_DEPENDENCY_PATTERN = re.compile(
@@ -94,7 +96,7 @@ def dependency_name(dependency: str) -> str:
 def _install_conda(dir: Path):
     """Download and run the Miniforge installer into the given directory, cached by URL."""
     url = _install_url()
-    log = logs.logger("conda_install")
+    log = logs.logger()
 
     def _download_installer() -> Path:
         url = _install_url()
@@ -156,7 +158,7 @@ def _run_arg_preprocess(env_name: str, args, kwargs):
     )
     stderr_log_levelno = logging.WARNING if "_err" not in kwargs else None
     if any(k is not None for k in [stdout_log_levelno, stderr_log_levelno]):
-        log = logs.logger("conda_run")
+        log = logs.logger()
 
         def _out(levelno, line, queue, process):
             # Strip trailing newline and log with env name prefix for clarity
@@ -176,5 +178,6 @@ def _run_arg_preprocess(env_name: str, args, kwargs):
 
 
 if __name__ == "__main__":
-    LOG = logs.logger(__file__)
+    print(shutil.which("pixi"))
+    LOG = logs.logger()
     LOG.info(exec())

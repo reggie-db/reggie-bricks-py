@@ -10,8 +10,8 @@ from datetime import date
 from typing import Any, Optional
 
 from fastapi import APIRouter, FastAPI, Path
+from lfp_logging import logs
 from pydantic import conint
-from reggie_core import logs
 
 from .models import (
     AiChatPostRequest,
@@ -36,7 +36,7 @@ from .models import (
     Type,
 )
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 
 class APIContract(ABC):
@@ -152,7 +152,7 @@ class GeneratedRouter:
 
     def __init__(self, contract: APIContract, log_level=None):
         self.contract = contract
-        self.log_level = logs.get_level(log_level, logging.DEBUG)[0]
+        self.log_level = logs.log_level(log_level or logging.DEBUG)[1]
         self.router = APIRouter()
 
         @self.router.post(

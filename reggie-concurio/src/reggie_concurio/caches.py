@@ -6,9 +6,10 @@ from typing import Any, Callable, Generic, TypeVar
 import reggie_core.paths as paths
 from diskcache import Cache
 from fasteners import InterProcessLock
-from reggie_core import logs, objects, strs
+from lfp_logging import logs
+from reggie_core import objects, strs
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 """
 Disk backed cache utilities built on diskcache with inter process locking.

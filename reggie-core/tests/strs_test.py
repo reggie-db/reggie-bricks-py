@@ -1,10 +1,14 @@
 """Quick checks for `reggie_core.strs.tokenize` behavior (moved from source)."""
 
+from lfp_logging import logs
+
 from reggie_core.strs import tokenize
 
+LOG = logs.logger()
+
 if __name__ == "__main__":
-    print(list[str](tokenize("HelloWorld", "hello_world", "helloWorld")))
-    print(
+    LOG.info(list[str](tokenize("HelloWorld", "hello_world", "helloWorld")))
+    LOG.info(
         list[str](
             tokenize(
                 "HelloWorld",
@@ -15,7 +19,7 @@ if __name__ == "__main__":
             )
         )
     )
-    print(
+    LOG.warning(
         list[str](
             tokenize(
                 "HelloWorld",

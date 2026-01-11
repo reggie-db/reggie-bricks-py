@@ -9,9 +9,9 @@ from array import array
 from collections import deque
 from typing import Any, Callable, Iterable, TypeVar
 
-from reggie_core import logs
+from lfp_logging import logs
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 T = TypeVar("T")
 _DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict", "__dict__"]

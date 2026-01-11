@@ -8,13 +8,13 @@ from typing import Generic, TypeVar
 import cv2
 import imagehash
 import numpy as np
+from lfp_logging import logs
 from PIL import Image
-from reggie_core import logs
 from skimage.metrics import structural_similarity as ssim
 
 T = TypeVar("T")
 
-LOG = logs.logger(__file__)
+LOG = logs.logger()
 
 rtsp_url = "rtsp://localhost:8554/cam"
 
