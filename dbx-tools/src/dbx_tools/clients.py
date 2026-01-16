@@ -8,7 +8,7 @@ from databricks.sdk.config import Config
 from lfp_logging import logs
 from pyspark.sql import SparkSession
 
-from dbx_tools import configs, platform, runtimes
+from dbx_tools import configs, runtimes
 
 LOG = logs.logger(__name__)
 
@@ -39,6 +39,6 @@ def spark(config: Config | None = None) -> SparkSession:
                 LOG.info(f"Databricks connect session created in {elapsed:.2f}s")
                 return sess
 
-        return platform.instance("spark", _load)
+        return runtimes.instance("spark", _load)
 
     return DatabricksSession.builder.sdkConfig(config).getOrCreate()

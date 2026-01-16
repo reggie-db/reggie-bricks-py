@@ -11,10 +11,12 @@ from configparser import ConfigParser
 from enum import Enum
 from typing import Any, Callable, Iterable
 
+import yaml
+from databricks.connect import DatabricksSession
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
+from databricks.sdk.runtime import dbutils
 from lfp_logging import logs
-from pyspark.sql import SparkSession
 
 from dbx_tools import catalogs, clients, runtimes
 
@@ -25,6 +27,7 @@ _DATABRICKS_AUTH_LOGIN_LOCK = threading.Lock()
 
 
 def get(profile: str | None = None) -> Config:
+    dbutils
     """Return a cached or freshly created Databricks ``Config`` for the given profile.
     When a profile is not provided this function returns a process wide default. A lock is used to avoid concurrent initialization of the default object.
     """
@@ -70,7 +73,7 @@ def token(config: Config = None) -> str:
 def config_value(
     name: str,
     default: Any = None,
-    spark: SparkSession = None,
+    spark: DatabricksSession = None,
     config_value_sources: list["ConfigValueSource"] = None,
 ) -> Any:
     """Fetch a configuration value by checking the configured sources in order.
@@ -115,6 +118,21 @@ def config_value(
                             return secrets.get(scope=str(catalog_schema), key=key)
 
                         yield _load_secret
+            elif config_value_source is ConfigValueSource.BUNDLE:
+
+                def _load_variable(key: str) -> str | None:
+                    variable = _bundle_data().get("variables", {}).get(key, {})
+                    if variable:
+                        value = variable.get("value", None)
+                        if not value:
+                            default_value = variable.get("default", None)
+                            if default_value and "${" not in default_value:
+                                value = default_value
+                        if value:
+                            return value
+                    return None
+
+                yield _load_variable
             else:
                 raise ValueError(
                     f"unknown ConfigValueSource - config_value_source:{config_value_source}"
@@ -247,15 +265,49 @@ def _cli_version() -> dict[str, Any]:
     return version
 
 
+@functools.cache
+def _bundle_data() -> dict[str, Any]:
+    data = {}
+    workspace_dir = _workspace_dir()
+    if workspace_dir:
+        bundle_file = workspace_dir / "databricks.yml"
+        if bundle_file.is_file():
+            try:
+                with bundle_file.open("r", encoding="utf-8") as f:
+                    data.update(yaml.safe_load(f))
+            except Exception:
+                pass
+    return data
+
+
+@functools.cache
+def _workspace_dir() -> pathlib.Path | None:
+    proc = subprocess.run(
+        ["uv", "workspace", "dir"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+    if proc.returncode == 0:
+        if dir := proc.stdout.strip():
+            return pathlib.Path(dir)
+    return None
+
+
 class ConfigValueSource(Enum):
     """Enumerates supported config sources in order of discovery precedence."""
 
-    WIDGETS = 1
-    SPARK_CONF = 2
+    WIDGETS = 2
+    SPARK_CONF = 1
     OS_ENVIRON = 3
     SECRETS = 4
+    BUNDLE = 5
 
     @classmethod
     def without(cls, *excluded):
         """Return members excluding any provided in ``excluded`` while preserving order."""
         return [member for member in cls if member not in excluded]
+
+
+if __name__ == "__main__":
+    print(config_value("catalog_name"))

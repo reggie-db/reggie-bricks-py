@@ -4,13 +4,12 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-tools"
-version = "0.0.1+ga7e4302"
+version = "0.0.1+gfcec25f"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "databricks-connect>=17.0,<17.3",
-    "databricks-sdk>=0.73.0",
-    "pyspark>=3.5.0",
+    "databricks-connect>=17.3,<18.0",
     "pydantic",
+    "pyyaml",
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
 ]
 
