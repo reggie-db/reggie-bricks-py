@@ -6,7 +6,7 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
-import lfp_logging.logs as logs
+from lfp_logging import logs
 from reggie_core import objects, paths
 
 from reggie_concurio import caches

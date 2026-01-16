@@ -1,6 +1,6 @@
 [project]
 name = "reggie-app-runner"
-version = "0.0.1+gdbf25f2"
+version = "0.0.1+gb7f5077"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "dynaconf",
