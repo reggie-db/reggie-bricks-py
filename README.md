@@ -20,14 +20,14 @@ The following projects are included in this workspace:
 ### Core Modules
 
 * `reggie-core`: Lightweight shared utilities for logging, object serialization, path handling, and common parsing operations.
-* `reggie-tools`: Databricks specific utilities for Spark sessions, configuration management, catalog access, and Genie API integration.
-* `reggie-concurio`: Execution and caching logic using `diskcache` and file locking.
+* `dbx-tools`: Databricks specific utilities for Spark sessions, configuration management, catalog access, and Genie API integration.
+* `dbx-concurio`: Execution and caching logic using `diskcache` and file locking.
 
 ### Applications and Orchestration
 
-* `reggie-app-runner`: Tools for orchestrating applications including Caddy, Docker, Conda, and Git management.
-* `reggie-reflex`: Web applications and components built with the Reflex framework.
-* `reggie-cv`: Computer vision utilities using OpenCV and image hashing.
+* `dbx-app-runner`: Tools for orchestrating applications including Caddy, Docker, Conda, and Git management.
+* `dbx-reflex`: Web applications and components built with the Reflex framework.
+* `dbx-cv`: Computer vision utilities using OpenCV and image hashing.
 
 ### Examples and Demos
 

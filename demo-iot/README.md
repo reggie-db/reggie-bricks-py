@@ -40,8 +40,8 @@ Note: Requires access to a Kafka cluster and Databricks workspace configuration.
 
 ## Dependencies
 
-* `reggie-tools` (workspace dependency)
-* `reggie-concurio` (workspace dependency)
+* `dbx-tools` (workspace dependency)
+* `dbx-concurio` (workspace dependency)
 * `uvicorn`
 * `fastapi`
 * `kafka-python`

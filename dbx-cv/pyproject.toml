@@ -1,0 +1,16 @@
+[project]
+name = "dbx-cv"
+version = "0.0.1+g3f310a4"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "imagehash",
+    "opencv_python_headless",
+    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+    "scikit-image",
+]
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources.reggie-core]
+workspace = true

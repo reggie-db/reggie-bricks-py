@@ -2,10 +2,10 @@ import json
 import os
 
 import pandas as pd
+from dbx_tools import clients
 from kafka import KafkaConsumer, TopicPartition
 from pyspark.sql import functions as F
 from pyspark.sql.streaming.state import GroupState, GroupStateTimeout
-from reggie_tools import clients
 
 BOOTSTRAP_SERVERS = "kafka.lfpconnect.io:443"
 SECURITY_PROTOCOL = "SSL"

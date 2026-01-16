@@ -1,23 +1,23 @@
 [project]
-name = "demo-iot"
+name = "dbx-app-runner"
 version = "0.0.1+g3f310a4"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "aioreactive",
-    "fastapi",
-    "humanize",
-    "kafka-python",
-    "dbx-concurio @ file://${PROJECT_ROOT}/../dbx-concurio",
+    "dynaconf",
+    "giturlparse",
+    "psutil",
+    "pyaml",
+    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
-    "uvicorn",
-    "websockets",
+    "requirements-parser",
+    "sh",
 ]
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.sources.dbx-tools]
+[tool.uv.sources.reggie-core]
 workspace = true
 
-[tool.uv.sources.dbx-concurio]
+[tool.uv.sources.dbx-tools]
 workspace = true

@@ -6,7 +6,7 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.member-project]
-project.requires-puvrython = ">=3.12,<3.13"
+project.requires-python = ">=3.12,<3.13"
 
 [tool.pixi.workspace]
 name = "reggie-bricks-py"
@@ -27,12 +27,12 @@ caddy = ">=2.10.0,<3"
 
 [tool.uv.workspace]
 members = [
+    "dbx-app-runner",
+    "dbx-concurio",
+    "dbx-cv",
+    "dbx-reflex",
+    "dbx-tools",
     "demo-iot",
-    "reggie-app-runner",
-    "reggie-concurio",
     "reggie-core",
-    "reggie-cv",
-    "reggie-reflex",
-    "reggie-tools",
 ]
 exclude = ["prpr", "__*", "*.egg-info"]

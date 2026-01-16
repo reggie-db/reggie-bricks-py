@@ -1,9 +1,7 @@
 [project]
 name = "reggie-core"
-version = "0.0.1+gb7f5077"
+version = "0.0.1+g3f310a4"
 requires-python = ">=3.12,<3.13"
-requires-puvrython = ">=3.12,<3.13"
-
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"

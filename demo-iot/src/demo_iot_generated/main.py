@@ -11,6 +11,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, FastAPI, Path
 from lfp_logging import logs
+from lfp_logging.log_level import get as log_level_get
 from pydantic import conint
 
 from .models import (
@@ -152,7 +153,7 @@ class GeneratedRouter:
 
     def __init__(self, contract: APIContract, log_level=None):
         self.contract = contract
-        self.log_level = logs.log_level(log_level or logging.DEBUG)[1]
+        self.log_level = log_level_get(log_level, logging.DEBUG).level
         self.router = APIRouter()
 
         @self.router.post(

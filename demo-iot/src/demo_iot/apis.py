@@ -7,13 +7,13 @@ from typing import Callable, Optional
 
 import humanize
 from databricks.sdk.config import Config
+from dbx_concurio import caches
+from dbx_tools import catalogs, clients, genie
 from fastapi import Path, Request
 from lfp_logging import logs
 from pydantic import conint
 from pyspark.sql import functions as F
-from reggie_concurio import caches
 from reggie_core import objects, paths
-from reggie_tools import catalogs, clients, genie
 
 from demo_iot_generated.main import APIContract
 from demo_iot_generated.models import (

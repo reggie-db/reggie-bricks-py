@@ -5,11 +5,11 @@ import os
 from typing import Optional
 
 import uvicorn
+from dbx_tools import configs
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import StreamingResponse
 from kafka import TopicPartition
 from lfp_logging import logs
-from reggie_tools import configs
 from starlette.middleware.cors import CORSMiddleware
 
 from demo_iot.apis import APIImplementation
