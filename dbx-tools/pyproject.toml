@@ -4,16 +4,15 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-tools"
-version = "0.0.1+gccf66c7"
+version = "0.0.1+ga7e4302"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "dbx-runtime @ file://${PROJECT_ROOT}/../dbx-runtime",
+    "databricks-connect>=17.0,<17.3",
+    "databricks-sdk>=0.73.0",
+    "pyspark>=3.5.0",
     "pydantic",
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
 ]
 
 [tool.uv.sources.dbx-core]
-workspace = true
-
-[tool.uv.sources.dbx-runtime]
 workspace = true
