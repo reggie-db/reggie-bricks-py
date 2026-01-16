@@ -11,8 +11,9 @@ from typing import Any
 
 import logging
 from lfp_logging import logs
+from lfp_logging.log_level import get as log_level_get
 
-LOG = logs.logger(__file__)
+LOG = logs.logger(__name__)
 
 class APIContract(ABC):
     """Abstract base class defining the API contract."""
@@ -30,7 +31,7 @@ class GeneratedRouter:
 
     def __init__(self, contract: APIContract, log_level = None):
         self.contract = contract
-        self.log_level = logs.get_level(log_level, logging.DEBUG)[0]
+        self.log_level = log_level_get(log_level, logging.DEBUG).level
         self.router = APIRouter()
 
 

@@ -3,6 +3,7 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "dbx-core"
+name = "dbx-runtime"
 version = "0.0.1+gccf66c7"
 requires-python = ">=3.12,<3.13"
+dependencies = ["databricks-connect>=17.0,<17.3", "databricks-sdk>=0.73.0"]

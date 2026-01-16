@@ -53,6 +53,7 @@ def get(profile: str | None = None) -> Config:
     return config
 
 
+# noinspection PyProtectedMember
 def token(config: Config = None) -> str:
     """Extract an API token from the provided or default configuration."""
     if not config:
@@ -129,7 +130,7 @@ def config_value(
 
 
 def _cli_run(
-    *popenargs,
+    *args,
     profile=None,
     stdout=subprocess.PIPE,
     stderr=None,
@@ -140,19 +141,24 @@ def _cli_run(
     version = runtimes.version()
     if version:
         raise ValueError("cli unsupported in databricks runtime - version:{version}")
-    args = ["databricks", "--output", "json"]
-    args.extend(popenargs)
+    proc_args = ["databricks", "--output", "json"]
+    proc_args.extend((str(a) for a in args))
     if profile:
-        args.extend(["--profile", profile])
+        proc_args.extend(["--profile", profile])
     LOG.debug(
-        "cli run - args:%s stdout:%s stderr:%s check:%s", args, stdout, stderr, check
+        "cli run - args:%s stdout:%s stderr:%s check:%s",
+        proc_args,
+        stdout,
+        stderr,
+        check,
     )
     completed_process = subprocess.run(
-        args,
+        proc_args,
         stdout=stdout,
         stderr=stderr,
         check=check,
         timeout=timeout,
+        text=True,
     )
     return json.loads(
         completed_process.stdout

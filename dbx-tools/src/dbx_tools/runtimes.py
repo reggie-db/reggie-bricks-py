@@ -7,7 +7,7 @@ from typing import Any
 
 from pyspark.sql import SparkSession
 
-from dbx_tools import clients
+from dbx_tools import clients, platform
 
 
 @functools.cache
@@ -17,32 +17,17 @@ def version() -> str | None:
     return runtime_version or None
 
 
-def ipython() -> Any | None:
-    """Return the active IPython instance when executing inside a notebook."""
-    if get_ipython_function := _get_ipython_function():
-        if ip := get_ipython_function():
-            return ip
-    return None
-
-
-def ipython_user_ns(name: str) -> Any | None:
-    """Look up ``name`` within the IPython user namespace, if available."""
-    if ip := ipython():
-        return ip.user_ns.get(name)
-    return None
-
-
 def dbutils(spark: SparkSession = None):
     """Return the ``DBUtils`` handle associated with the current Spark session."""
-    if not spark:
-        if dbutils := ipython_user_ns("dbutils"):
-            return dbutils
-        spark = clients.spark()
-    if dbutils_class := _dbutils_class():
-        # Construct DBUtils using the detected class for the current session
-        if dbutils := dbutils_class(spark):
-            return dbutils
-    return None
+
+    def _load(spark_instance: SparkSession):
+        if dbutils_class := _dbutils_class():
+            return dbutils_class(spark_instance)
+        return None
+
+    if spark is None:
+        return platform.instance("dbutils", lambda: _load(clients.spark()))
+    return _load(spark)
 
 
 def context(spark: SparkSession = None) -> dict[str, Any]:

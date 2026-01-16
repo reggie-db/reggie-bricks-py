@@ -1,15 +1,16 @@
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
 [project]
 name = "dbx-concurio"
-version = "0.0.1+ged195ca"
+version = "0.0.1+gccf66c7"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "diskcache",
     "fasteners",
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
 ]
-[build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"]
-build-backend = "uv_build"
 
 [tool.uv.sources.dbx-core]
 workspace = true

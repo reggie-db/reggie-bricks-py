@@ -24,7 +24,7 @@ warnings.filterwarnings(
 )
 import fastapi_code_generator.__main__ as fastapi_code_generator_main  # noqa: E402
 
-LOG = logs.logger(__file__)
+LOG = logs.logger(__name__)
 _TIMESTAMP_RE = re.compile(rb"^\s*#\s*timestamp:.*$")
 
 

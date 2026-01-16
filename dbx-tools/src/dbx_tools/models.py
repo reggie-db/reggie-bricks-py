@@ -19,7 +19,7 @@ class SchemaModel(BaseModel):
     """
 
     @classmethod
-    def model_json_schema(cls, *args, exclude_keys: list[str] = [], **kwargs):
+    def model_json_schema(cls, *args, exclude_keys: list[str] | None = None, **kwargs):
         """
         Generate JSON schema for the model with optional key exclusion.
 
@@ -35,11 +35,14 @@ class SchemaModel(BaseModel):
             Dictionary containing the JSON schema with excluded keys removed
         """
         schema = super().model_json_schema(*args, **kwargs)
-        objects.remove_keys(schema, *exclude_keys)
+        if exclude_keys:
+            objects.remove_keys(schema, *exclude_keys)
         return schema
 
     @classmethod
-    def model_response_format(cls, *args, exclude_keys: list[str] = [], **kwargs):
+    def model_response_format(
+        cls, *args, exclude_keys: list[str] | None = None, **kwargs
+    ):
         """
         Generate OpenAI-compatible response format specification.
 

@@ -1,9 +1,9 @@
-[dependency-groups]
-dev = ["lfp-build @ git+https://github.com/regbo/lfp-build-py.git", "pytest"]
-
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["lfp-build @ git+https://github.com/regbo/lfp-build-py.git", "pytest"]
 
 [tool.member-project]
 project.requires-python = ">=3.12,<3.13"
@@ -32,6 +32,7 @@ members = [
     "dbx-core",
     "dbx-cv",
     "dbx-reflex",
+    "dbx-runtime",
     "dbx-tools",
     "demo-iot",
 ]

@@ -1,6 +1,10 @@
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
 [project]
 name = "demo-iot"
-version = "0.0.1+ged195ca"
+version = "0.0.1+gccf66c7"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aioreactive",
@@ -12,9 +16,6 @@ dependencies = [
     "uvicorn",
     "websockets",
 ]
-[build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"]
-build-backend = "uv_build"
 
 [tool.uv.sources.dbx-tools]
 workspace = true
