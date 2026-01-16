@@ -5,8 +5,8 @@ import platform
 import shutil
 
 import sh
+from dbx_core import paths
 from lfp_logging import logs
-from reggie_core import paths
 
 from dbx_app_runner import conda
 

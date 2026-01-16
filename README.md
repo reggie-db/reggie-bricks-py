@@ -19,7 +19,7 @@ The following projects are included in this workspace:
 
 ### Core Modules
 
-* `reggie-core`: Lightweight shared utilities for logging, object serialization, path handling, and common parsing operations.
+* `dbx-core`: Lightweight shared utilities for logging, object serialization, path handling, and common parsing operations.
 * `dbx-tools`: Databricks specific utilities for Spark sessions, configuration management, catalog access, and Genie API integration.
 * `dbx-concurio`: Execution and caching logic using `diskcache` and file locking.
 

@@ -11,8 +11,8 @@ from typing import Any, Sequence
 
 import psutil
 import sh
+from dbx_core import objects, paths
 from lfp_logging import logs
-from reggie_core import objects, paths
 from sh import RunningCommand
 
 from dbx_app_runner import app_runner, caddy, conda, docker, git

@@ -14,8 +14,8 @@ from urllib.request import urlretrieve
 import sh
 import yaml
 from dbx_concurio import caches
+from dbx_core import paths
 from lfp_logging import logs
-from reggie_core import paths
 
 _CONDA_DIR = paths.path(paths.home() / ".miniforge3", mkdir=True)
 _CONDA_DEPENDENCY_PATTERN = re.compile(

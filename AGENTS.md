@@ -2,7 +2,7 @@
 
 ## Project Structure and Module Organization
 
-The repository is a uv workspace containing multiple Python projects. Each project is located in its own directory at the root and follows the src layout. Shared utilities live in `reggie-core`, while Databricks specific tools are in `dbx-tools`. Build artifacts and wheels are stored in the `dist` directory.
+The repository is a uv workspace containing multiple Python projects. Each project is located in its own directory at the root and follows the src layout. Shared utilities live in `dbx-core`, while Databricks specific tools are in `dbx-tools`. Build artifacts and wheels are stored in the `dist` directory.
 
 ## Build, Test, and Development Commands
 

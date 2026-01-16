@@ -3,11 +3,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Callable, Generic, TypeVar
 
-import reggie_core.paths as paths
+import dbx_core.paths as paths
+from dbx_core import objects, strs
 from diskcache import Cache
 from fasteners import InterProcessLock
 from lfp_logging import logs
-from reggie_core import objects, strs
 
 LOG = logs.logger()
 

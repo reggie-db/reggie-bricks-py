@@ -6,8 +6,8 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
+from dbx_core import objects, paths
 from lfp_logging import logs
-from reggie_core import objects, paths
 
 from dbx_concurio import caches
 

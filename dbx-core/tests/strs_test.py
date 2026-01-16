@@ -1,8 +1,8 @@
-"""Quick checks for `reggie_core.strs.tokenize` behavior (moved from source)."""
+"""Quick checks for `dbx_core.strs.tokenize` behavior (moved from source)."""
 
 from lfp_logging import logs
 
-from reggie_core.strs import tokenize
+from dbx_core.strs import tokenize
 
 LOG = logs.logger()
 

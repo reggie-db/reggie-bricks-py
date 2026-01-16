@@ -5,8 +5,8 @@ Provides a base model class with utilities for generating JSON schemas with
 key exclusion and OpenAI-compatible response format specifications.
 """
 
+from dbx_core import objects, strs
 from pydantic import BaseModel
-from reggie_core import objects, strs
 
 
 class SchemaModel(BaseModel):

@@ -35,7 +35,7 @@ from dbx_cv import cams
 
 ## Dependencies
 
-* `reggie-core` (workspace dependency)
+* `dbx-core` (workspace dependency)
 * `scikit-image`
 * `imagehash`
 * `opencv-python-headless`

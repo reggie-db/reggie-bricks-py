@@ -15,8 +15,8 @@ from typing import Any, Iterable
 
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.dashboards import GenieMessage, GenieSpace, MessageStatus
+from dbx_core import objects
 from lfp_logging import logs
-from reggie_core import objects
 
 from dbx_tools import clients, configs
 

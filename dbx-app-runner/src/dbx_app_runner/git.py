@@ -4,8 +4,8 @@ from pathlib import Path
 import giturlparse
 import requirements
 import sh
+from dbx_core import paths
 from lfp_logging import logs
-from reggie_core import paths
 from requirements.requirement import Requirement
 
 

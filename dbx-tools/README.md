@@ -6,7 +6,7 @@ work with Databricks workspaces, clusters, and notebooks.
 
 ## Overview
 
-`dbx-tools` builds on `reggie-core` to provide Databricks specific functionality.
+`dbx-tools` builds on `dbx-core` to provide Databricks specific functionality.
 It handles Spark session creation, Databricks SDK configuration, catalog/schema
 discovery, and runtime environment detection. This module is designed to minimize
 boilerplate when working with Databricks.
@@ -133,7 +133,7 @@ for response in service.chat(conversation.conversation_id, "Follow-up question")
 
 ## Dependencies
 
-* `reggie-core` (workspace dependency)
+* `dbx-core` (workspace dependency)
 * `databricks-sdk`
 * `databricks-connect`
 * `pydantic`

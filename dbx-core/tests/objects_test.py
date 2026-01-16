@@ -1,5 +1,5 @@
 """
-Quick tests for `reggie_core.objects` moved from the source module.
+Quick tests for `dbx_core.objects` moved from the source module.
 
 This mirrors the original ad hoc prints from `objects.py` under a test location,
 while explicitly referencing `objects.to_json` and `objects.to_dict`.

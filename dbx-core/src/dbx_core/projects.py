@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 from types import ModuleType
 
-from reggie_core import paths
+from dbx_core import paths
 
 
 def name(input=None, default: str = None, git_origin: bool = True) -> str:

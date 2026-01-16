@@ -15,7 +15,7 @@ from typing import Iterable
 
 import tomlkit
 from benedict.dicts import benedict
-from reggie_core import logs
+from dbx_core import logs
 
 LOG = logs.logger(__file__)
 

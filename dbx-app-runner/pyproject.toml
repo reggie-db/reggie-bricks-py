@@ -1,13 +1,13 @@
 [project]
 name = "dbx-app-runner"
-version = "0.0.1+g3f310a4"
+version = "0.0.1+ged195ca"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "dynaconf",
     "giturlparse",
     "psutil",
     "pyaml",
-    "reggie-core @ file://${PROJECT_ROOT}/../reggie-core",
+    "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "requirements-parser",
     "sh",
@@ -16,7 +16,7 @@ dependencies = [
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.sources.reggie-core]
+[tool.uv.sources.dbx-core]
 workspace = true
 
 [tool.uv.sources.dbx-tools]

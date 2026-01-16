@@ -8,8 +8,8 @@ import socket
 from typing import Iterable
 
 import dynaconf
+from dbx_core import objects, parsers, strs
 from lfp_logging import logs
-from reggie_core import objects, parsers, strs
 
 from dbx_app_runner import conda, docker, git
 

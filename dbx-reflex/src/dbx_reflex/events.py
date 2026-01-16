@@ -1,8 +1,8 @@
 from typing import Any, Callable
 
 import reflex as rx
+from dbx_core import objects
 from reflex.event import EventSpec
-from reggie_core import objects
 
 
 def on_key_down_event(

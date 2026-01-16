@@ -70,7 +70,7 @@ for config in configs:
 
 ## Dependencies
 
-* `reggie-core` (workspace dependency)
+* `dbx-core` (workspace dependency)
 * `dbx-tools` (workspace dependency)
 * `dynaconf`
 * `pyaml`

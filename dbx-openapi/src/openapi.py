@@ -12,7 +12,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import utils
-from reggie_core import logs
+from dbx_core import logs
 
 from scripts import projects
 

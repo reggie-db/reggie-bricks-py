@@ -29,10 +29,10 @@ caddy = ">=2.10.0,<3"
 members = [
     "dbx-app-runner",
     "dbx-concurio",
+    "dbx-core",
     "dbx-cv",
     "dbx-reflex",
     "dbx-tools",
     "demo-iot",
-    "reggie-core",
 ]
 exclude = ["prpr", "__*", "*.egg-info"]

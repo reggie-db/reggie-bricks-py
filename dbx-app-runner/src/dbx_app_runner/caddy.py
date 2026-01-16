@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any
 
 import sh
+from dbx_core import objects, paths
 from lfp_logging import logs
-from reggie_core import objects, paths
 
 from dbx_app_runner import conda
 

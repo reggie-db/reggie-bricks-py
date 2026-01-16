@@ -1,5 +1,5 @@
 """
-Quick tests for `reggie_core.projects` moved from the source module.
+Quick tests for `dbx_core.projects` moved from the source module.
 
 This mirrors the original ad hoc prints from `projects.py` under a test location
 to avoid execution in the library module itself.
@@ -7,7 +7,7 @@ to avoid execution in the library module itself.
 
 from pathlib import Path
 
-from reggie_core.projects import _remote_origin_name, name
+from dbx_core.projects import _remote_origin_name, name
 
 if __name__ == "__main__":
     print(name())

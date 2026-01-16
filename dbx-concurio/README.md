@@ -86,7 +86,7 @@ executable_path.complete()
 
 ## Dependencies
 
-* `reggie-core` (workspace dependency)
+* `dbx-core` (workspace dependency)
 * `diskcache`
 * `fasteners`
 

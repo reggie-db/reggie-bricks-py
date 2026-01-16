@@ -20,7 +20,7 @@ import click
 import tomlkit
 import typer
 from benedict.dicts import benedict
-from reggie_core import logs
+from dbx_core import logs
 
 from scripts import projects
 from scripts.projects import Project
@@ -167,7 +167,7 @@ def sync_member_project_tool(sync_projects: _SYNC_PROJECTS_OPTION = None):
 
 @sync.command(
     name="member-project-dependencies",
-    help="Synchronize member project dependencies to use workspace file references. Updates project dependencies to reference workspace member projects using file:// URLs with ${PROJECT_ROOT} placeholders. Also configures tool.uv.sources to mark these dependencies as workspace members and removes stale workspace source entries for dependencies that are no longer member projects. Example: 'reggie-core' -> 'reggie-core @ file://${PROJECT_ROOT}/../reggie-core'",
+    help="Synchronize member project dependencies to use workspace file references. Updates project dependencies to reference workspace member projects using file:// URLs with ${PROJECT_ROOT} placeholders. Also configures tool.uv.sources to mark these dependencies as workspace members and removes stale workspace source entries for dependencies that are no longer member projects. Example: 'dbx-core' -> 'dbx-core @ file://${PROJECT_ROOT}/../dbx-core'",
 )
 def sync_member_project_dependencies(sync_projects: _SYNC_PROJECTS_OPTION = None):
     # Get list of all member project names for dependency matching

@@ -1,4 +1,4 @@
-# reggie-core
+# dbx-core
 
 Lightweight shared utilities intended to be reused by high level modules without
 carrying heavy dependencies. This module provides foundational functionality for
@@ -6,7 +6,7 @@ logging, object serialization, path handling, and common parsing operations.
 
 ## Overview
 
-`reggie-core` is designed as a minimal dependency base layer. It contains only
+`dbx-core` is designed as a minimal dependency base layer. It contains only
 essential utilities that other projects in the workspace can depend on without
 introducing unnecessary bloat. The module focuses on common operations needed
 across Databricks development workflows.
@@ -82,7 +82,7 @@ Tokenization helpers for names and identifiers:
 
 ```python
 from lfp_logging import logs
-from reggie_core import objects, paths
+from dbx_core import objects, paths
 
 # Automatic logging configuration
 log = logs.logger()

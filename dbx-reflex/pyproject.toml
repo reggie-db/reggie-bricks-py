@@ -1,6 +1,6 @@
 [project]
 name = "dbx-reflex"
-version = "0.0.1+g3f310a4"
+version = "0.0.1+ged195ca"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     # "reflex>=0.7.0,<0.8.0",
