@@ -187,6 +187,9 @@ prpr/
 **/*dev-local*
 **/*dev_local*
 
+**/.dev.*
+**/.dev
+
 nohup.out
 # pixi environments
 .pixi/*

@@ -12,6 +12,8 @@ from typing import Any, Callable, Iterable, TypeVar
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
+from dbx_core import projects
+from dotenv import dotenv_values
 from lfp_logging import logs
 
 from dbx_tools import catalogs, clients, runtimes
@@ -128,7 +130,7 @@ def value(
     The first loader that returns a truthy value wins. Callers can pass a subset of sources to control resolution order.
     """
     if not name:
-        raise ValueError("name cannot be empty")
+        raise ValueError("Name required")
     if not config_value_sources:
         config_value_sources = tuple(ConfigValueSource)
 
@@ -144,22 +146,23 @@ def value(
     def _config_value_loaders() -> Iterable[Callable[[str], Any]]:
         for config_value_source in config_value_sources:
             if config_value_source is ConfigValueSource.WIDGETS:
-                widgets = getattr(dbutils, "widgets", None)
-                widgets_get = getattr(widgets, "get", None)
-                if callable(widgets_get):
-                    yield widgets.get
-                # Provide a dict like fallback when widgets is present
-                yield _get_all(widgets).get
+                if widgets := getattr(dbutils, "widgets", None):
+                    if (widgets_get := getattr(widgets, "get", None)) and callable(
+                        widgets_get
+                    ):
+                        yield widgets_get
+                    # Provide a dict like fallback when widgets is present
+                    yield _get_all(widgets).get
             elif config_value_source is ConfigValueSource.SPARK_CONF:
-                config_spark = spark or clients.spark()
-                yield config_spark.conf.get
+                spark = clients.spark()
+                yield spark.conf.get
                 # Provide a dict like fallback when Spark conf is present
-                yield _get_all(config_spark, "conf").get
+                yield _get_all(spark, "conf").get
             elif config_value_source is ConfigValueSource.OS_ENVIRON:
                 yield os.environ.get
+                yield _env_data().get
             elif config_value_source is ConfigValueSource.SECRETS:
-                secrets = getattr(dbutils, "secrets", None)
-                if secrets:
+                if secrets := getattr(dbutils, "secrets", None):
                     if catalog_schema := catalogs.catalog_schema():
 
                         def _load_secret(key: str) -> str:
@@ -237,6 +240,22 @@ def _cli_version() -> dict[str, Any]:
     return version
 
 
+@functools.cache
+def _env_data() -> dict[str, Any]:
+    env_file_name = ".env"
+    env_file_names = [env_file_name]
+    if not runtimes.version():
+        env_file_names.append(".dev" + env_file_name)
+    data = {}
+    root_dir = projects.root_dir()
+    for env_file_name in env_file_names:
+        env_file = root_dir / env_file_name
+        if env_file.is_file():
+            if env_data := dotenv_values(env_file):
+                data.update(env_data)
+    return data
+
+
 class ConfigValueSource(Enum):
     """Enumerates supported config sources in order of discovery precedence."""
 
@@ -253,3 +272,4 @@ class ConfigValueSource(Enum):
 
 if __name__ == "__main__":
     print(_cli_version())
+    print(value("cool"))
