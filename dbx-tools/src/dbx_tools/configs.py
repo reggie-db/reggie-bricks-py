@@ -8,18 +8,19 @@ import subprocess
 from builtins import Exception, ValueError
 from configparser import ConfigParser
 from enum import Enum
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, TypeVar
 
-from databricks.connect import DatabricksSession
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
 from lfp_logging import logs
 
 from dbx_tools import catalogs, clients, runtimes
 
-LOG = logs.logger()
-
+T = TypeVar("T")
+_UNSET = object()
 _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME = "DEFAULT"
+
+LOG = logs.logger()
 
 
 def get() -> Config:
@@ -118,12 +119,11 @@ def _token(config: Config) -> str | None:
         return config.token
 
 
-def config_value(
+def value(
     name: str,
-    default: Any = None,
-    spark: DatabricksSession = None,
+    default_value: T | None = _UNSET,
     config_value_sources: list["ConfigValueSource"] = None,
-) -> Any:
+) -> T:
     """Fetch a configuration value by checking the configured sources in order.
     The first loader that returns a truthy value wins. Callers can pass a subset of sources to control resolution order.
     """
@@ -133,7 +133,7 @@ def config_value(
         config_value_sources = tuple(ConfigValueSource)
 
     dbutils = (
-        runtimes.dbutils(spark)
+        runtimes.dbutils()
         if (
             ConfigValueSource.WIDGETS in config_value_sources
             or ConfigValueSource.SECRETS in config_value_sources
@@ -160,7 +160,7 @@ def config_value(
             elif config_value_source is ConfigValueSource.SECRETS:
                 secrets = getattr(dbutils, "secrets", None)
                 if secrets:
-                    if catalog_schema := catalogs.catalog_schema(spark):
+                    if catalog_schema := catalogs.catalog_schema():
 
                         def _load_secret(key: str) -> str:
                             return secrets.get(scope=str(catalog_schema), key=key)
@@ -168,16 +168,19 @@ def config_value(
                         yield _load_secret
             else:
                 raise ValueError(
-                    f"unknown ConfigValueSource - config_value_source:{config_value_source}"
+                    f"Unknown ConfigValueSource - config_value_source:{config_value_source}"
                 )
 
     for loader in _config_value_loaders():
+        # noinspection PyBroadException
         try:
             if value := loader(name):
                 return value
         except Exception:
             pass
-    return default
+    if default_value is not _UNSET:
+        return default_value
+    raise ValueError(f"Config value not found: {name}")
 
 
 def _cli_run(*args, profile=None, stdout=subprocess.PIPE) -> dict[str, Any]:

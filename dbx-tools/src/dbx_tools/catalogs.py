@@ -38,11 +38,11 @@ def _catalog_schema_config() -> CatalogSchema | None:
     config_value_sources = configs.ConfigValueSource.without(
         configs.ConfigValueSource.SECRETS
     )
-    catalog_name = configs.config_value(
+    catalog_name = configs.value(
         "catalog_name", config_value_sources=config_value_sources
     )
     if catalog_name:
-        schema_name = configs.config_value(
+        schema_name = configs.value(
             "schema_name", config_value_sources=config_value_sources
         )
         if schema_name:
@@ -65,7 +65,7 @@ def _catalog_schema_config() -> CatalogSchema | None:
     return None
 
 
-def catalog_schema(spark: SparkSession = None) -> CatalogSchema | None:
+def catalog_schema(spark: SparkSession | None = None) -> CatalogSchema | None:
     """Derive the active catalog/schema, preferring configuration hints first."""
     catalog_schema_config = _catalog_schema_config()
     if catalog_schema_config:

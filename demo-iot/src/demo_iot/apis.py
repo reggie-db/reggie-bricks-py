@@ -62,9 +62,9 @@ class APIImplementation(APIContract):
     ) -> None:
         self.config = config
         self.current_request = current_request
-        self.spark = clients.spark(config)
+        self.spark = clients.spark()
         self.genie_service = genie.Service(
-            clients.workspace_client(config),
+            clients.workspace_client(),
             os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"),
         )
         self.detection_table_name = str(

@@ -1,8 +1,9 @@
-from dbx_tools import clients, configs, runtimes
+from dbx_tools import clients, configs
 
 if "__main__" == __name__:
     config = configs.get()
-    spark = clients.spark(config)
+    spark = clients.spark()
     print(config.host)
-    print(configs.token(config))
-    print(runtimes.context(spark))
+    print(configs.token())
+    print("done")
+    # print(runtimes.context(None))

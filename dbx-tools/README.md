@@ -106,29 +106,30 @@ print(f"Using {catalog_schema}")
 
 # Check runtime context
 if runtimes.is_notebook():
-    print("Running in notebook")
+  print("Running in notebook")
 elif runtimes.is_job():
-    print("Running in job")
+  print("Running in job")
 elif runtimes.is_pipeline():
-    print("Running in pipeline")
+  print("Running in pipeline")
 
 # Get config value from multiple sources
-value = configs.config_value(
-    "my_setting",
-    default="default_value",
-    config_value_sources=[
-        configs.ConfigValueSource.WIDGETS,
-        configs.ConfigValueSource.OS_ENVIRON,
-    ]
+value = configs.value(
+  "my_setting",
+  default="default_value",
+  config_value_sources=[
+    configs.ConfigValueSource.WIDGETS,
+    configs.ConfigValueSource.OS_ENVIRON,
+  ]
 )
 
 # Use Genie API for AI assistance
 from dbx_tools import genie
+
 service = genie.Service(clients.workspace_client(), "space-id")
 conversation = service.create_conversation("Initial question")
 for response in service.chat(conversation.conversation_id, "Follow-up question"):
-    for query in response.queries():
-        spark.sql(query).show()
+  for query in response.queries():
+    spark.sql(query).show()
 ```
 
 ## Dependencies

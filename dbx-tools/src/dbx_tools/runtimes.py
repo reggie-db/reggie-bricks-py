@@ -7,7 +7,6 @@ from copy import deepcopy
 from typing import Any, Collection, Mapping, TypeVar
 
 from packaging.version import Version
-from pyspark.sql import SparkSession
 
 from dbx_tools import clients
 
@@ -112,7 +111,7 @@ def _get_context_function():
         pass
 
 
-def is_notebook(spark: SparkSession = None) -> bool:
+def is_notebook() -> bool:
     """Return ``True`` when the current context indicates notebook execution."""
     if not version():
         return False
@@ -126,7 +125,7 @@ def is_job() -> bool:
     return context().get("isInJob", False)
 
 
-def is_pipeline(spark: SparkSession = None) -> bool:
+def is_pipeline() -> bool:
     """Return ``True`` when executing inside a Databricks pipeline rather than a job."""
     if not version() or is_job():
         return False
