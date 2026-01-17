@@ -5,17 +5,14 @@ import json
 import os
 import pathlib
 import subprocess
-import threading
 from builtins import Exception, ValueError
 from configparser import ConfigParser
 from enum import Enum
 from typing import Any, Callable, Iterable
 
-import yaml
 from databricks.connect import DatabricksSession
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
-from databricks.sdk.runtime import dbutils
 from lfp_logging import logs
 
 from dbx_tools import catalogs, clients, runtimes
@@ -23,51 +20,102 @@ from dbx_tools import catalogs, clients, runtimes
 LOG = logs.logger()
 
 _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME = "DEFAULT"
-_DATABRICKS_AUTH_LOGIN_LOCK = threading.Lock()
 
 
-def get(profile: str | None = None) -> Config:
-    dbutils
+def get() -> Config:
     """Return a cached or freshly created Databricks ``Config`` for the given profile.
     When a profile is not provided this function returns a process wide default. A lock is used to avoid concurrent initialization of the default object.
     """
-    if not profile:
-        profile = _databricks_config_profile_name_default()
-    for login in [False, True]:
-        if login:
-            if _cli_version():
-                _DATABRICKS_AUTH_LOGIN_LOCK.acquire()
-            else:
-                raise ValueError("Databricks CLI not installed")
+    if runtimes.version():
+        return Config()
+    else:
+        return _config()
+
+
+@functools.cache
+def _config() -> Config:
+    def _load() -> Config:
+        profile = _databricks_config_profile()
+        config: Config | None = None
+        exc: Exception | None = None
         try:
-            if login:
-                _cli_run("auth", "login", profile=profile)
+            config = Config(profile=profile) if profile else Config()
+            if not _token(config):
+                config = None
+        except Exception as e:
+            exc = e
+        if not config and profile and _cli_version():
+            _cli_run("auth", "login", profile=profile, stdout=subprocess.DEVNULL)
             config = Config(profile=profile)
-            break
-        except ValueError:
-            if login:
-                raise
-        finally:
-            if login:
-                _DATABRICKS_AUTH_LOGIN_LOCK.release()
-    if not config.cluster_id:
-        config.serverless_compute_id = "auto"
-    LOG.debug("config created - profile:%s config:%s", profile, config)
-    return config
+            if not _token(config):
+                config = None
+        if not config:
+            raise exc if exc else ValueError(f"Config not found: {profile}")
+
+        if not config.cluster_id and not config.serverless_compute_id:
+            config.serverless_compute_id = "auto"
+
+        return config
+
+    try:
+        from wrapt import LazyObjectProxy
+
+        # noinspection PyTypeChecker
+        return LazyObjectProxy(_load, interface=Config)
+    except ImportError:
+        return _load()
+
+
+def _databricks_config_profile() -> str | None:
+    profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "")
+    if not profile:
+        profiles = None
+        if _cli_version():
+            auth_profiles = _cli_run("auth", "profiles")
+            if profiles := auth_profiles.get("profiles", []):
+                profiles = [p["name"] for p in profiles]
+        else:
+            databricks_config_file = pathlib.Path.home() / ".databrickscfg"
+            if databricks_config_file.is_file():
+                config_parser = ConfigParser()
+                config_parser.optionxform = str
+                config_files_read = None
+                # noinspection PyBroadException
+                try:
+                    config_files_read = config_parser.read(
+                        str(databricks_config_file.absolute())
+                    )
+                except Exception:
+                    pass
+                if config_files_read:
+                    profiles = config_parser.sections()
+                    if config_parser.defaults():
+                        profiles = [
+                            _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME,
+                            *profiles,
+                        ]
+        if _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME in profiles:
+            profile = _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME
+        elif profiles and len(profiles) == 1:
+            profile = profiles[0]
+    return profile
 
 
 # noinspection PyProtectedMember
-def token(config: Config = None) -> str:
+def token() -> str:
     """Extract an API token from the provided or default configuration."""
-    if not config:
-        config = get()
-    if isinstance(config._header_factory, OAuthCredentialsProvider):
+    config = get()
+    if result := _token(config):
+        return result
+    raise ValueError(f"config token not found - config:{config}")
+
+
+def _token(config: Config) -> str | None:
+    header_factory = getattr(config, "_header_factory", None)
+    if isinstance(header_factory, OAuthCredentialsProvider):
         return config.oauth_token().access_token
     else:
-        if config.token:
-            return config.token
-        else:
-            raise ValueError(f"config token not found - config:{config}")
+        return config.token
 
 
 def config_value(
@@ -118,21 +166,6 @@ def config_value(
                             return secrets.get(scope=str(catalog_schema), key=key)
 
                         yield _load_secret
-            elif config_value_source is ConfigValueSource.BUNDLE:
-
-                def _load_variable(key: str) -> str | None:
-                    variable = _bundle_data().get("variables", {}).get(key, {})
-                    if variable:
-                        value = variable.get("value", None)
-                        if not value:
-                            default_value = variable.get("default", None)
-                            if default_value and "${" not in default_value:
-                                value = default_value
-                        if value:
-                            return value
-                    return None
-
-                yield _load_variable
             else:
                 raise ValueError(
                     f"unknown ConfigValueSource - config_value_source:{config_value_source}"
@@ -147,40 +180,21 @@ def config_value(
     return default
 
 
-def _cli_run(
-    *args,
-    profile=None,
-    stdout=subprocess.PIPE,
-    stderr=None,
-    check=False,
-    timeout=None,
-) -> tuple[dict[str, Any], subprocess.CompletedProcess]:
+def _cli_run(*args, profile=None, stdout=subprocess.PIPE) -> dict[str, Any]:
     """Execute the Databricks CLI and return the parsed JSON payload and process."""
-    version = runtimes.version()
-    if version:
-        raise ValueError("cli unsupported in databricks runtime - version:{version}")
+    if runtimes.version():
+        return {}
     proc_args = ["databricks", "--output", "json"]
     proc_args.extend((str(a) for a in args))
     if profile:
         proc_args.extend(["--profile", profile])
-    LOG.debug(
-        "cli run - args:%s stdout:%s stderr:%s check:%s",
-        proc_args,
-        stdout,
-        stderr,
-        check,
-    )
-    completed_process = subprocess.run(
+    proc = subprocess.run(
         proc_args,
         stdout=stdout,
-        stderr=stderr,
-        check=check,
-        timeout=timeout,
+        check=True,
         text=True,
     )
-    return json.loads(
-        completed_process.stdout
-    ) if completed_process.stdout else None, completed_process
+    return json.loads(proc.stdout)
 
 
 def _get_all(obj: Any, *attribues: str) -> dict[str, Any]:
@@ -213,85 +227,11 @@ def _get_all(obj: Any, *attribues: str) -> dict[str, Any]:
 
 
 @functools.cache
-def _databricks_config_profile_name_default() -> str:
-    profile_name = os.environ.get("DATABRICKS_CONFIG_PROFILE", "")
-    if not profile_name:
-        profile_names = None
-        if _cli_version():
-            auth_profiles = _cli_run("auth", "profiles")[0]
-            if profiles := auth_profiles.get("profiles", []):
-                profile_names = [p["name"] for p in profiles]
-        else:
-            databricks_config_file = pathlib.Path.home() / ".databrickscfg"
-            if databricks_config_file.is_file():
-                config_parser = ConfigParser()
-                config_parser.optionxform = str
-                config_files_read = None
-                try:
-                    config_files_read = config_parser.read(
-                        str(databricks_config_file.absolute())
-                    )
-                except Exception:
-                    pass
-                if config_files_read:
-                    profile_names = config_parser.sections()
-                    if config_parser.defaults():
-                        profile_names = [
-                            _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME,
-                            *profile_names,
-                        ]
-        if _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME in profile_names:
-            profile_name = _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME
-        elif profile_names and len(profile_names) == 1:
-            profile_name = profile_names[0]
-    if profile_name:
-        LOG.info(f"Databricks config profile name: {profile_name}")
-        return profile_name
-    else:
-        raise ValueError(
-            f"Databricks config profile name not found. Set a 'DEFAULT' profile name, limit ~/.databrickscfg to a single profile, or set 'DATABRICKS_CONFIG_PROFILE' environment variable. profile_names:{profile_names}"
-        )
-
-
-@functools.cache
 def _cli_version() -> dict[str, Any]:
     """Return cached CLI version metadata, if available outside a runtime cluster."""
-    version = (
-        None
-        if runtimes.version()
-        else _cli_run("version", check=False, stderr=subprocess.DEVNULL)[0]
-    )
-    LOG.debug(f"version:{version}")
+    version = _cli_run("version")
+    LOG.debug(f"CLI Version: {version}")
     return version
-
-
-@functools.cache
-def _bundle_data() -> dict[str, Any]:
-    data = {}
-    workspace_dir = _workspace_dir()
-    if workspace_dir:
-        bundle_file = workspace_dir / "databricks.yml"
-        if bundle_file.is_file():
-            try:
-                with bundle_file.open("r", encoding="utf-8") as f:
-                    data.update(yaml.safe_load(f))
-            except Exception:
-                pass
-    return data
-
-
-@functools.cache
-def _workspace_dir() -> pathlib.Path | None:
-    proc = subprocess.run(
-        ["uv", "workspace", "dir"],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-    )
-    if proc.returncode == 0:
-        if dir := proc.stdout.strip():
-            return pathlib.Path(dir)
-    return None
 
 
 class ConfigValueSource(Enum):
@@ -301,7 +241,6 @@ class ConfigValueSource(Enum):
     SPARK_CONF = 1
     OS_ENVIRON = 3
     SECRETS = 4
-    BUNDLE = 5
 
     @classmethod
     def without(cls, *excluded):
@@ -310,4 +249,4 @@ class ConfigValueSource(Enum):
 
 
 if __name__ == "__main__":
-    print(config_value("catalog_name"))
+    print(_cli_version())

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-tools"
-version = "0.0.1+gfcec25f"
+version = "0.0.1+g331acef"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "databricks-connect>=17.3,<18.0",
@@ -12,6 +12,9 @@ dependencies = [
     "pyyaml",
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
 ]
+
+[dependency-groups]
+dev = ["wrapt>=2.0"]
 
 [tool.uv.sources.dbx-core]
 workspace = true

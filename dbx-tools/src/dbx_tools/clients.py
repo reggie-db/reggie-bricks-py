@@ -1,10 +1,10 @@
 """Client factory helpers shared across Databricks command-line tools."""
 
+import functools
 from datetime import datetime
 
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.config import Config
 from lfp_logging import logs
 from pyspark.sql import SparkSession
 
@@ -13,32 +13,36 @@ from dbx_tools import configs, runtimes
 LOG = logs.logger(__name__)
 
 
-def workspace_client(config: Config | None = None) -> WorkspaceClient:
+def workspace_client() -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` using the provided or cached config.
     Uses the default cached config when none is supplied.
     """
-    if not config:
-        config = configs.get()
-    return WorkspaceClient(config=config)
+    return WorkspaceClient(config=configs.get())
 
 
-def spark(config: Config | None = None) -> SparkSession:
+def spark() -> SparkSession:
     """Return a Spark session sourced from the runtime or Databricks Connect."""
+    if instance := runtimes.ipython_user_ns("spark", None):
+        return instance
+    if runtimes.version():
+        return SparkSession.builder.getOrCreate()
+    return _spark()
 
-    if config is None:
 
-        def _load():
-            if runtimes.version():
-                return SparkSession.builder.getOrCreate()
-            else:
-                default_config = configs.get()
-                LOG.info("Databricks connect session initializing")
-                start_time = datetime.now()
-                sess = DatabricksSession.builder.sdkConfig(default_config).getOrCreate()
-                elapsed = (datetime.now() - start_time).total_seconds()
-                LOG.info(f"Databricks connect session created in {elapsed:.2f}s")
-                return sess
+@functools.cache
+def _spark() -> SparkSession:
+    def _load():
+        LOG.info("Databricks connect session initializing")
+        start_time = datetime.now()
+        sess = DatabricksSession.builder.sdkConfig(configs.get()).getOrCreate()
+        elapsed = (datetime.now() - start_time).total_seconds()
+        LOG.info(f"Databricks connect session created in {elapsed:.2f}s")
+        return sess
 
-        return runtimes.instance("spark", _load)
+    try:
+        from wrapt import LazyObjectProxy
 
-    return DatabricksSession.builder.sdkConfig(config).getOrCreate()
+        # noinspection PyTypeChecker
+        return LazyObjectProxy(_load, interface=SparkSession)
+    except ImportError:
+        return _load()
