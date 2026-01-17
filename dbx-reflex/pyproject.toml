@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-reflex"
-version = "0.0.1+g1d6382e"
+version = "0.0.1+gc08fdea"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     # "reflex>=0.7.0,<0.8.0",

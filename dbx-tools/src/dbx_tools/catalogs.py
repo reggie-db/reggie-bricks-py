@@ -39,11 +39,11 @@ def _catalog_schema_config() -> CatalogSchema | None:
         configs.ConfigValueSource.SECRETS
     )
     catalog_name = configs.value(
-        "catalog_name", config_value_sources=config_value_sources
+        "catalog_name", None, config_value_sources=config_value_sources
     )
     if catalog_name:
         schema_name = configs.value(
-            "schema_name", config_value_sources=config_value_sources
+            "schema_name", None, config_value_sources=config_value_sources
         )
         if schema_name:
             return CatalogSchema(catalog_name, schema_name)

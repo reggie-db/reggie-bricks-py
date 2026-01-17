@@ -158,9 +158,6 @@ def value(
                 yield spark.conf.get
                 # Provide a dict like fallback when Spark conf is present
                 yield _get_all(spark, "conf").get
-            elif config_value_source is ConfigValueSource.OS_ENVIRON:
-                yield os.environ.get
-                yield _env_data().get
             elif config_value_source is ConfigValueSource.SECRETS:
                 if secrets := getattr(dbutils, "secrets", None):
                     if catalog_schema := catalogs.catalog_schema():
@@ -169,6 +166,26 @@ def value(
                             return secrets.get(scope=str(catalog_schema), key=key)
 
                         yield _load_secret
+            elif config_value_source is ConfigValueSource.OS_ENVIRON:
+
+                def _load(env: dict[str, Any], upper: bool, key: str) -> Any | None:
+                    if upper:
+                        key_upper = key.upper()
+                        if key_upper == key:
+                            return None
+                        else:
+                            key = key_upper
+                    return env.get(key, None)
+
+                def _loader(
+                    env: dict[str, Any], upper: bool
+                ) -> Callable[[str], Any | None]:
+                    return lambda key: _load(env, upper, key)
+
+                for upper in (False, True):
+                    for env in (os.environ, _env_data()):
+                        yield _loader(env, upper)
+
             else:
                 raise ValueError(
                     f"Unknown ConfigValueSource - config_value_source:{config_value_source}"
@@ -272,4 +289,4 @@ class ConfigValueSource(Enum):
 
 if __name__ == "__main__":
     print(_cli_version())
-    print(value("cool"))
+    print(value("COOL"))
