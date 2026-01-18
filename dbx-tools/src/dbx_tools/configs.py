@@ -138,19 +138,26 @@ def value(
                 return value
         except Exception:
             pass
-    if bundle_path and _cli_version():
-        parts = bundle_path.split(".")
-        data = _bundle_data()
-        for idx, part in enumerate(parts):
-            if isinstance(data, Mapping):
-                value = data.get(part, None)
-                if value:
-                    if idx == len(parts) - 1:
-                        return value
-                    else:
+    if _cli_version():
+        if data := _bundle_data():
+            if not bundle_path:
+                bundle_path = f"variables.{name}"
+            parts = bundle_path.split(".")
+            for idx, part in enumerate(parts):
+                if isinstance(data, Mapping):
+                    value = data.get(part, None)
+                    last = idx == len(parts) - 1
+                    if not last:
                         data = value
-                else:
-                    break
+                    else:
+                        is_variable = "variables" == parts[0]
+                        if is_variable:
+                            if isinstance(value, Mapping):
+                                value = value.get("value", None)
+                            else:
+                                value = None
+                        if isinstance(value, str) and value:
+                            return value
 
     if default_value is not _UNSET:
         return default_value
@@ -288,3 +295,7 @@ class ConfigValueSource(Enum):
     def without(cls, *excluded):
         """Return members excluding any provided in ``excluded`` while preserving order."""
         return [member for member in cls if member not in excluded]
+
+
+if __name__ == "__main__":
+    print(value("cool_dude"))
