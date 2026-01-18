@@ -42,14 +42,14 @@ def _config() -> Config:
         exc: Exception | None = None
         try:
             config = Config(profile=profile) if profile else Config()
-            if not _token(config):
+            if not token(config):
                 config = None
         except Exception as e:
             exc = e
         if not config and profile and _cli_version():
             _cli_run("auth", "login", profile=profile, stdout=subprocess.DEVNULL)
             config = Config(profile=profile)
-            if not _token(config):
+            if not token(config):
                 config = None
         if not config:
             raise exc if exc else ValueError(f"Config not found: {profile}")
@@ -100,21 +100,16 @@ def _databricks_config_profile() -> str | None:
     return profile
 
 
-# noinspection PyProtectedMember
-def token() -> str:
-    """Extract an API token from the provided or default configuration."""
-    config = get()
-    if result := _token(config):
-        return result
-    raise ValueError(f"config token not found - config:{config}")
-
-
-def _token(config: Config) -> str | None:
+def token(config: Config | None = None) -> str | None:
+    if not config:
+        config = get()
     header_factory = getattr(config, "_header_factory", None)
     if isinstance(header_factory, OAuthCredentialsProvider):
         return config.oauth_token().access_token
     else:
-        return config.token
+        if token := config.token:
+            return token
+        raise ValueError(f"Config token not found - config:{config}")
 
 
 def value(
