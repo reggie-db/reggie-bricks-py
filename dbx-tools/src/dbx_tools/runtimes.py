@@ -6,6 +6,7 @@ import os
 from copy import deepcopy
 from typing import Any, Collection, Mapping, TypeVar
 
+from dbx_core import imports
 from packaging.version import Version
 
 from dbx_tools import clients
@@ -23,7 +24,7 @@ def version() -> Version | None:
 
 
 def ipython_user_ns(key: str, default_value: T | None = _UNSET) -> T | None:
-    if get_ipython_function := _get_ipython_function():
+    if get_ipython_function := imports.resolve("IPython", "get_ipython"):
         if ipython := get_ipython_function():
             value = ipython.user_ns.get(key, _UNSET)
             if value is not _UNSET:
@@ -33,41 +34,21 @@ def ipython_user_ns(key: str, default_value: T | None = _UNSET) -> T | None:
     raise KeyError(key)
 
 
-@functools.cache
-def _get_ipython_function():
-    """Return the ``get_ipython`` callable when IPython is importable."""
-    try:
-        from IPython import get_ipython  # pyright: ignore[reportMissingImports]
-
-        return get_ipython
-    except ImportError:
-        pass
-
-
 def dbutils() -> "DBUtils":
     """Return the ``DBUtils`` handle associated with the current Spark session."""
     if instance := ipython_user_ns("dbutils", None):
         return instance
-    if pyspark_dbutils_class := _pyspark_dbutils_class():
+    if pyspark_dbutils_class := imports.resolve("pyspark.dbutils", "DBUtils"):
         # noinspection PyTypeChecker
         return pyspark_dbutils_class(clients.spark())
     raise ValueError("DBUtils is not available")
 
 
-@functools.cache
-def _pyspark_dbutils_class():
-    """Import and cache the DBUtils entry point when available."""
-    try:
-        from pyspark.dbutils import DBUtils as PySparkDBUtils
-
-        return PySparkDBUtils
-    except ImportError:
-        return False
-
-
 def context(default_value: dict[str, Any] | None = _UNSET) -> dict[str, Any]:
     """Assemble runtime context information from notebook and Spark sources."""
-    if get_context_function := _get_context_function():
+    if get_context_function := imports.resolve(
+        "dbruntime.databricks_repl_context", "get_context"
+    ):
         if (context_instance := get_context_function()) is not None:
             return deepcopy(context_instance.__dict__)
     dbutils_instance = dbutils()
@@ -96,19 +77,6 @@ def context(default_value: dict[str, Any] | None = _UNSET) -> dict[str, Any]:
     if default_value is not _UNSET:
         return default_value
     raise ValueError("Context is not available")
-
-
-@functools.cache
-def _get_context_function():
-    """Return the Databricks notebook context accessor when available."""
-    try:
-        from dbruntime.databricks_repl_context import (
-            get_context,  # pyright: ignore[reportMissingImports]
-        )
-
-        return get_context
-    except ImportError:
-        pass
 
 
 def is_notebook() -> bool:

@@ -8,12 +8,11 @@ import subprocess
 from builtins import Exception, ValueError
 from configparser import ConfigParser
 from enum import Enum
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, Mapping, TypeVar
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
-from dbx_core import projects
-from dotenv import dotenv_values
+from dbx_core import imports, projects, strs
 from lfp_logging import logs
 
 from dbx_tools import catalogs, clients, runtimes
@@ -60,12 +59,9 @@ def _config() -> Config:
 
         return config
 
-    try:
-        from wrapt import LazyObjectProxy
-
-        # noinspection PyTypeChecker
-        return LazyObjectProxy(_load, interface=Config)
-    except ImportError:
+    if lazy_object_proxy := imports.resolve("wrapt", "LazyObjectProxy"):
+        return lazy_object_proxy(_load, interface=Config)
+    else:
         return _load()
 
 
@@ -124,6 +120,7 @@ def _token(config: Config) -> str | None:
 def value(
     name: str,
     default_value: T | None = _UNSET,
+    bundle_path: str | None = None,
     config_value_sources: list["ConfigValueSource"] = None,
 ) -> T:
     """Fetch a configuration value by checking the configured sources in order.
@@ -134,6 +131,35 @@ def value(
     if not config_value_sources:
         config_value_sources = tuple(ConfigValueSource)
 
+    for loader in _value_loaders(config_value_sources):
+        # noinspection PyBroadException
+        try:
+            if value := loader(name):
+                return value
+        except Exception:
+            pass
+    if bundle_path and _cli_version():
+        parts = bundle_path.split(".")
+        data = _bundle_data()
+        for idx, part in enumerate(parts):
+            if isinstance(data, Mapping):
+                value = data.get(part, None)
+                if value:
+                    if idx == len(parts) - 1:
+                        return value
+                    else:
+                        data = value
+                else:
+                    break
+
+    if default_value is not _UNSET:
+        return default_value
+    raise ValueError(f"Config value not found: {name}")
+
+
+def _value_loaders(
+    config_value_sources: list["ConfigValueSource"],
+) -> Iterable[Callable[[str], Any]]:
     dbutils = (
         runtimes.dbutils()
         if (
@@ -143,64 +169,37 @@ def value(
         else None
     )
 
-    def _config_value_loaders() -> Iterable[Callable[[str], Any]]:
-        for config_value_source in config_value_sources:
-            if config_value_source is ConfigValueSource.WIDGETS:
-                if widgets := getattr(dbutils, "widgets", None):
-                    if (widgets_get := getattr(widgets, "get", None)) and callable(
-                        widgets_get
-                    ):
-                        yield widgets_get
-                    # Provide a dict like fallback when widgets is present
-                    yield _get_all(widgets).get
-            elif config_value_source is ConfigValueSource.SPARK_CONF:
-                spark = clients.spark()
-                yield spark.conf.get
-                # Provide a dict like fallback when Spark conf is present
-                yield _get_all(spark, "conf").get
-            elif config_value_source is ConfigValueSource.SECRETS:
-                if secrets := getattr(dbutils, "secrets", None):
-                    if catalog_schema := catalogs.catalog_schema():
+    for config_value_source in config_value_sources:
+        if config_value_source is ConfigValueSource.WIDGETS:
+            if widgets := getattr(dbutils, "widgets", None):
+                if (widgets_get := getattr(widgets, "get", None)) and callable(
+                    widgets_get
+                ):
+                    yield widgets_get
+                # Provide a dict like fallback when widgets is present
+                yield _get_all(widgets).get
+        elif config_value_source is ConfigValueSource.SPARK_CONF:
+            spark = clients.spark()
+            yield spark.conf.get
+            # Provide a dict like fallback when Spark conf is present
+            yield _get_all(spark, "conf").get
+        elif config_value_source is ConfigValueSource.SECRETS:
+            if secrets := getattr(dbutils, "secrets", None):
+                if catalog_schema := catalogs.catalog_schema():
 
-                        def _load_secret(key: str) -> str:
-                            return secrets.get(scope=str(catalog_schema), key=key)
+                    def _load_secret(key: str) -> str:
+                        return secrets.get(scope=str(catalog_schema), key=key)
 
-                        yield _load_secret
-            elif config_value_source is ConfigValueSource.OS_ENVIRON:
+                    yield _load_secret
+        elif config_value_source is ConfigValueSource.OS_ENVIRON:
+            yield os.getenv
+            yield lambda k: os.getenv(k.upper())
+            yield lambda k: os.getenv("_".join(strs.tokenize(k)).upper())
 
-                def _load(env: dict[str, Any], upper: bool, key: str) -> Any | None:
-                    if upper:
-                        key_upper = key.upper()
-                        if key_upper == key:
-                            return None
-                        else:
-                            key = key_upper
-                    return env.get(key, None)
-
-                def _loader(
-                    env: dict[str, Any], upper: bool
-                ) -> Callable[[str], Any | None]:
-                    return lambda key: _load(env, upper, key)
-
-                for upper in (False, True):
-                    for env in (os.environ, _env_data()):
-                        yield _loader(env, upper)
-
-            else:
-                raise ValueError(
-                    f"Unknown ConfigValueSource - config_value_source:{config_value_source}"
-                )
-
-    for loader in _config_value_loaders():
-        # noinspection PyBroadException
-        try:
-            if value := loader(name):
-                return value
-        except Exception:
-            pass
-    if default_value is not _UNSET:
-        return default_value
-    raise ValueError(f"Config value not found: {name}")
+        else:
+            raise ValueError(
+                f"Unknown ConfigValueSource - config_value_source:{config_value_source}"
+            )
 
 
 def _cli_run(*args, profile=None, stdout=subprocess.PIPE) -> dict[str, Any]:
@@ -258,35 +257,34 @@ def _cli_version() -> dict[str, Any]:
 
 
 @functools.cache
-def _env_data() -> dict[str, Any]:
-    env_file_name = ".env"
-    env_file_names = [env_file_name]
-    if not runtimes.version():
-        env_file_names.append(".dev" + env_file_name)
-    data = {}
+def _bundle_data() -> dict[str, Any]:
     root_dir = projects.root_dir()
-    for env_file_name in env_file_names:
-        env_file = root_dir / env_file_name
-        if env_file.is_file():
-            if env_data := dotenv_values(env_file):
-                data.update(env_data)
-    return data
+    bundle_file = root_dir / "databricks.yml"
+    if bundle_file.is_file():
+        # noinspection PyBroadException
+        try:
+            proc = subprocess.run(
+                ["databricks", "bundle", "--output", "json", "validate"],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+            )
+            if proc.returncode == 0:
+                return json.loads(proc.stdout)
+        except Exception:
+            pass
+    return {}
 
 
 class ConfigValueSource(Enum):
     """Enumerates supported config sources in order of discovery precedence."""
 
-    WIDGETS = 2
-    SPARK_CONF = 1
-    OS_ENVIRON = 3
-    SECRETS = 4
+    WIDGETS = 1
+    SPARK_CONF = 2
+    SECRETS = 3
+    OS_ENVIRON = 4
 
     @classmethod
     def without(cls, *excluded):
         """Return members excluding any provided in ``excluded`` while preserving order."""
         return [member for member in cls if member not in excluded]
-
-
-if __name__ == "__main__":
-    print(_cli_version())
-    print(value("COOL"))
