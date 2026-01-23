@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+gcc62a6b"
+version = "0.0.1+g49cbdaf"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aioreactive",
@@ -15,6 +15,8 @@ dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "uvicorn",
     "websockets",
+    "sqlalchemy>=2.0.45",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [tool.uv.sources.dbx-tools]

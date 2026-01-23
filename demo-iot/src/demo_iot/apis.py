@@ -65,7 +65,7 @@ class APIImplementation(APIContract):
         self.spark = clients.spark()
         self.genie_service = genie.Service(
             clients.workspace_client(),
-            os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"),
+            os.getenv("GENIE_SPACE_ID", "01f0f874d8721992b9d02f8f03487924"),
         )
         self.detection_table_name = str(
             catalogs.catalog_schema_table("detections", self.spark)

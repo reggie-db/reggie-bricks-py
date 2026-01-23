@@ -7,10 +7,12 @@ from copy import deepcopy
 from typing import Any, Collection, Mapping, TypeVar
 
 from dbx_core import imports
+from lfp_logging import logs
 from packaging.version import Version
 
 from dbx_tools import clients
 
+LOG = logs.logger()
 T = TypeVar("T")
 _UNSET = object()
 
@@ -18,8 +20,10 @@ _UNSET = object()
 @functools.cache
 def version() -> Version | None:
     """Return the Databricks runtime version if running on a cluster."""
-    if runtime_version := os.environ.get("DATABRICKS_RUNTIME_VERSION"):
-        return Version(runtime_version)
+    if runtime_version_env := os.environ.get("DATABRICKS_RUNTIME_VERSION"):
+        runtime_version = Version(runtime_version_env)
+        LOG.debug(f"Runtime Version: {runtime_version}")
+        return runtime_version
     return None
 
 
