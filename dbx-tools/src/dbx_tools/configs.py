@@ -93,10 +93,11 @@ def _databricks_config_profile() -> str | None:
                             _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME,
                             *profiles,
                         ]
-        if _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME in profiles:
-            profile = _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME
-        elif profiles and len(profiles) == 1:
-            profile = profiles[0]
+        if profiles:
+            if _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME in profiles:
+                profile = _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME
+            elif len(profiles) == 1:
+                profile = profiles[0]
     return profile
 
 
