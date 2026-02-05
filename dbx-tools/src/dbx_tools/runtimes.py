@@ -4,6 +4,7 @@ import functools
 import json
 import os
 from copy import deepcopy
+from dataclasses import dataclass, fields
 from typing import Any, Collection, Mapping, TypeVar
 
 from dbx_core import imports
@@ -17,6 +18,13 @@ T = TypeVar("T")
 _UNSET = object()
 
 
+@dataclass
+class AppInfo:
+    name: str
+    url: str
+    port: int
+
+
 @functools.cache
 def version() -> Version | None:
     """Return the Databricks runtime version if running on a cluster."""
@@ -25,6 +33,21 @@ def version() -> Version | None:
         LOG.debug(f"Runtime Version: {runtime_version}")
         return runtime_version
     return None
+
+
+def app_info() -> AppInfo | None:
+    """Return the application information associated with the current cluster."""
+    data = {}
+    for f in fields(AppInfo):
+        field_name = f.name
+        value = os.environ.get(f"DATABRICKS_APP_{field_name.upper()}", None)
+        if value is None:
+            return None
+        try:
+            data[field_name] = f.type(value)
+        except (TypeError, ValueError):
+            return None
+    return AppInfo(**data)
 
 
 def ipython_user_ns(key: str, default_value: T | None = _UNSET) -> T | None:

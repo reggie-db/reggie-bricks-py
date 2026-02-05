@@ -206,7 +206,7 @@ def _value_loaders(
 
 def _cli_run(*args, profile=None, stdout=subprocess.PIPE) -> dict[str, Any]:
     """Execute the Databricks CLI and return the parsed JSON payload and process."""
-    if runtimes.version():
+    if runtimes.version() or runtimes.app_info():
         return {}
     proc_args = ["databricks", "--output", "json"]
     proc_args.extend((str(a) for a in args))
