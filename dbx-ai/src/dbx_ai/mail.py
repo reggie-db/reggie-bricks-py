@@ -1,8 +1,6 @@
 import email
 import json
-import os
 import pathlib
-import pwd
 import re
 import subprocess
 import threading
@@ -15,7 +13,7 @@ from functools import cached_property
 from http.client import HTTPMessage
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from tempfile import TemporaryDirectory
-from typing import Iterable, Iterator
+from typing import Iterator
 from urllib.parse import unquote, urlparse
 
 from lfp_logging import logs
@@ -460,47 +458,6 @@ def _parse_mail_date(value: str) -> datetime:
         return datetime.fromisoformat(v)
     except Exception as e:  # noqa: BLE001 - raise a clearer message below
         raise ValueError(f"Unrecognized mail date format: {value!r}") from e
-
-
-def _parse_bool(value: str) -> bool:
-    """
-    Parse script boolean-ish values.
-
-    The script typically returns "true" / "false" (lowercase) when coerced to string,
-    but we accept common variants to be resilient to format changes.
-    """
-    v = str(value).strip().lower()
-    return v in {"true", "1", "yes", "y", "t"}
-
-
-def _iter_kv_blocks(lines: Iterable[str]) -> Iterator[dict[str, str]]:
-    """
-    Convert a stream of `key=value` lines into blocks separated by `---`.
-    """
-
-    current: dict[str, str] = {}
-    for raw in lines:
-        line = raw.strip().removeprefix("(* ").removesuffix(" *)")
-        if not line:
-            continue
-        if line.startswith("ERROR:"):
-            break
-        if line == "---":
-            if current:
-                yield current
-                current = {}
-            continue
-        if "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        current[k.strip()] = v.strip()
-
-    if current:
-        yield current
-
-
-def _username():
-    return pwd.getpwuid(os.getuid())[0]
 
 
 if __name__ == "__main__":
