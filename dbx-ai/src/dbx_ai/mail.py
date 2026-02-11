@@ -37,25 +37,6 @@ _UNICODE_MARKS_RE = re.compile(
 _WHITESPACE_RE = re.compile(r"\s+")
 
 
-class EmailMessageMetadata(BaseModel):
-    account: int = Field(..., description="Account index (1-based).")
-    mailbox: str = Field(
-        ..., description='Mailbox name within the account (example: "INBOX").'
-    )
-    id: str = Field(
-        ..., description="Message identifier (as returned by the mail provider)."
-    )
-    subject: str = Field(
-        ..., description="Message subject line. Empty string if missing."
-    )
-    sender: str = Field(
-        ...,
-        description="Message sender (display name and/or email). Empty string if missing.",
-    )
-    received: datetime = Field(..., description="Message received timestamp.")
-    is_read: bool = Field(..., description="True if the message is marked as read.")
-
-
 class EmailMessage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

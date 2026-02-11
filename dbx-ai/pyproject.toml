@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+g188400a"
+version = "0.0.1+gd3e9da6"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
