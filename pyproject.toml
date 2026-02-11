@@ -27,6 +27,7 @@ caddy = ">=2.10.0,<3"
 
 [tool.uv.workspace]
 members = [
+    "dbx-ai",
     "dbx-app-runner",
     "dbx-concurio",
     "dbx-core",

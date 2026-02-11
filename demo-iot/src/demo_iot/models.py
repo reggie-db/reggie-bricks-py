@@ -19,7 +19,6 @@ class Frame(Base):
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     timestamp = Column(DateTime(timezone=True), nullable=True)
-    ingest_timestamp = Column(DateTime(timezone=True), nullable=True)
     update_timestamp = Column(DateTime(timezone=True), nullable=True)
     stream_id = Column(String, nullable=True)
     fps = Column(Integer, nullable=True)
@@ -31,7 +30,7 @@ class Detection(Base):
 
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     frame_id = Column(PG_UUID(as_uuid=True), ForeignKey("frames.id"), nullable=False)
-    detection_timestamp = Column(DateTime(timezone=True), nullable=False)
+    inference_timestamp = Column(DateTime(timezone=True), nullable=False)
     label = Column(String, nullable=False)
     class_id = Column(Integer, nullable=False)
     confidence = Column(Float, nullable=False)

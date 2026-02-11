@@ -6,13 +6,15 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Optional
 
 from fastapi import APIRouter, FastAPI, Path
 from lfp_logging import logs
 from lfp_logging.log_level import get as log_level_get
 from pydantic import conint
+
+from demo_iot.date_utils import DateQuery
 
 from .models import (
     AiChatPostRequest,
@@ -329,14 +331,20 @@ class GeneratedRouter:
             responses={"500": {"model": Error}},
             tags=["Object Detection"],
         )
-        def _get_hourly_detections(date: Optional[date] = None):
+        def _get_hourly_detections(
+            date_val: datetime | None = DateQuery(
+                "date", description="Date to filter hourly detections (human readable)"
+            ),
+        ):
             LOG.log(
                 self.log_level,
                 "api request:%s args=%s",
                 "get_hourly_detections",
-                {"date": date},
+                {"date": date_val},
             )
-            return self.contract.get_hourly_detections(date)
+            # Convert datetime to date for the contract implementation
+            date_only = date_val.date() if date_val else None
+            return self.contract.get_hourly_detections(date_only)
 
         @self.router.get(
             "/object-detection/recent",

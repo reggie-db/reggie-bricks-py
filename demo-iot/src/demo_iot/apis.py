@@ -71,7 +71,7 @@ class APIImplementation(APIContract):
             catalogs.catalog_schema_table("detections", self.spark)
         )
         self.query_cache = caches.DiskCache(
-            paths.temp_dir() / f"{__class__.__name__}_v2"
+            paths.temp_dir() / f"{__class__.__name__}_v3"
         )
 
     def send_chat_message(self, body: AiChatPostRequest) -> AiChatPostResponse | Error:
