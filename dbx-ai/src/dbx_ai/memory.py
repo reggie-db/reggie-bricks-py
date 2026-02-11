@@ -105,12 +105,7 @@ def kv_read(type: str, key: Any) -> Any | None:
 def kv_write(type: str, key: Any, value: Any) -> None:
     doc_id = _encode_doc_id(type, key)
     encoded = _encode_value(value)
-
-    _kv_collection().add(
-        ids=[doc_id],
-        documents=[encoded],
-        metadatas=[{"type": type}],
-    )
+    _kv_collection().add(ids=[doc_id], documents=[encoded], metadatas=[{"type": type}])
 
 
 @functools.cache
