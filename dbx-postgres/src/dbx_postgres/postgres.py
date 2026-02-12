@@ -97,8 +97,6 @@ def _create_engine(
             raise TimeoutError(
                 f"Database not online - url:{url} database_timeout:{database_timeout}"
             )
-    if tables:
-        with db_engine.connect() as conn:
-            for table in tables:
-                table.metadata.create_all(conn)
+    for table in tables:
+        table.metadata.create_all(db_engine)
     return db_engine
