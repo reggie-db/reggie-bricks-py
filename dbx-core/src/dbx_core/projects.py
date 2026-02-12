@@ -4,6 +4,9 @@ import functools
 import pathlib
 import subprocess
 from os import PathLike
+from typing import Any
+
+_PYPROJECT_FILE_NAME = "pyproject.toml"
 
 
 def root_dir(input: PathLike | str | None = None) -> pathlib.Path:
@@ -40,7 +43,7 @@ def _root_dir(path: pathlib.Path) -> pathlib.Path | None:
         except Exception:
             pass
     while path:
-        if (path / "pyproject.toml").exists():
+        if (path / _PYPROJECT_FILE_NAME).exists():
             return path
         path = path.parent
     raise None
@@ -51,6 +54,23 @@ def _root_dir_cwd(path: pathlib.Path) -> pathlib.Path:
     return _root_dir(path) or path
 
 
-if __name__ == "__main__":
-    print(root_dir(__file__))
-    print(root_dir())
+def root_pyproject(
+    path: PathLike | str | None = None,
+) -> tuple[pathlib.Path | None, dict[str, Any]]:
+    pyproject = root_dir(path) / _PYPROJECT_FILE_NAME
+    if pyproject.exists():
+        try:
+            import tomllib  # py3.11+
+        except ModuleNotFoundError:
+            import tomli as tomllib  # fallback
+        with pyproject.open("rb") as f:
+            return pyproject, tomllib.load(f)
+    return None, {}
+
+
+def root_project_name(path: PathLike | str | None = None) -> str | None:
+    _, pdata = root_pyproject(path)
+    if pdata:
+        if project_name := pdata.get("project", {}).get("name", None):
+            return project_name
+    return root_dir(path).name

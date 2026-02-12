@@ -3,22 +3,16 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "dbx-app-runner"
+name = "dbx-postgres"
 version = "0.0.1+g9ae73d5"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "dynaconf",
-    "giturlparse",
-    "psutil",
-    "pyaml",
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
-    "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
-    "requirements-parser",
-    "sh",
+    "sqlalchemy",
+    "psycopg[binary]",
+    "greenlet",
+    "pydantic",
 ]
 
 [tool.uv.sources.dbx-core]
-workspace = true
-
-[tool.uv.sources.dbx-tools]
 workspace = true
