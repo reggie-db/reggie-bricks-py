@@ -106,9 +106,7 @@ def _create_engine(
                 f"Database not online - url:{url} database_timeout:{database_timeout}"
             )
     if tables or statements:
-        sync_engine = db_engine.sync_engine
-
-        with sync_engine.begin() as conn:
+        with db_engine.begin() as conn:
             # create tables
             if tables:
                 for table in tables:
