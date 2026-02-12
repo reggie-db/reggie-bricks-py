@@ -105,10 +105,17 @@ def _create_engine(
             raise TimeoutError(
                 f"Database not online - url:{url} database_timeout:{database_timeout}"
             )
-    for table in tables:
-        table.metadata.create_all(db_engine)
-    if statements:
-        for statement in statements:
-            with db_engine.connect() as conn:
-                conn.execute(text(statement))
+    if tables or statements:
+        sync_engine = db_engine.sync_engine
+
+        with sync_engine.begin() as conn:
+            # create tables
+            if tables:
+                for table in tables:
+                    table.metadata.create_all(conn)
+
+            # install triggers / functions
+            if statements:
+                for statement in statements:
+                    conn.execute(text(statement))
     return db_engine
