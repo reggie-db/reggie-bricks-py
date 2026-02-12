@@ -52,7 +52,7 @@ def _run(cmds: list[Any], quiet=True) -> subprocess.CompletedProcess[bytes]:
 
 
 class LocalPostgres:
-    def __init__(self, project: str):
+    def __init__(self, project: str | None = None):
         if not project:
             project = projects.root_project_name()
         if not project:
