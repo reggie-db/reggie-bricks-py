@@ -16,6 +16,7 @@ _DEFAULT_DATABASE_TIMEOUT = 15.0
 def create_engine(
     url: URL,
     *tables: type[DeclarativeBase],
+    statements: list[str] | None = None,
     admin_database: str = _DEFAULT_ADMIN_DATABASE,
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
@@ -23,6 +24,7 @@ def create_engine(
     return _create_engine(
         url,
         *tables,
+        statements=statements,
         admin_database=admin_database,
         database_timeout=database_timeout,
         **kwargs,
@@ -32,12 +34,17 @@ def create_engine(
 def create_async_engine(
     url: URL,
     *tables: type[DeclarativeBase],
+    statements: list[str] | None = None,
     admin_database: str = _DEFAULT_ADMIN_DATABASE,
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
 ):
     _create_engine(
-        url, *tables, admin_database=admin_database, database_timeout=database_timeout
+        url,
+        *tables,
+        statements=statements,
+        admin_database=admin_database,
+        database_timeout=database_timeout,
     ).dispose()
     return sql_create_async_engine(url, **kwargs)
 
@@ -45,6 +52,7 @@ def create_async_engine(
 def _create_engine(
     url: URL,
     *tables: type[DeclarativeBase],
+    statements: list[str] | None = None,
     admin_database: str,
     database_timeout: float,
     **kwargs,
@@ -99,4 +107,8 @@ def _create_engine(
             )
     for table in tables:
         table.metadata.create_all(db_engine)
+    if statements:
+        for statement in statements:
+            with db_engine.connect() as conn:
+                conn.execute(text(statement))
     return db_engine
