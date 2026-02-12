@@ -15,7 +15,7 @@ _DEFAULT_DATABASE_TIMEOUT = 15.0
 
 def create_engine(
     url: URL,
-    *tables: DeclarativeBase,
+    *tables: type[DeclarativeBase],
     admin_database: str = _DEFAULT_ADMIN_DATABASE,
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
@@ -31,7 +31,7 @@ def create_engine(
 
 def create_async_engine(
     url: URL,
-    *tables: DeclarativeBase,
+    *tables: type[DeclarativeBase],
     admin_database: str = _DEFAULT_ADMIN_DATABASE,
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
@@ -44,7 +44,7 @@ def create_async_engine(
 
 def _create_engine(
     url: URL,
-    *tables: DeclarativeBase,
+    *tables: type[DeclarativeBase],
     admin_database: str,
     database_timeout: float,
     **kwargs,
