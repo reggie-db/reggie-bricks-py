@@ -106,6 +106,7 @@ def _create_engine(
                 f"Database not online - url:{url} database_timeout:{database_timeout}"
             )
     if tables or statements:
+        # noinspection PyTypeChecker
         with db_engine.begin() as conn:
             # create tables
             if tables:
