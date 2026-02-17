@@ -4,13 +4,11 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+g2f9918d"
+version = "0.0.1+gbb2e967"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "pydantic_ai",
-    "chromadb",
-    "sentence-transformers",
 ]
 
 [dependency-groups]
