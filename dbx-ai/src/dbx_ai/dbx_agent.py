@@ -9,7 +9,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 
 
-def agent(
+def create(
     model: str = "databricks-gpt-5-2", wc: WorkspaceClient | None = None
 ) -> Agent:
     @dataclass
