@@ -1,5 +1,4 @@
 import functools
-from dataclasses import dataclass
 
 import httpx
 from databricks.sdk import WorkspaceClient
@@ -7,17 +6,15 @@ from dbx_tools import clients
 from openai import AsyncClient
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
 
 def create(
-    model: str = "databricks-gpt-5-2", wc: WorkspaceClient | None = None
+    model_name: str = "databricks-gpt-5-2", wc: WorkspaceClient | None = None
 ) -> Agent:
-    @dataclass
-    class _OpenAIModelProvider:
-        client: AsyncClient
-
+    provider = OpenAIProvider(openai_client=client(wc))
     # noinspection PyTypeChecker
-    model = OpenAIModel(model_name=model, provider=_OpenAIModelProvider(client(wc)))
+    model = OpenAIModel(model_name=model_name, provider=provider)
     return Agent(model)
 
 
@@ -63,3 +60,7 @@ def _http_client(wc: WorkspaceClient) -> httpx.AsyncClient:
         auth=bearer_auth,
         http2=http2,
     )
+
+
+if __name__ == "__main__":
+    print(create())

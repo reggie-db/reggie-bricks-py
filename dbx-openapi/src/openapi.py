@@ -13,7 +13,6 @@ from tempfile import TemporaryDirectory
 
 import utils
 from dbx_core import logs
-
 from scripts import projects
 
 warnings.filterwarnings(
