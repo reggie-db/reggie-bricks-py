@@ -54,6 +54,8 @@ def _http_client(wc: WorkspaceClient) -> httpx.AsyncClient:
     # noinspection PyProtectedMember
     bearer_auth = AsyncBearerAuth(wc.serving_endpoints._api._cfg.authenticate)
     try:
+        import h2  # noqa: F401
+
         http2 = True
     except Exception:
         http2 = False
