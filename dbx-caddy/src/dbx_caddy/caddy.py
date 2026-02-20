@@ -443,20 +443,18 @@ def _local_bin_dir() -> pathlib.Path:
     - Otherwise use `/home` if it exists.
     - Otherwise create `/tmp/home` and use that.
     """
-
-    home_env = (os.environ.get("HOME") or "").strip()
-    if home_env:
-        p = pathlib.Path(home_env)
-        if p.exists():
-            return p / ".local" / "bin"
-
-    home_dir = pathlib.Path("/home")
-    if home_dir.exists():
-        return home_dir / ".local" / "bin"
-
-    tmp_home = pathlib.Path("/tmp/home")
-    tmp_home.mkdir(parents=True, exist_ok=True)
-    return tmp_home / ".local" / "bin"
+    home_path: pathlib.Path | None = None
+    for fp in {os.environ.get("HOME", None), "/home"}:
+        if fp:
+            p = pathlib.Path(fp)
+            if p.is_dir():
+                home_path = p
+                break
+    if home_path is None:
+        home_path = pathlib.Path("/tmp/home")
+    bin_path = home_path / ".local" / "bin"
+    bin_path.mkdir(parents=True, exist_ok=True)
+    return bin_path
 
 
 def _move_binary(src: pathlib.Path, dst: pathlib.Path) -> None:
