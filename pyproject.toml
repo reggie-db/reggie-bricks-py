@@ -12,6 +12,7 @@ project.requires-python = ">=3.12,<3.13"
 members = [
     "dbx-ai",
     "dbx-app-runner",
+    "dbx-caddy",
     "dbx-concurio",
     "dbx-core",
     "dbx-cv",

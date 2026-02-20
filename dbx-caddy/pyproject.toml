@@ -3,11 +3,7 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "dbx-reflex"
+name = "dbx-caddy"
 version = "0.0.1+g5fd8938"
 requires-python = ">=3.12,<3.13"
-dependencies = ["reflex>=0.8.0"]
-
-[tool.uv_build]
-package-dir = "."
-packages = [{ include = "dbx_reflex" }]
+dependencies = ["PyGithub"]
