@@ -52,6 +52,16 @@ def _config() -> Config:
             if not token(config):
                 config = None
         if not config:
+            # Databricks Apps injects service principal OAuth credentials into the
+            # runtime environment. If a profile/default config is not available,
+            # fall back to M2M OAuth using:
+            # - DATABRICKS_HOST
+            # - DATABRICKS_CLIENT_ID
+            # - DATABRICKS_CLIENT_SECRET
+            config = _config_from_env_oauth_m2m()
+            if config and not token(config):
+                config = None
+        if not config:
             raise exc if exc else ValueError(f"Config not found: {profile}")
 
         if not config.cluster_id and not config.serverless_compute_id:
@@ -102,15 +112,57 @@ def _databricks_config_profile() -> str | None:
 
 
 def token(config: Config | None = None) -> str | None:
-    if not config:
+    """Return an access token for a Databricks SDK `Config`.
+
+    Notes:
+    - `get()` is responsible for loading the default configuration, including the
+      Databricks Apps fallback based on `DATABRICKS_CLIENT_ID` and
+      `DATABRICKS_CLIENT_SECRET` when no profile/default config is available.
+    - This function only extracts a token from a `Config` instance and does not log
+      sensitive values.
+    """
+
+    if config is None:
         config = get()
+
     header_factory = getattr(config, "_header_factory", None)
     if isinstance(header_factory, OAuthCredentialsProvider):
         return config.oauth_token().access_token
-    else:
-        if token := config.token:
-            return token
-        raise ValueError(f"Config token not found - config:{config}")
+
+    if token := config.token:
+        return token
+
+    # Some auth modes can still expose `oauth_token()` without the header factory type.
+    oauth_token = getattr(config, "oauth_token", None)
+    if callable(oauth_token):
+        return oauth_token().access_token
+
+    raise ValueError(f"Config token not found - config:{config}")
+
+
+def _config_from_env_oauth_m2m() -> Config | None:
+    """Construct a Databricks SDK `Config` from Apps-injected OAuth env vars.
+
+    Databricks Apps injects `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET`
+    for the app service principal. If `DATABRICKS_HOST` is also present, build a
+    Config that uses OAuth M2M.
+    """
+
+    host = (os.environ.get("DATABRICKS_HOST") or "").strip()
+    client_id = (os.environ.get("DATABRICKS_CLIENT_ID") or "").strip()
+    client_secret = (os.environ.get("DATABRICKS_CLIENT_SECRET") or "").strip()
+    if not (host and client_id and client_secret):
+        return None
+    try:
+        return Config(
+            host=host,
+            client_id=client_id,
+            client_secret=client_secret,
+            auth_type="oauth-m2m",
+        )
+    except Exception:
+        # Best-effort fallback only. Do not log secrets or tokens.
+        return None
 
 
 def value(
