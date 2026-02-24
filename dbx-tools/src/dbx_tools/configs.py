@@ -28,7 +28,7 @@ def get() -> Config:
     """Return a cached or freshly created Databricks ``Config`` for the given profile.
     When a profile is not provided this function returns a process wide default. A lock is used to avoid concurrent initialization of the default object.
     """
-    if runtimes.version():
+    if runtimes.version() or runtimes.app_info():
         return Config()
     else:
         return _config()
