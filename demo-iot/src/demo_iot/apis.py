@@ -7,6 +7,7 @@ from typing import Callable, Optional
 
 import humanize
 from databricks.sdk.config import Config
+from databricks_tools_core import get_workspace_client
 from dbx_concurio import caches
 from dbx_core import objects, paths
 from dbx_tools import catalogs, clients, genie
@@ -64,7 +65,7 @@ class APIImplementation(APIContract):
         self.current_request = current_request
         self.spark = clients.spark()
         self.genie_service = genie.Service(
-            clients.workspace_client(),
+            get_workspace_client(),
             os.getenv("GENIE_SPACE_ID", "01f0f874d8721992b9d02f8f03487924"),
         )
         self.detection_table_name = str(

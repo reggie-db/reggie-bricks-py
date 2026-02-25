@@ -3,7 +3,7 @@ import os
 import time
 import uuid
 
-from dbx_tools import clients
+from databricks_tools_core import get_workspace_client
 from lfp_logging import logs
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import URL
@@ -124,7 +124,7 @@ async def get_async_db():
 @functools.cache
 def get_engine():
     instance_name, postgres_database, log_sql, slow_sql_ms = _lakebase_settings()
-    wc = clients.workspace_client()
+    wc = get_workspace_client()
     url, rendered_url = _lakebase_url(
         drivername="postgresql+psycopg2",
         wc=wc,
@@ -163,7 +163,7 @@ def get_async_engine():
     """
 
     instance_name, postgres_database, log_sql, slow_sql_ms = _lakebase_settings()
-    wc = clients.workspace_client()
+    wc = get_workspace_client()
     url, rendered_url = _lakebase_url(
         drivername="postgresql+asyncpg",
         wc=wc,

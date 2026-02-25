@@ -70,3 +70,28 @@ are immediately visible to dependents without publishing wheels or editing
 
 * Use `uv run --project <member>` for ad-hoc commands inside a specific module.
 * See individual project READMEs for project specific documentation and usage.
+
+## Migration Utility
+
+Use `scripts/migrate_to_databricks_tools_core.py` to migrate repositories from
+`dbx-tools` patterns to `databricks-tools-core`.
+
+Dry-run (default):
+
+```bash
+python scripts/migrate_to_databricks_tools_core.py --root . --report migration-report.json
+```
+
+Apply changes:
+
+```bash
+python scripts/migrate_to_databricks_tools_core.py --root . --apply --report migration-report.json
+```
+
+Rollback strategy:
+
+```bash
+git restore .
+```
+
+The script also writes a report with changed files and manual review items.

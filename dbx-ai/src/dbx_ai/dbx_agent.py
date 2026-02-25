@@ -2,7 +2,7 @@ import functools
 
 import httpx
 from databricks.sdk import WorkspaceClient
-from dbx_tools import clients
+from databricks_tools_core import get_workspace_client
 from openai import AsyncClient
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
@@ -34,7 +34,7 @@ def _client(wc: WorkspaceClient) -> AsyncClient:
 
 @functools.cache
 def _client_default() -> AsyncClient:
-    return _client(clients.workspace_client())
+    return _client(get_workspace_client())
 
 
 def _http_client(wc: WorkspaceClient) -> httpx.AsyncClient:

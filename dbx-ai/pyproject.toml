@@ -4,9 +4,10 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+ge40acb7"
+version = "0.0.1+g2f729dc"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "databricks-tools-core",
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "pydantic_ai",
 ]
@@ -16,3 +17,7 @@ dev = ["textual", "google-auth", "google-auth-oauthlib", "emlx"]
 
 [tool.uv.sources.dbx-tools]
 workspace = true
+
+[tool.uv.sources.databricks-tools-core]
+git = "https://github.com/databricks-solutions/ai-dev-kit.git"
+subdirectory = "databricks-tools-core"

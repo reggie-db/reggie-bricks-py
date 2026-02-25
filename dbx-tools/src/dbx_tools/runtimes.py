@@ -1,6 +1,5 @@
 """Runtime helpers for working within Databricks notebooks and jobs."""
 
-import functools
 import json
 import os
 from copy import deepcopy
@@ -25,7 +24,6 @@ class AppInfo:
     port: int
 
 
-@functools.cache
 def version() -> Version | None:
     """Return the Databricks runtime version if running on a cluster."""
     if runtime_version_env := os.environ.get("DATABRICKS_RUNTIME_VERSION"):

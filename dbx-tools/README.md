@@ -132,6 +132,25 @@ for response in service.chat(conversation.conversation_id, "Follow-up question")
     spark.sql(query).show()
 ```
 
+## Migration to databricks-tools-core
+
+`dbx-tools` now depends on `databricks-tools-core` and keeps selected APIs as
+compatibility shims for existing repositories.
+
+- `dbx_tools.clients.workspace_client()` is deprecated.
+- Preferred replacement: `from databricks_tools_core import get_workspace_client`.
+
+Example:
+
+```python
+from databricks_tools_core import get_workspace_client
+
+workspace = get_workspace_client()
+```
+
+Modules such as `catalogs`, `runtimes`, and `genie` currently remain in
+`dbx-tools` because there are no direct upstream drop-in equivalents.
+
 ## Dependencies
 
 * `dbx-core` (workspace dependency)

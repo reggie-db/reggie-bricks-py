@@ -3,15 +3,13 @@
 import functools
 import json
 import os
-import pathlib
 import subprocess
-from builtins import Exception, ValueError
-from configparser import ConfigParser
 from enum import Enum
 from typing import Any, Callable, Iterable, Mapping, TypeVar
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
+from databricks_tools_core import get_workspace_client
 from dbx_core import imports, projects, strs
 from lfp_logging import logs
 
@@ -19,96 +17,37 @@ from dbx_tools import catalogs, clients, runtimes
 
 T = TypeVar("T")
 _UNSET = object()
-_DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME = "DEFAULT"
 
 LOG = logs.logger()
 
 
 def get() -> Config:
-    """Return a cached or freshly created Databricks ``Config`` for the given profile.
-    When a profile is not provided this function returns a process wide default. A lock is used to avoid concurrent initialization of the default object.
+    """Return the Databricks SDK ``Config`` used by workspace clients.
+
+    Default auth and config resolution is delegated to
+    ``databricks_tools_core.get_workspace_client()`` to avoid duplicating
+    authentication logic in this module.
     """
     if runtimes.version() or runtimes.app_info():
-        return Config()
+        config = Config()
     else:
-        return _config()
+        config = _config()
+    if not config.cluster_id and not config.serverless_compute_id:
+        config.serverless_compute_id = "auto"
+    return config
 
 
 @functools.cache
 def _config() -> Config:
     def _load() -> Config:
-        profile = _databricks_config_profile()
-        config: Config | None = None
-        exc: Exception | None = None
-        try:
-            config = Config(profile=profile) if profile else Config()
-            if not token(config):
-                config = None
-        except Exception as e:
-            exc = e
-        if not config and profile and _cli_version():
-            _cli_run("auth", "login", profile=profile, stdout=subprocess.DEVNULL)
-            config = Config(profile=profile)
-            if not token(config):
-                config = None
-        if not config:
-            # Databricks Apps injects service principal OAuth credentials into the
-            # runtime environment. If a profile/default config is not available,
-            # fall back to M2M OAuth using:
-            # - DATABRICKS_HOST
-            # - DATABRICKS_CLIENT_ID
-            # - DATABRICKS_CLIENT_SECRET
-            config = _config_from_env_oauth_m2m()
-            if config and not token(config):
-                config = None
-        if not config:
-            raise exc if exc else ValueError(f"Config not found: {profile}")
-
-        if not config.cluster_id and not config.serverless_compute_id:
-            config.serverless_compute_id = "auto"
-
-        return config
+        # Delegate to core auth path to keep one source of truth for default
+        # workspace authentication behavior.
+        return get_workspace_client().config
 
     if lazy_object_proxy := imports.resolve("wrapt", "LazyObjectProxy"):
         return lazy_object_proxy(_load, interface=Config)
     else:
         return _load()
-
-
-def _databricks_config_profile() -> str | None:
-    profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "")
-    if not profile:
-        profiles = None
-        if _cli_version():
-            auth_profiles = _cli_run("auth", "profiles")
-            if profiles := auth_profiles.get("profiles", []):
-                profiles = [p["name"] for p in profiles]
-        else:
-            databricks_config_file = pathlib.Path.home() / ".databrickscfg"
-            if databricks_config_file.is_file():
-                config_parser = ConfigParser()
-                config_parser.optionxform = str
-                config_files_read = None
-                # noinspection PyBroadException
-                try:
-                    config_files_read = config_parser.read(
-                        str(databricks_config_file.absolute())
-                    )
-                except Exception:
-                    pass
-                if config_files_read:
-                    profiles = config_parser.sections()
-                    if config_parser.defaults():
-                        profiles = [
-                            _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME,
-                            *profiles,
-                        ]
-        if profiles:
-            if _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME in profiles:
-                profile = _DEFAULT_DATABRICKS_CONFIG_PROFILE_NAME
-            elif len(profiles) == 1:
-                profile = profiles[0]
-    return profile
 
 
 def token(config: Config | None = None) -> str | None:
@@ -138,31 +77,6 @@ def token(config: Config | None = None) -> str | None:
         return oauth_token().access_token
 
     raise ValueError(f"Config token not found - config:{config}")
-
-
-def _config_from_env_oauth_m2m() -> Config | None:
-    """Construct a Databricks SDK `Config` from Apps-injected OAuth env vars.
-
-    Databricks Apps injects `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET`
-    for the app service principal. If `DATABRICKS_HOST` is also present, build a
-    Config that uses OAuth M2M.
-    """
-
-    host = (os.environ.get("DATABRICKS_HOST") or "").strip()
-    client_id = (os.environ.get("DATABRICKS_CLIENT_ID") or "").strip()
-    client_secret = (os.environ.get("DATABRICKS_CLIENT_SECRET") or "").strip()
-    if not (host and client_id and client_secret):
-        return None
-    try:
-        return Config(
-            host=host,
-            client_id=client_id,
-            client_secret=client_secret,
-            auth_type="oauth-m2m",
-        )
-    except Exception:
-        # Best-effort fallback only. Do not log secrets or tokens.
-        return None
 
 
 def value(

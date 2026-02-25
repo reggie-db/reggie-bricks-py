@@ -1,6 +1,5 @@
 """Catalog and schema discovery utilities for Databricks workspaces."""
 
-import functools
 import re
 import uuid
 from builtins import hasattr
@@ -32,7 +31,6 @@ class CatalogSchemaTable(CatalogSchema):
         return f"{self.catalog}.{self.schema}.{self.table}"
 
 
-@functools.cache
 def _catalog_schema_config() -> CatalogSchema | None:
     """Attempt to resolve catalog and schema using configuration sources."""
     config_value_sources = configs.ConfigValueSource.without(
