@@ -9,9 +9,6 @@ import time
 
 from dbx_caddy import caddy
 
-# CLI utility to run Reflex with Caddy in front so Databricks Apps style routing
-# and HMR proxying work consistently in local and app-style environments.
-
 LOG = logging.getLogger(__name__)
 _DEFAULT_APP_PORT = 8000
 
@@ -21,29 +18,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         prog="dbx-reflex-run",
         description="Run a Reflex app behind Caddy with HMR proxy support.",
     )
-    parser.add_argument(
-        "--backend-port",
-        type=int,
-        default=None,
-        help="Backend port for Reflex API server.",
-    )
-    parser.add_argument(
-        "--frontend-port",
-        type=int,
-        default=None,
-        help="Frontend port for Reflex dev server (Vite).",
-    )
-    parser.add_argument(
-        "--app-port",
-        type=int,
-        default=None,
-        help="Public Caddy bind port (defaults to DATABRICKS_APP_PORT or 8000).",
-    )
-    parser.add_argument(
-        "reflex_args",
-        nargs=argparse.REMAINDER,
-        help="Arguments forwarded to `reflex run`.",
-    )
+    parser.add_argument("--backend-port", type=int, default=None)
+    parser.add_argument("--frontend-port", type=int, default=None)
+    parser.add_argument("--app-port", type=int, default=None)
+    parser.add_argument("reflex_args", nargs=argparse.REMAINDER)
     return parser.parse_args(argv)
 
 
@@ -66,13 +44,8 @@ def _get_free_port() -> int:
 
 def _resolve_ports(args: argparse.Namespace) -> tuple[int, int, int]:
     app_port = args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
-    # Prefer explicit CLI args, then env overrides, then randomized free ports.
-    backend_port = args.backend_port or _env_int("REFLEX_BACKEND_PORT", 0)
-    frontend_port = args.frontend_port or _env_int("REFLEX_FRONTEND_PORT", 0)
-    if backend_port <= 0:
-        backend_port = _get_free_port()
-    if frontend_port <= 0:
-        frontend_port = _get_free_port()
+    backend_port = args.backend_port or _get_free_port()
+    frontend_port = args.frontend_port or _get_free_port()
     if frontend_port == backend_port:
         frontend_port = _get_free_port()
     return app_port, backend_port, frontend_port
@@ -110,123 +83,44 @@ def _normalize_reflex_args(raw_args: list[str]) -> list[str]:
     return args
 
 
-def _strip_mode_flags(reflex_args: list[str]) -> list[str]:
-    """Remove frontend/backend mode flags from forwarded args.
-
-    This runner controls frontend/backend mode explicitly for each child process.
-    """
-    out: list[str] = []
-    skip_next = False
-    for idx, arg in enumerate(reflex_args):
-        if skip_next:
-            skip_next = False
-            continue
-        if arg in (
-            "--backend-only",
-            "--frontend-only",
-            "--backend_port",
-            "--frontend_port",
-            "--backend-port",
-            "--frontend-port",
-        ):
-            if idx + 1 < len(reflex_args) and not reflex_args[idx + 1].startswith("-"):
-                skip_next = True
-            continue
-        out.append(arg)
-    return out
-
-
-def _start_reflex(
-    reflex_args: list[str],
-    env: dict[str, str],
-    *,
-    backend_only: bool,
-    frontend_only: bool,
-    process_name: str,
-) -> subprocess.Popen:
+def _start_reflex(reflex_args: list[str], env: dict[str, str]) -> subprocess.Popen:
     cmd = ["reflex", "run", *reflex_args]
-    LOG.info(
-        "Starting Reflex [%s] backend_only=%s frontend_only=%s: %s",
-        process_name,
-        backend_only,
-        frontend_only,
-        " ".join(cmd),
-    )
-    env = dict(env)
-    env["REFLEX_BACKEND_ONLY"] = "true" if backend_only else "false"
-    env["REFLEX_FRONTEND_ONLY"] = "true" if frontend_only else "false"
+    LOG.info("Starting Reflex: %s", " ".join(cmd))
     if os.name == "posix":
         return subprocess.Popen(cmd, env=env, preexec_fn=os.setsid)
     return subprocess.Popen(cmd, env=env)
 
 
-def _kill_process(proc: subprocess.Popen) -> None:
-    """Last-resort kill that always runs."""
+def _stop_process(proc: subprocess.Popen) -> None:
+    if proc.poll() is not None:
+        return
+    try:
+        if os.name == "posix":
+            os.killpg(proc.pid, signal.SIGTERM)
+        else:
+            proc.terminate()
+    except ProcessLookupError:
+        return
+    except Exception as exc:
+        raise RuntimeError("Failed to terminate Reflex process") from exc
+    try:
+        proc.wait(timeout=5)
+        return
+    except subprocess.TimeoutExpired:
+        LOG.warning("Reflex did not exit after SIGTERM, forcing kill")
     try:
         if os.name == "posix":
             os.killpg(proc.pid, signal.SIGKILL)
         else:
             proc.kill()
     except ProcessLookupError:
-        pass
-    except Exception as e:
-        LOG.debug("Force kill failed pid=%s error=%s", proc.pid, e)
-
+        return
+    except Exception as exc:
+        raise RuntimeError("Failed to kill Reflex process") from exc
     try:
         proc.wait(timeout=5)
-    except Exception:
-        pass
-
-
-def _stop_process(proc: subprocess.Popen) -> None:
-    if proc.poll() is not None:
-        return
-
-    LOG.info("Stopping reflex process - pid: %s", proc.pid)
-
-    try:
-        # ---------------- graceful shutdown ----------------
-        try:
-            if os.name == "posix":
-                os.killpg(proc.pid, signal.SIGTERM)
-            else:
-                proc.terminate()
-        except ProcessLookupError:
-            return
-        except Exception as e:
-            LOG.debug("SIGTERM failed pid=%s error=%s", proc.pid, e)
-            _kill_process(proc)
-            return
-
-        try:
-            proc.wait(timeout=10)
-            return
-        except subprocess.TimeoutExpired:
-            LOG.info("Reflex still running after SIGTERM - escalating")
-
-        # ---------------- hard shutdown ----------------
-        try:
-            if os.name == "posix":
-                os.killpg(proc.pid, signal.SIGKILL)
-            else:
-                proc.kill()
-        except ProcessLookupError:
-            return
-        except Exception as e:
-            LOG.debug("SIGKILL failed pid=%s error=%s", proc.pid, e)
-            _kill_process(proc)
-            return
-
-        try:
-            proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            LOG.warning("Process would not exit pid=%s", proc.pid)
-            _kill_process(proc)
-
-    # absolutely anything unexpected
-    except BaseException as e:
-        LOG.exception("Unexpected error stopping reflex pid=%s", proc.pid)
-        _kill_process(proc)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("Reflex process still running after SIGKILL") from exc
 
 
 def _stop_all(processes: list[subprocess.Popen]) -> None:
@@ -252,13 +146,11 @@ def _wait_until_any_exits(processes: list[subprocess.Popen]) -> tuple[int, int]:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv if argv is not None else sys.argv[1:])
     app_port, backend_port, frontend_port = _resolve_ports(args)
-    reflex_args = _strip_mode_flags(_normalize_reflex_args(args.reflex_args))
-
+    reflex_args = _normalize_reflex_args(args.reflex_args)
     env = dict(os.environ)
     env["DATABRICKS_APP_PORT"] = str(app_port)
     env["REFLEX_BACKEND_PORT"] = str(backend_port)
     env["REFLEX_FRONTEND_PORT"] = str(frontend_port)
-
     LOG.info(
         "Resolved ports: app=%s backend=%s frontend=%s",
         app_port,
@@ -276,38 +168,18 @@ def main(argv: list[str] | None = None) -> int:
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    caddy_config = _caddyfile(
-        app_port=app_port,
-        backend_port=backend_port,
-        frontend_port=frontend_port,
-    )
-
-    with caddy.run(caddy_config, "watch") as caddy_proc:
-        reflex_backend = _start_reflex(
-            reflex_args=reflex_args,
-            env=env,
-            backend_only=True,
-            frontend_only=False,
-            process_name="backend",
-        )
-        reflex_frontend = _start_reflex(
-            reflex_args=reflex_args,
-            env=env,
-            backend_only=False,
-            frontend_only=True,
-            process_name="frontend",
-        )
-        reflex_processes = [reflex_backend, reflex_frontend]
+    with caddy.run(
+        _caddyfile(app_port, backend_port, frontend_port), "watch"
+    ) as caddy_proc:
+        reflex_proc = _start_reflex(reflex_args=reflex_args, env=env)
+        reflex_processes = [reflex_proc]
         proc_holder["reflex"] = reflex_processes
         try:
-            idx, exit_code = _wait_until_any_exits([*reflex_processes, caddy_proc])
-            log_level = logging.DEBUG if exit_code == 0 else logging.ERROR
+            idx, exit_code = _wait_until_any_exits([reflex_proc, caddy_proc])
             if idx == 0:
-                LOG.log(log_level, "Reflex backend exited with code %s", exit_code)
-            elif idx == 1:
-                LOG.log(log_level, "Reflex frontend exited with code %s", exit_code)
+                LOG.error("Reflex exited with code %s", exit_code)
             else:
-                LOG.log(log_level, "Caddy exited with code %s", exit_code)
+                LOG.error("Caddy exited with code %s", exit_code)
             return exit_code
         finally:
             _stop_all(reflex_processes)
