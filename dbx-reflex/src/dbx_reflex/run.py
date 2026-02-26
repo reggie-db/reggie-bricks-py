@@ -139,9 +139,16 @@ def _start_reflex(
     *,
     backend_only: bool,
     frontend_only: bool,
+    process_name: str,
 ) -> subprocess.Popen:
     cmd = ["reflex", "run", *reflex_args]
-    LOG.info("Starting Reflex: %s", " ".join(cmd))
+    LOG.info(
+        "Starting Reflex [%s] backend_only=%s frontend_only=%s: %s",
+        process_name,
+        backend_only,
+        frontend_only,
+        " ".join(cmd),
+    )
     env = dict(env)
     env["REFLEX_BACKEND_ONLY"] = "true" if backend_only else "false"
     env["REFLEX_FRONTEND_ONLY"] = "true" if frontend_only else "false"
@@ -278,12 +285,14 @@ def main(argv: list[str] | None = None) -> int:
             env=env,
             backend_only=True,
             frontend_only=False,
+            process_name="backend",
         )
         reflex_frontend = _start_reflex(
             reflex_args=reflex_args,
             env=env,
             backend_only=False,
             frontend_only=True,
+            process_name="frontend",
         )
         reflex_processes = [reflex_backend, reflex_frontend]
         proc_holder["reflex"] = reflex_processes
