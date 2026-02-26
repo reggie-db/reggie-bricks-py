@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-reflex"
-version = "0.0.1+g2865aaa"
+version = "0.0.1+gbaf5eb8"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "reflex>=0.8.0",
@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-reflex-app = "dbx_reflex.runner:main"
+dbx-reflex-run = "dbx_reflex.run:main"
 
 [tool.uv.sources.dbx-caddy]
 workspace = true

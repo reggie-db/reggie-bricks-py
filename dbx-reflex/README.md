@@ -33,7 +33,7 @@ Streamlined event triggers:
 
 * **Keyboard Events**: Simplified handling of specific key presses (e.g., Enter) for form submissions and interactive elements.
 
-### Reflex + Caddy Runner (`runner.py`)
+### Reflex + Caddy Runner (`run.py`)
 
 Run Reflex with `dbx-caddy` as a front proxy so local behavior matches Databricks
 Apps routing and HMR paths.
@@ -50,19 +50,19 @@ Key behavior:
 ### Run Reflex Behind Caddy
 
 ```bash
-uv run --directory dbx-reflex reflex-app
+uv run --directory dbx-reflex dbx-reflex-run
 ```
 
 Forward custom `reflex run` args:
 
 ```bash
-uv run --directory dbx-reflex reflex-app -- --env dev --backend-only false
+uv run --directory dbx-reflex dbx-reflex-run -- --env dev --backend-only false
 ```
 
 Set explicit ports:
 
 ```bash
-uv run --directory dbx-reflex reflex-app --app-port 8000 --backend-port 5000 --frontend-port 5173
+uv run --directory dbx-reflex dbx-reflex-run --app-port 8000 --backend-port 5000 --frontend-port 5173
 ```
 
 ### Query Parameter Binding

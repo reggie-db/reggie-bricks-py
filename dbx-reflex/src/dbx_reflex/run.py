@@ -19,7 +19,7 @@ _DEFAULT_FRONTEND_PORT = 5173
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="reflex-app",
+        prog="dbx-reflex-run",
         description="Run a Reflex app behind Caddy with HMR proxy support.",
     )
     parser.add_argument(

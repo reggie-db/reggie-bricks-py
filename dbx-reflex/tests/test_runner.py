@@ -1,10 +1,10 @@
 import os
 
-from dbx_reflex import runner
+from dbx_reflex import run
 
 
 def test_caddyfile_contains_hmr_and_websocket_routes():
-    data = runner._caddyfile(app_port=8000, backend_port=5000, frontend_port=5173)
+    data = run._caddyfile(app_port=8000, backend_port=5000, frontend_port=5173)
     assert ":8000 {" in data
     assert "handle /_hmr" in data
     assert "reverse_proxy localhost:5173" in data
@@ -14,13 +14,13 @@ def test_caddyfile_contains_hmr_and_websocket_routes():
 
 
 def test_normalize_reflex_args_defaults_when_empty():
-    assert runner._normalize_reflex_args([]) == [
+    assert run._normalize_reflex_args([]) == [
         "--env",
         "dev",
         "--backend-only",
         "false",
     ]
-    assert runner._normalize_reflex_args(["--"]) == [
+    assert run._normalize_reflex_args(["--"]) == [
         "--env",
         "dev",
         "--backend-only",
@@ -30,7 +30,7 @@ def test_normalize_reflex_args_defaults_when_empty():
 
 def test_normalize_reflex_args_passes_through_custom_values():
     args = ["--env", "prod", "--backend-only", "true"]
-    assert runner._normalize_reflex_args(args) == args
+    assert run._normalize_reflex_args(args) == args
 
 
 def test_resolve_ports_prefers_cli_values(monkeypatch):
@@ -38,7 +38,7 @@ def test_resolve_ports_prefers_cli_values(monkeypatch):
     monkeypatch.setenv("REFLEX_BACKEND_PORT", "9001")
     monkeypatch.setenv("REFLEX_FRONTEND_PORT", "9002")
 
-    parsed = runner._parse_args(
+    parsed = run._parse_args(
         [
             "--app-port",
             "8010",
@@ -48,7 +48,7 @@ def test_resolve_ports_prefers_cli_values(monkeypatch):
             "5180",
         ]
     )
-    app_port, backend_port, frontend_port = runner._resolve_ports(parsed)
+    app_port, backend_port, frontend_port = run._resolve_ports(parsed)
     assert app_port == 8010
     assert backend_port == 5010
     assert frontend_port == 5180
@@ -59,8 +59,8 @@ def test_resolve_ports_uses_env_and_ephemeral_defaults(monkeypatch):
     monkeypatch.setenv("REFLEX_BACKEND_PORT", "0")
     monkeypatch.setenv("REFLEX_FRONTEND_PORT", "0")
 
-    parsed = runner._parse_args([])
-    app_port, backend_port, frontend_port = runner._resolve_ports(parsed)
+    parsed = run._parse_args([])
+    app_port, backend_port, frontend_port = run._resolve_ports(parsed)
     assert app_port == 9100
     assert backend_port > 0
     assert frontend_port > 0
@@ -96,13 +96,13 @@ def test_main_sets_env_and_uses_caddy_and_reflex(monkeypatch):
         calls["env"] = dict(env)
         return _FakeProc()
 
-    monkeypatch.setattr(runner.caddy, "run", _fake_caddy_run)
-    monkeypatch.setattr(runner, "_start_reflex", _fake_start_reflex)
-    monkeypatch.setattr(runner, "_stop_reflex", lambda _proc: None)
-    monkeypatch.setattr(runner.signal, "signal", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(runner, "_get_free_port", lambda: 5111)
+    monkeypatch.setattr(run.caddy, "run", _fake_caddy_run)
+    monkeypatch.setattr(run, "_start_reflex", _fake_start_reflex)
+    monkeypatch.setattr(run, "_stop_reflex", lambda _proc: None)
+    monkeypatch.setattr(run.signal, "signal", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(run, "_get_free_port", lambda: 5111)
 
-    exit_code = runner.main([])
+    exit_code = run.main([])
     assert exit_code == 0
     assert calls["caddy_flags"] == ("watch",)
     assert "handle /_hmr" in str(calls["caddy_config"])
