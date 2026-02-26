@@ -289,12 +289,13 @@ def main(argv: list[str] | None = None) -> int:
         proc_holder["reflex"] = reflex_processes
         try:
             idx, exit_code = _wait_until_any_exits([*reflex_processes, caddy_proc])
+            log_level = logging.DEBUG if exit_code == 0 else logging.ERROR
             if idx == 0:
-                LOG.error("Reflex backend exited with code %s", exit_code)
+                LOG.log(log_level, "Reflex backend exited with code %s", exit_code)
             elif idx == 1:
-                LOG.error("Reflex frontend exited with code %s", exit_code)
+                LOG.log(log_level, "Reflex frontend exited with code %s", exit_code)
             else:
-                LOG.error("Caddy exited with code %s", exit_code)
+                LOG.log(log_level, "Caddy exited with code %s", exit_code)
             return exit_code
         finally:
             _stop_all(reflex_processes)
