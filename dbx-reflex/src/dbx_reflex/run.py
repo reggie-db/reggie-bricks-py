@@ -44,8 +44,12 @@ def _get_free_port() -> int:
 
 def _resolve_ports(args: argparse.Namespace) -> tuple[int, int, int]:
     app_port = args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
-    backend_port = args.backend_port or _get_free_port()
-    frontend_port = args.frontend_port or _get_free_port()
+    backend_port = args.backend_port or _env_int("REFLEX_BACKEND_PORT", 0)
+    frontend_port = args.frontend_port or _env_int("REFLEX_FRONTEND_PORT", 0)
+    if backend_port <= 0:
+        backend_port = _get_free_port()
+    if frontend_port <= 0:
+        frontend_port = _get_free_port()
     if frontend_port == backend_port:
         frontend_port = _get_free_port()
     return app_port, backend_port, frontend_port
@@ -60,6 +64,9 @@ def _caddyfile(app_port: int, backend_port: int, frontend_port: int) -> str:
         f"    handle /_upload {{\n"
         f"        reverse_proxy localhost:{backend_port}\n"
         f"    }}\n\n"
+        f"    handle /_event {{\n"
+        f"        reverse_proxy localhost:{backend_port}\n"
+        f"    }}\n\n"
         f"    @websockets {{\n"
         f"        header Connection *Upgrade*\n"
         f"        header Upgrade websocket\n"
@@ -71,7 +78,7 @@ def _caddyfile(app_port: int, backend_port: int, frontend_port: int) -> str:
 
 
 def _default_reflex_args() -> list[str]:
-    return ["--env", "dev", "--backend-only", "false"]
+    return ["--env", "dev"]
 
 
 def _normalize_reflex_args(raw_args: list[str]) -> list[str]:
