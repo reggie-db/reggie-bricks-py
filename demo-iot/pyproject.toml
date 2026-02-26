@@ -4,11 +4,10 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+geb20549"
+version = "0.0.1+g4997d3a"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aioreactive",
-    "databricks-tools-core",
     "fastapi",
     "humanize",
     "kafka-python",
@@ -29,7 +28,3 @@ workspace = true
 
 [tool.uv.sources.dbx-concurio]
 workspace = true
-
-[tool.uv.sources.databricks-tools-core]
-git = "https://github.com/databricks-solutions/ai-dev-kit.git"
-subdirectory = "databricks-tools-core"
