@@ -44,12 +44,9 @@ def _get_free_port() -> int:
 
 def _resolve_ports(args: argparse.Namespace) -> tuple[int, int, int]:
     app_port = args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
-    backend_port = args.backend_port or _env_int("REFLEX_BACKEND_PORT", 0)
-    frontend_port = args.frontend_port or _env_int("REFLEX_FRONTEND_PORT", 0)
-    if backend_port <= 0:
-        backend_port = _get_free_port()
-    if frontend_port <= 0:
-        frontend_port = _get_free_port()
+    # Always randomize internal Reflex ports unless explicitly specified via CLI.
+    backend_port = args.backend_port or _get_free_port()
+    frontend_port = args.frontend_port or _get_free_port()
     if frontend_port == backend_port:
         frontend_port = _get_free_port()
     return app_port, backend_port, frontend_port
@@ -67,11 +64,11 @@ def _caddyfile(app_port: int, backend_port: int, frontend_port: int) -> str:
         f"    handle /_event {{\n"
         f"        reverse_proxy localhost:{backend_port}\n"
         f"    }}\n\n"
-        f"    @websockets {{\n"
+        f"    @frontend_websockets {{\n"
         f"        header Connection *Upgrade*\n"
         f"        header Upgrade websocket\n"
         f"    }}\n\n"
-        f"    reverse_proxy @websockets localhost:{backend_port}\n"
+        f"    reverse_proxy @frontend_websockets localhost:{frontend_port}\n"
         f"    reverse_proxy localhost:{frontend_port}\n"
         f"}}\n"
     )
