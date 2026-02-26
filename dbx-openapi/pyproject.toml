@@ -1,14 +1,9 @@
-[project]
-name = "dbx-tools"
-version = "0.0.1+gb7f5077"
-requires-python = ">=3.12,<3.13"
-dependencies = [
-    "cyclopts",
-]
-
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.sources.dbx-core]
-workspace = true
+[project]
+name = "dbx-openapi"
+version = "0.0.1+geb20549"
+requires-python = ">=3.12,<3.13"
+dependencies = ["cyclopts"]
