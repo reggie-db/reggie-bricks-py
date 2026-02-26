@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from dbx_reflex import run
 
 
@@ -70,13 +72,25 @@ def test_resolve_ports_randomizes_backend_and_frontend_by_default(monkeypatch):
 
 
 def test_main_sets_env_and_uses_caddy_and_reflex(monkeypatch):
-    calls = {"caddy_config": None, "caddy_flags": None, "cmd": None, "env": None}
+    calls = {
+        "caddy_config": None,
+        "caddy_flags": None,
+        "starts": [],
+        "stops": 0,
+    }
 
     class _FakeProc:
-        pid = os.getpid()
+        def __init__(self, pid, poll_values=None):
+            self.pid = pid
+            self._poll_values = poll_values or []
+            self._idx = 0
 
         def poll(self):
-            return 0
+            if self._idx < len(self._poll_values):
+                v = self._poll_values[self._idx]
+                self._idx += 1
+                return v
+            return None
 
         def wait(self, timeout=None):
             return 0
@@ -93,22 +107,72 @@ def test_main_sets_env_and_uses_caddy_and_reflex(monkeypatch):
         calls["caddy_flags"] = flags
         return _FakeCaddyContext()
 
-    def _fake_start_reflex(reflex_args, env):
-        calls["cmd"] = list(reflex_args)
-        calls["env"] = dict(env)
-        return _FakeProc()
+    backend_proc = _FakeProc(os.getpid() + 1, poll_values=[None, 17])
+    frontend_proc = _FakeProc(os.getpid() + 2, poll_values=[None, None, None])
+    caddy_proc = _FakeProc(os.getpid() + 3, poll_values=[None, None, None])
+    procs = [backend_proc, frontend_proc]
+
+    def _fake_start_reflex(reflex_args, env, *, backend_only, frontend_only):
+        calls["starts"].append(
+            {
+                "args": list(reflex_args),
+                "env": dict(env),
+                "backend_only": backend_only,
+                "frontend_only": frontend_only,
+            }
+        )
+        return procs[len(calls["starts"]) - 1]
+
+    def _fake_stop_reflex(_proc):
+        calls["stops"] += 1
+
+    def _fake_wait_until_any_exits(_processes):
+        return 0, 17
+
+    def _fake_caddy_enter(self):
+        return caddy_proc
 
     monkeypatch.setattr(run.caddy, "run", _fake_caddy_run)
+    monkeypatch.setattr(_FakeCaddyContext, "__enter__", _fake_caddy_enter)
     monkeypatch.setattr(run, "_start_reflex", _fake_start_reflex)
-    monkeypatch.setattr(run, "_stop_reflex", lambda _proc: None)
+    monkeypatch.setattr(run, "_stop_reflex", _fake_stop_reflex)
+    monkeypatch.setattr(run, "_wait_until_any_exits", _fake_wait_until_any_exits)
     monkeypatch.setattr(run.signal, "signal", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(run, "_get_free_port", lambda: 5111)
 
     exit_code = run.main([])
-    assert exit_code == 0
+    assert exit_code == 17
     assert calls["caddy_flags"] == ("watch",)
     assert "handle /_hmr" in str(calls["caddy_config"])
-    assert calls["cmd"] == ["--env", "dev", "--backend-only", "false"]
-    assert calls["env"]["DATABRICKS_APP_PORT"]
-    assert calls["env"]["REFLEX_BACKEND_PORT"]
-    assert calls["env"]["REFLEX_FRONTEND_PORT"]
+    assert len(calls["starts"]) == 2
+    assert calls["starts"][0]["args"] == ["--env", "dev"]
+    assert calls["starts"][1]["args"] == ["--env", "dev"]
+    assert calls["starts"][0]["backend_only"] is True
+    assert calls["starts"][0]["frontend_only"] is False
+    assert calls["starts"][1]["backend_only"] is False
+    assert calls["starts"][1]["frontend_only"] is True
+    assert calls["starts"][0]["env"]["DATABRICKS_APP_PORT"]
+    assert calls["starts"][0]["env"]["REFLEX_BACKEND_PORT"]
+    assert calls["starts"][0]["env"]["REFLEX_FRONTEND_PORT"]
+    assert calls["stops"] == 2
+
+
+def test_stop_all_rethrows_after_attempting_all_stops(monkeypatch):
+    calls = []
+
+    class _FakeProc:
+        def __init__(self, idx):
+            self.idx = idx
+
+    def _fake_stop_reflex(proc):
+        calls.append(proc.idx)
+        if proc.idx == 1:
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(run, "_stop_reflex", _fake_stop_reflex)
+
+    with pytest.raises(ExceptionGroup):
+        run._stop_all([_FakeProc(0), _FakeProc(1), _FakeProc(2)])
+
+    # All stop attempts should run even when one fails.
+    assert calls == [0, 1, 2]

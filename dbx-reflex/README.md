@@ -43,6 +43,7 @@ Key behavior:
 * **Caddy Front Proxy**: Proxies public app traffic to Reflex frontend/backend.
 * **Randomized Internal Ports**: Picks random backend/frontend ports each run, then exports them to Reflex and Caddy.
 * **HMR Support**: Routes `/_hmr` to frontend and `/_upload` plus websocket upgrades to backend.
+* **Fail-fast Supervision**: Runs frontend and backend as separate child processes and shuts down everything if either exits.
 * **Clean Shutdown**: On SIGINT/SIGTERM, terminates Reflex process tree and Caddy.
 * **Reflex-like Invocation**: Supports forwarding args to `reflex run`.
 

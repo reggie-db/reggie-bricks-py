@@ -5,6 +5,7 @@ import signal
 import socket
 import subprocess
 import sys
+import time
 
 from dbx_caddy import caddy
 
@@ -106,51 +107,142 @@ def _normalize_reflex_args(raw_args: list[str]) -> list[str]:
     return args
 
 
-def _start_reflex(reflex_args: list[str], env: dict[str, str]) -> subprocess.Popen:
+def _strip_mode_flags(reflex_args: list[str]) -> list[str]:
+    """Remove frontend/backend mode flags from forwarded args.
+
+    This runner controls frontend/backend mode explicitly for each child process.
+    """
+    out: list[str] = []
+    skip_next = False
+    for idx, arg in enumerate(reflex_args):
+        if skip_next:
+            skip_next = False
+            continue
+        if arg in (
+            "--backend-only",
+            "--frontend-only",
+            "--backend_port",
+            "--frontend_port",
+            "--backend-port",
+            "--frontend-port",
+        ):
+            if idx + 1 < len(reflex_args) and not reflex_args[idx + 1].startswith("-"):
+                skip_next = True
+            continue
+        out.append(arg)
+    return out
+
+
+def _start_reflex(
+    reflex_args: list[str],
+    env: dict[str, str],
+    *,
+    backend_only: bool,
+    frontend_only: bool,
+) -> subprocess.Popen:
     cmd = ["reflex", "run", *reflex_args]
     LOG.info("Starting Reflex: %s", " ".join(cmd))
+    env = dict(env)
+    env["REFLEX_BACKEND_ONLY"] = "true" if backend_only else "false"
+    env["REFLEX_FRONTEND_ONLY"] = "true" if frontend_only else "false"
     if os.name == "posix":
         return subprocess.Popen(cmd, env=env, preexec_fn=os.setsid)
     return subprocess.Popen(cmd, env=env)
 
 
-def _stop_reflex(proc: subprocess.Popen) -> None:
-    if proc.poll() is not None:
-        return
-
-    LOG.info("Stopping Reflex process tree")
+def _kill_process(proc: subprocess.Popen) -> None:
+    """Last-resort kill that always runs."""
     try:
         if os.name == "posix":
-            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-        else:
-            proc.terminate()
-    except Exception:
-        LOG.exception("Failed to terminate Reflex process")
-
-    try:
-        proc.wait(timeout=10)
-        return
-    except subprocess.TimeoutExpired:
-        LOG.warning("Reflex did not exit after SIGTERM, forcing kill")
-
-    try:
-        if os.name == "posix":
-            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            os.killpg(proc.pid, signal.SIGKILL)
         else:
             proc.kill()
-    except Exception:
-        LOG.exception("Failed to kill Reflex process")
+    except ProcessLookupError:
+        pass
+    except Exception as e:
+        LOG.debug("Force kill failed pid=%s error=%s", proc.pid, e)
 
     try:
         proc.wait(timeout=5)
-    except subprocess.TimeoutExpired:
-        LOG.exception("Reflex process still running after SIGKILL")
+    except Exception:
+        pass
+
+
+def _stop_process(proc: subprocess.Popen) -> None:
+    if proc.poll() is not None:
+        return
+
+    LOG.info("Stopping reflex process - pid: %s", proc.pid)
+
+    try:
+        # ---------------- graceful shutdown ----------------
+        try:
+            if os.name == "posix":
+                os.killpg(proc.pid, signal.SIGTERM)
+            else:
+                proc.terminate()
+        except ProcessLookupError:
+            return
+        except Exception as e:
+            LOG.debug("SIGTERM failed pid=%s error=%s", proc.pid, e)
+            _kill_process(proc)
+            return
+
+        try:
+            proc.wait(timeout=10)
+            return
+        except subprocess.TimeoutExpired:
+            LOG.info("Reflex still running after SIGTERM - escalating")
+
+        # ---------------- hard shutdown ----------------
+        try:
+            if os.name == "posix":
+                os.killpg(proc.pid, signal.SIGKILL)
+            else:
+                proc.kill()
+        except ProcessLookupError:
+            return
+        except Exception as e:
+            LOG.debug("SIGKILL failed pid=%s error=%s", proc.pid, e)
+            _kill_process(proc)
+            return
+
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            LOG.warning("Process would not exit pid=%s", proc.pid)
+            _kill_process(proc)
+
+    # absolutely anything unexpected
+    except BaseException as e:
+        LOG.exception("Unexpected error stopping reflex pid=%s", proc.pid)
+        _kill_process(proc)
+
+
+def _stop_all(processes: list[subprocess.Popen]) -> None:
+    stop_errors: list[Exception] = []
+    for proc in processes:
+        try:
+            _stop_process(proc)
+        except Exception as stop_error:
+            stop_errors.append(stop_error)
+    if stop_errors:
+        raise ExceptionGroup("Failed to stop one or more Reflex processes", stop_errors)
+
+
+def _wait_until_any_exits(processes: list[subprocess.Popen]) -> tuple[int, int]:
+    while True:
+        for idx, proc in enumerate(processes):
+            code = proc.poll()
+            if code is not None:
+                return idx, code
+        time.sleep(0.1)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv if argv is not None else sys.argv[1:])
     app_port, backend_port, frontend_port = _resolve_ports(args)
-    reflex_args = _normalize_reflex_args(args.reflex_args)
+    reflex_args = _strip_mode_flags(_normalize_reflex_args(args.reflex_args))
 
     env = dict(os.environ)
     env["DATABRICKS_APP_PORT"] = str(app_port)
@@ -164,12 +256,12 @@ def main(argv: list[str] | None = None) -> int:
         frontend_port,
     )
 
-    proc_holder: dict[str, subprocess.Popen] = {}
+    proc_holder: dict[str, list[subprocess.Popen]] = {}
 
     def _handle_signal(signum, _frame):
         LOG.info("Received signal %s", signum)
-        if proc := proc_holder.get("reflex"):
-            _stop_reflex(proc)
+        if procs := proc_holder.get("reflex"):
+            _stop_all(procs)
 
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
@@ -180,14 +272,32 @@ def main(argv: list[str] | None = None) -> int:
         frontend_port=frontend_port,
     )
 
-    with caddy.run(caddy_config, "watch"):
-        reflex_proc = _start_reflex(reflex_args=reflex_args, env=env)
-        proc_holder["reflex"] = reflex_proc
+    with caddy.run(caddy_config, "watch") as caddy_proc:
+        reflex_backend = _start_reflex(
+            reflex_args=reflex_args,
+            env=env,
+            backend_only=True,
+            frontend_only=False,
+        )
+        reflex_frontend = _start_reflex(
+            reflex_args=reflex_args,
+            env=env,
+            backend_only=False,
+            frontend_only=True,
+        )
+        reflex_processes = [reflex_backend, reflex_frontend]
+        proc_holder["reflex"] = reflex_processes
         try:
-            exit_code = reflex_proc.wait()
+            idx, exit_code = _wait_until_any_exits([*reflex_processes, caddy_proc])
+            if idx == 0:
+                LOG.error("Reflex backend exited with code %s", exit_code)
+            elif idx == 1:
+                LOG.error("Reflex frontend exited with code %s", exit_code)
+            else:
+                LOG.error("Caddy exited with code %s", exit_code)
             return exit_code
         finally:
-            _stop_reflex(reflex_proc)
+            _stop_all(reflex_processes)
 
 
 if __name__ == "__main__":
