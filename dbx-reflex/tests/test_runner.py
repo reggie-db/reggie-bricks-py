@@ -54,16 +54,18 @@ def test_resolve_ports_prefers_cli_values(monkeypatch):
     assert frontend_port == 5180
 
 
-def test_resolve_ports_uses_env_and_ephemeral_defaults(monkeypatch):
+def test_resolve_ports_randomizes_backend_and_frontend_by_default(monkeypatch):
     monkeypatch.setenv("DATABRICKS_APP_PORT", "9100")
-    monkeypatch.setenv("REFLEX_BACKEND_PORT", "0")
-    monkeypatch.setenv("REFLEX_FRONTEND_PORT", "0")
+    monkeypatch.setenv("REFLEX_BACKEND_PORT", "9001")
+    monkeypatch.setenv("REFLEX_FRONTEND_PORT", "9002")
 
+    free_ports = iter([5011, 5179])
+    monkeypatch.setattr(run, "_get_free_port", lambda: next(free_ports))
     parsed = run._parse_args([])
     app_port, backend_port, frontend_port = run._resolve_ports(parsed)
     assert app_port == 9100
-    assert backend_port > 0
-    assert frontend_port > 0
+    assert backend_port == 5011
+    assert frontend_port == 5179
     assert backend_port != frontend_port
 
 

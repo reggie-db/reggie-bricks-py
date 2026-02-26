@@ -13,8 +13,6 @@ from dbx_caddy import caddy
 
 LOG = logging.getLogger(__name__)
 _DEFAULT_APP_PORT = 8000
-_DEFAULT_BACKEND_PORT = 5000
-_DEFAULT_FRONTEND_PORT = 5173
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -67,11 +65,11 @@ def _get_free_port() -> int:
 
 def _resolve_ports(args: argparse.Namespace) -> tuple[int, int, int]:
     app_port = args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
-    backend_port = args.backend_port or _env_int("REFLEX_BACKEND_PORT", 0)
-    frontend_port = args.frontend_port or _env_int("REFLEX_FRONTEND_PORT", 0)
-    if backend_port <= 0:
-        backend_port = _get_free_port()
-    if frontend_port <= 0:
+    # Match dbx-lottery behavior: backend/frontend ports are randomized each run
+    # unless explicitly provided by CLI flags.
+    backend_port = args.backend_port or _get_free_port()
+    frontend_port = args.frontend_port or _get_free_port()
+    if frontend_port == backend_port:
         frontend_port = _get_free_port()
     return app_port, backend_port, frontend_port
 
@@ -146,7 +144,7 @@ def _stop_reflex(proc: subprocess.Popen) -> None:
     try:
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        LOG.warning("Reflex process still running after SIGKILL")
+        LOG.exception("Reflex process still running after SIGKILL")
 
 
 def main(argv: list[str] | None = None) -> int:
