@@ -8,10 +8,12 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from dbx_ai import models
 
-def create(
-    model_name: str = "databricks-gpt-5-2", wc: WorkspaceClient | None = None
-) -> Agent:
+
+def create(model_name: str | None = None, wc: WorkspaceClient | None = None) -> Agent:
+    if model_name is None:
+        model_name = models.reasoning()
     provider = OpenAIProvider(openai_client=client(wc))
     # noinspection PyTypeChecker
     model = OpenAIModel(model_name=model_name, provider=provider)
