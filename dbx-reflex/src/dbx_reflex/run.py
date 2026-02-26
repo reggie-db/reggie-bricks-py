@@ -66,10 +66,13 @@ def _get_free_port() -> int:
 
 def _resolve_ports(args: argparse.Namespace) -> tuple[int, int, int]:
     app_port = args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
-    # Match dbx-lottery behavior: backend/frontend ports are randomized each run
-    # unless explicitly provided by CLI flags.
-    backend_port = args.backend_port or _get_free_port()
-    frontend_port = args.frontend_port or _get_free_port()
+    # Prefer explicit CLI args, then env overrides, then randomized free ports.
+    backend_port = args.backend_port or _env_int("REFLEX_BACKEND_PORT", 0)
+    frontend_port = args.frontend_port or _env_int("REFLEX_FRONTEND_PORT", 0)
+    if backend_port <= 0:
+        backend_port = _get_free_port()
+    if frontend_port <= 0:
+        frontend_port = _get_free_port()
     if frontend_port == backend_port:
         frontend_port = _get_free_port()
     return app_port, backend_port, frontend_port
