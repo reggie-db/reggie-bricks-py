@@ -4,6 +4,6 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-caddy"
-version = "0.0.1+g68d5c96"
+version = "0.0.1+g9dcde8c"
 requires-python = ">=3.12,<3.13"
 dependencies = ["PyGithub"]
