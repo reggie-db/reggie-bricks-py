@@ -1,12 +1,12 @@
 """Client factory helpers shared across Databricks command-line tools."""
 
 import functools
-import warnings
 from datetime import datetime
 
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
-from databricks_tools_core import get_workspace_client as _core_get_workspace_client
+from databricks.sdk.config import Config
+from databricks_tools_core import get_workspace_client
 from lfp_logging import logs
 from pyspark.sql import SparkSession
 
@@ -15,20 +15,19 @@ from dbx_tools import configs, runtimes
 LOG = logs.logger(__name__)
 
 
-def workspace_client() -> WorkspaceClient:
-    """Return a Databricks ``WorkspaceClient``.
-
-    Deprecated:
-        Prefer ``databricks_tools_core.get_workspace_client()`` directly in new code.
-        This compatibility shim remains for external consumers of ``dbx_tools``.
+def workspace_client(config: Config | None = None) -> WorkspaceClient:
+    """Create a Databricks ``WorkspaceClient`` using the provided or cached config.
+    Uses the default cached config when none is supplied.
     """
-    warnings.warn(
-        "dbx_tools.clients.workspace_client() is deprecated; use "
-        "databricks_tools_core.get_workspace_client() instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return _core_get_workspace_client()
+    if config is None:
+        return _workspace_client_default()
+    return WorkspaceClient(config=configs.get())
+
+
+@functools.cache
+def _workspace_client_default() -> WorkspaceClient:
+    """Create a Databricks ``WorkspaceClient`` using the default cached config."""
+    return get_workspace_client()
 
 
 def spark() -> SparkSession:
