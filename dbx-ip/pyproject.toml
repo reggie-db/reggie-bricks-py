@@ -3,7 +3,10 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "dbx-core"
+name = "dbx-ip"
 version = "0.0.1+g4be5df8"
 requires-python = ">=3.12,<3.13"
-dependencies = ["lfp-logging @ git+https://github.com/regbo/lfp-logging-py.git"]
+dependencies = ["dbx-core @ file://${PROJECT_ROOT}/../dbx-core"]
+
+[tool.uv.sources.dbx-core]
+workspace = true

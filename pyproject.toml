@@ -15,6 +15,7 @@ members = [
     "dbx-concurio",
     "dbx-core",
     "dbx-cv",
+    "dbx-ip",
     "dbx-openapi",
     "dbx-postgres",
     "dbx-reflex",

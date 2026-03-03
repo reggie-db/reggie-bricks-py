@@ -23,3 +23,18 @@ def to_bool(value, default=False):
                 if value.casefold() == bool_str.casefold():
                     return bool_value
     return default
+
+
+def to_float(value, default=None):
+    """Coerce values to float with default fallback."""
+    if isinstance(value, float):
+        return value
+    elif isinstance(value, int):
+        return float(value)
+    elif value:
+        if value_str := str(value).strip():
+            try:
+                return float(value_str)
+            except ValueError:
+                return default
+    return default
