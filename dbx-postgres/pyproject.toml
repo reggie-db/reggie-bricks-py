@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-postgres"
-version = "0.0.1+g4be5df8"
+version = "0.0.1+g468264a"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",

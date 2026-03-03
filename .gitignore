@@ -1,152 +1,175 @@
-.web
-*.db
-.states
-assets/external/
-*.py[cod]
-# -----------------------
-# IntelliJ IDEA / JetBrains
-# -----------------------
-.idea/
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/dictionaries
-.idea/**/shelf
-*.iml
-*.ipr
-*.iws
-out/
-.idea_modules/
-# IntelliJ crash logs
-idea.log
+# =========================================================
+# Python Artifacts
+# =========================================================
 
-# -----------------------
-# Visual Studio Code
-# -----------------------
-.vscode/
-.history/
-*.code-workspace
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-
-# -----------------------
-# Cursor editor
-# -----------------------
-.cursor/
-.cursorignore
-.cursorindexingignore
-!.cursor/settings.json
-!.cursor/tasks.json
-!.cursor/launch.json
-
-# -----------------------
-# Python
-# -----------------------
 __pycache__/
-*.py[codz]
+*.py[cod]
 *$py.class
 *.so
 .Python
-develop-eggs/
+
+# =========================================================
+# Build / Distribution
+# =========================================================
+
+build/
 dist/
+.eggs/
+develop-eggs/
 downloads/
 eggs/
-.eggs/
-lib/
-lib64/
-parts/
 sdist/
+parts/
 var/
 wheels/
 share/python-wheels/
 *.egg-info/
-.installed.cfg
 *.egg
+.installed.cfg
 MANIFEST
-uv.lock
 *.manifest
 *.spec
-pip-log.txt
-pip-delete-this-directory.txt
+
+# =========================================================
+# Virtual Environments
+# =========================================================
+
+.env
+.envrc
+.venv
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+.pixi/*
+!.pixi/config.toml
+
+.pdm-build/
+.pdm-python
+
+__pypackages__/
+
+# =========================================================
+# Testing / Coverage / Type Checking
+# =========================================================
+
 htmlcov/
 .tox/
 .nox/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
 .hypothesis/
 .pytest_cache/
-cover/
-*.mo
-*.pot
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-instance/
-.webassets-cache
-.scrapy
-docs/_build/
-.pybuilder/
-.ipynb_checkpoints
-profile_default/
-ipython_config.py
-.pdm-python
-.pdm-build/
-.pixi
-__pypackages__/
-celerybeat-schedule
-celerybeat.pid
-*.sage.py
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-.spyderproject
-.spyproject
-.ropeproject
-/site
 .mypy_cache/
 .dmypy.json
 dmypy.json
 .pyre/
 .pytype/
-cython_debug/
-.abstra/
 .ruff_cache/
-.pypirc
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+cover/
 
-# -----------------------
+# =========================================================
 # Logs
-# -----------------------
+# =========================================================
+
 *.log
 *.log.*
+nohup.out
+pip-log.txt
+pip-delete-this-directory.txt
 
-# -----------------------
-# Vaadin
-# -----------------------
-**/frontend/generated
+# =========================================================
+# Local Databases / Runtime
+# =========================================================
+
+*.db
+db.sqlite3
+db.sqlite3-journal
+instance/
+local_settings.py
+
+# =========================================================
+# Notebooks / Interactive
+# =========================================================
+
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+*.sage.py
+
+# =========================================================
+# Documentation Builds
+# =========================================================
+
+docs/_build/
+/site
+
+# =========================================================
+# Node / Frontend / Vaadin
+# =========================================================
+
 node_modules/
 pnpmfile.js
+webpack.generated.js
 drivers/
 error-screenshots/
-webpack.generated.js
+**/frontend/generated
 
-# -----------------------
-# OS-specific
-# -----------------------
-# macOS
+# =========================================================
+# IntelliJ / JetBrains (Vendor Recommended)
+# =========================================================
+
+.idea/*
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+!.idea/runConfigurations/
+!.idea/misc.xml
+!.idea/modules.xml
+
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/shelf/
+.idea/dictionaries/
+
+*.iml
+*.ipr
+*.iws
+out/
+idea.log
+.idea_modules/
+
+# =========================================================
+# VS Code (Vendor Recommended)
+# =========================================================
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+.history/
+*.code-workspace
+
+# =========================================================
+# Cursor (Vendor Recommended)
+# =========================================================
+
+.cursor/*
+!.cursor/settings.json
+!.cursor/tasks.json
+!.cursor/launch.json
+
+.cursorignore
+.cursorindexingignore
+
+# =========================================================
+# OS Files
+# =========================================================
+
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -157,36 +180,44 @@ webpack.generated.js
 Network Trash Folder
 Temporary Items
 
-# Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Linux
 *~
 
-# -----------------------
-# Others
-# -----------------------
+# =========================================================
+# Tool Specific / Misc
+# =========================================================
+
+.scrapy
+.webassets-cache
+.pybuilder/
+celerybeat-schedule
+celerybeat.pid
+cython_debug/
+.abstra/
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+.spyderproject
+.spyproject
+.ropeproject
+.pypirc
+
+# =========================================================
+# Project / Generated / Dev Specific
+# =========================================================
+
+.states
+.web
+assets/external/
+
 *.tmp
 *.temp
 prpr/
-./*.pt
 *.proto
 *_pb2.py
 
-# -----------------------
-# Dev
-# -----------------------
-
-# Match exactly or any path segment equal to dev
 **/.dev
-
-# Match any file or directory that starts with .dev.
 **/.dev.*
-
-
-nohup.out
-# pixi environments
-.pixi/*
-!.pixi/config.toml

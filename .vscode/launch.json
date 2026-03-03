@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Run Script (uv)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "uv",
+            "args": [
+                "run",
+                "${file}"
+            ],
+            "cwd": "${workspaceFolder}/build-scripts",
+            "console": "integratedTerminal",
+            "noDebug": true
+        }
+    ]
+}
