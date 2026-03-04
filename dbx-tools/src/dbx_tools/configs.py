@@ -22,16 +22,8 @@ LOG = logs.logger()
 
 
 def get() -> Config:
-    """Return the Databricks SDK ``Config`` used by workspace clients.
-
-    Default auth and config resolution is delegated to
-    ``databricks_tools_core.get_workspace_client()`` to avoid duplicating
-    authentication logic in this module.
-    """
-    if runtimes.version() or runtimes.app_info():
-        config = Config()
-    else:
-        config = _config()
+    """Return the Databricks SDK ``Config`` used by workspace clients."""
+    config = _config()
     if not config.cluster_id and not config.serverless_compute_id:
         config.serverless_compute_id = "auto"
     return config
@@ -39,6 +31,9 @@ def get() -> Config:
 
 @functools.cache
 def _config() -> Config:
+    if runtimes.version() or runtimes.app_info():
+        return Config()
+
     def _load() -> Config:
         # Delegate to core auth path to keep one source of truth for default
         # workspace authentication behavior.

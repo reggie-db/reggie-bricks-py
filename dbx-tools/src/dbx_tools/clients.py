@@ -7,7 +7,6 @@ from typing import Any, Iterable
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.config import Config
-from databricks_tools_core import get_workspace_client
 from lfp_logging import logs
 from pyspark.sql import SparkSession
 
@@ -20,15 +19,18 @@ def workspace_client(config: Config | None = None) -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` using the provided or cached config.
     Uses the default cached config when none is supplied.
     """
-    if config is None:
-        return _workspace_client_default()
-    return WorkspaceClient(config=configs.get())
+    return _workspace_client(config) if config else _workspace_client_default()
+
+
+def _workspace_client(config: Config) -> WorkspaceClient:
+    """Create a Databricks ``WorkspaceClient`` using the provided config."""
+    return WorkspaceClient(config=config)
 
 
 @functools.cache
 def _workspace_client_default() -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` using the default cached config."""
-    return get_workspace_client()
+    return _workspace_client(configs.get())
 
 
 def spark() -> SparkSession:
