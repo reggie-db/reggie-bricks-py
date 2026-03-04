@@ -4,7 +4,8 @@ from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import EndpointInfo
 from dbx_core import strs
 
-from dbx_tools.clients import _WAREHOUSE_SIZE_PATTERN, workspace_client
+from dbx_tools.clients import _WAREHOUSE_SIZE_PATTERN
+from dbx_tools.clients import workspace_client as default_workspace_client
 
 
 class WarehouseSort(enum.Enum):
@@ -40,14 +41,14 @@ def get(
 def list(
     *sort: WarehouseSort,
     name_preference: list[str] | None = None,
-    client: WorkspaceClient | None = None,
+    workspace_client: WorkspaceClient | None = None,
 ) -> list[EndpointInfo]:
     """Return accessible warehouses sorted by requested ranking dimensions.
 
     Args:
         *sort: One or more `WarehouseSort` values defining ranking order.
         name_preference: Ordered list of preferred name fragments.
-        client: Optional `WorkspaceClient`; default client is used when omitted.
+        workspace_client: Optional `WorkspaceClient`; default client is used when omitted.
 
     Returns:
         Warehouses sorted by the selected ranking dimensions, highest ranked first.
@@ -60,7 +61,7 @@ def list(
         preference.lower() for preference in name_preference if preference
     ]
 
-    wc = client or workspace_client()
+    wc = workspace_client or default_workspace_client()
     candidates = [w for w in wc.warehouses.list() if w.id]
     if not candidates:
         return []

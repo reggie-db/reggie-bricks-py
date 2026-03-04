@@ -63,28 +63,28 @@ def test_warehouse_selection_logic():
 
     items = [w1, w2, w3, w4]
     client = MockWorkspaceClient(items)
-    assert warehouses.get(client=client).id == "3"
+    assert warehouses.get(workspace_client=client).id == "3"
 
     items = [w1, w2, w4]
     client = MockWorkspaceClient(items)
-    assert warehouses.get(client=client).id == "2"
+    assert warehouses.get(workspace_client=client).id == "2"
 
     w5 = MockWarehouse(
         id="5", name="demo", cluster_size="Small", enable_serverless_compute=False
     )
     items = [w1, w4, w5]
     client = MockWorkspaceClient(items)
-    assert warehouses.get(client=client).id == "4"
+    assert warehouses.get(workspace_client=client).id == "4"
 
     items = [w1, w5]
     client = MockWorkspaceClient(items)
-    assert warehouses.get(client=client).id == "5"
+    assert warehouses.get(workspace_client=client).id == "5"
 
 
 def test_warehouse_raises_on_empty():
     client = MockWorkspaceClient([])
     with pytest.raises(ValueError, match="No accessible SQL warehouses found"):
-        warehouses.get(client=client)
+        warehouses.get(workspace_client=client)
 
 
 def test_warehouse_ignores_warehouses_without_id():
@@ -96,7 +96,7 @@ def test_warehouse_ignores_warehouses_without_id():
     )
 
     client = MockWorkspaceClient([w1, w2])
-    assert warehouses.get(client=client).id == "2"
+    assert warehouses.get(workspace_client=client).id == "2"
 
 
 def test_warehouse_prefers_serverless_then_size_then_name():
@@ -133,7 +133,7 @@ def test_warehouse_prefers_serverless_then_size_then_name():
         ),
     ]
 
-    chosen = warehouses.get(client=MockWorkspaceClient(items))
+    chosen = warehouses.get(workspace_client=MockWorkspaceClient(items))
     assert chosen.id == "4"
 
 
@@ -159,7 +159,7 @@ def test_warehouse_name_preference_breaks_size_ties_within_serverless():
         ),
     ]
 
-    chosen = warehouses.get(client=MockWorkspaceClient(items))
+    chosen = warehouses.get(workspace_client=MockWorkspaceClient(items))
     assert chosen.id == "3"
 
 
@@ -182,7 +182,7 @@ def test_list_name_preference_uses_tokenized_contains_matching():
     ranked = warehouses.list(
         warehouses.WarehouseSort.NAME,
         name_preference=["endpoint", "demo"],
-        client=MockWorkspaceClient(items),
+        workspace_client=MockWorkspaceClient(items),
     )
     assert ranked[0].id == "1"
 
@@ -197,4 +197,4 @@ def test_warehouse_raises_when_none_found():
         warehouses = _W()
 
     with pytest.raises(ValueError):
-        warehouses.get(client=_EmptyWC())
+        warehouses.get(workspace_client=_EmptyWC())

@@ -38,7 +38,7 @@ def _pool_settings() -> tuple[int, int, float]:
     return pool_size, max_overflow, pool_timeout
 
 
-def _install_token_injection(*, engine, wc, instance_name: str) -> None:
+def _install_token_injection(*, engine, workspace_client, instance_name: str) -> None:
     """
     Inject the Databricks Lakebase OAuth token during connection.
     """
@@ -46,7 +46,7 @@ def _install_token_injection(*, engine, wc, instance_name: str) -> None:
     @event.listens_for(engine, "do_connect")
     def provide_token(dialect, conn_rec, cargs, cparams):
         """Provide the App's OAuth token. Caching is managed by WorkspaceClient"""
-        cparams["password"] = wc.database.generate_database_credential(
+        cparams["password"] = workspace_client.database.generate_database_credential(
             request_id=str(uuid.uuid4()), instance_names=[instance_name]
         ).token
 
@@ -81,7 +81,7 @@ def _install_sql_logging(*, engine, log_sql: bool, slow_sql_ms: float) -> None:
 
 
 def _lakebase_url(
-    *, drivername: str, wc, instance_name: str, postgres_database: str
+    *, drivername: str, workspace_client, instance_name: str, postgres_database: str
 ) -> tuple[URL, str]:
     """
     Build a SQLAlchemy URL for Lakebase using the given driver name.
@@ -89,8 +89,8 @@ def _lakebase_url(
     Uses `URL.create(...)` so usernames with `@` are correctly encoded.
     """
 
-    db_instance = wc.database.get_database_instance(instance_name)
-    postgres_username = wc.current_user.me().user_name
+    db_instance = workspace_client.database.get_database_instance(instance_name)
+    postgres_username = workspace_client.current_user.me().user_name
 
     postgres_host = db_instance.read_write_dns
     postgres_port = 5432
@@ -124,10 +124,10 @@ async def get_async_db():
 @functools.cache
 def get_engine():
     instance_name, postgres_database, log_sql, slow_sql_ms = _lakebase_settings()
-    wc = clients.workspace_client()
+    workspace_client = clients.workspace_client()
     url, rendered_url = _lakebase_url(
         drivername="postgresql+psycopg2",
-        wc=wc,
+        workspace_client=workspace_client,
         instance_name=instance_name,
         postgres_database=postgres_database,
     )
@@ -144,7 +144,11 @@ def get_engine():
         pool_timeout=pool_timeout,
     )
 
-    _install_token_injection(engine=engine, wc=wc, instance_name=instance_name)
+    _install_token_injection(
+        engine=engine,
+        workspace_client=workspace_client,
+        instance_name=instance_name,
+    )
     _install_sql_logging(engine=engine, log_sql=log_sql, slow_sql_ms=slow_sql_ms)
 
     return engine
@@ -163,10 +167,10 @@ def get_async_engine():
     """
 
     instance_name, postgres_database, log_sql, slow_sql_ms = _lakebase_settings()
-    wc = clients.workspace_client()
+    workspace_client = clients.workspace_client()
     url, rendered_url = _lakebase_url(
         drivername="postgresql+asyncpg",
-        wc=wc,
+        workspace_client=workspace_client,
         instance_name=instance_name,
         postgres_database=postgres_database,
     )
@@ -186,7 +190,11 @@ def get_async_engine():
     # Events must be registered on the underlying sync engine.
     sync_engine = async_engine.sync_engine
 
-    _install_token_injection(engine=sync_engine, wc=wc, instance_name=instance_name)
+    _install_token_injection(
+        engine=sync_engine,
+        workspace_client=workspace_client,
+        instance_name=instance_name,
+    )
     _install_sql_logging(engine=sync_engine, log_sql=log_sql, slow_sql_ms=slow_sql_ms)
 
     return async_engine
