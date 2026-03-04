@@ -49,7 +49,7 @@ def reasoning() -> str:
     return _model("REASONING_MODEL", models)
 
 
-def memory() -> str:
+def summarize() -> str:
     """
     Target: Mem0 (Summarization & Fact Extraction)
     Requirements: High throughput, low cost, strict JSON adherence.
@@ -129,6 +129,6 @@ def _model_cache(config_key: str, model_csv: str) -> str:
 if __name__ == "__main__":
     print("starting")
     LOG.info("reasoning model: %s", reasoning())
-    LOG.info("memory model: %s", memory())
+    LOG.info("memory model: %s", summarize())
     LOG.info("vector model: %s", vectorize())
     LOG.info("ranker model: %s", ranker())

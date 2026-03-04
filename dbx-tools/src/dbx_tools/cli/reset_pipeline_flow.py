@@ -15,6 +15,13 @@ LOG = logs.logger()
 
 
 def _reset_checkpoint(config: Config, pipeline_id: str, flow: list[str]):
+    """Request a checkpoint reset for one or more DLT streaming flows.
+
+    Args:
+        config: Databricks SDK config containing host and auth context.
+        pipeline_id: DLT pipeline identifier.
+        flow: Flow names to include in the reset selection payload.
+    """
     url = f"{config.host.rstrip('/')}/api/2.0/pipelines/{pipeline_id}/updates"
 
     payload = {"reset_checkpoint_selection": flow}
@@ -44,6 +51,7 @@ def _reset_checkpoint(config: Config, pipeline_id: str, flow: list[str]):
 
 
 def main():
+    """Parse CLI arguments and submit a checkpoint reset request."""
     parser = argparse.ArgumentParser(
         description="Reset DLT streaming checkpoint selection for specific flows"
     )

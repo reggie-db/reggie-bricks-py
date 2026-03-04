@@ -5,6 +5,7 @@ from databricks.sdk import WorkspaceClient
 from dbx_tools import clients
 from openai import AsyncClient
 from pydantic_ai import Agent
+from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
@@ -12,12 +13,7 @@ from dbx_ai import models
 
 
 def create(model_name: str | None = None, wc: WorkspaceClient | None = None) -> Agent:
-    if model_name is None:
-        model_name = models.reasoning()
-    provider = OpenAIProvider(openai_client=client(wc))
-    # noinspection PyTypeChecker
-    model = OpenAIModel(model_name=model_name, provider=provider)
-    return Agent(model)
+    return Agent(model(model_name=model_name, wc=wc))
 
 
 def client(wc: WorkspaceClient | None = None) -> AsyncClient:
@@ -37,6 +33,14 @@ def _client(wc: WorkspaceClient) -> AsyncClient:
 @functools.cache
 def _client_default() -> AsyncClient:
     return _client(clients.workspace_client())
+
+
+def model(model_name: str | None = None, wc: WorkspaceClient | None = None) -> Model:
+    if model_name is None:
+        model_name = models.reasoning()
+    provider = OpenAIProvider(openai_client=client(wc))
+    # noinspection PyTypeChecker
+    return OpenAIModel(model_name=model_name, provider=provider)
 
 
 def _http_client(wc: WorkspaceClient) -> httpx.AsyncClient:

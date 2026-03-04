@@ -4,7 +4,7 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass, fields
-from typing import Any, Collection, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Collection, Mapping, TypeVar
 
 from dbx_core import imports
 from lfp_logging import logs
@@ -15,6 +15,9 @@ from dbx_tools import clients
 LOG = logs.logger()
 T = TypeVar("T")
 _UNSET = object()
+
+if TYPE_CHECKING:
+    from pyspark.dbutils import DBUtils
 
 
 @dataclass
@@ -49,6 +52,18 @@ def app_info() -> AppInfo | None:
 
 
 def ipython_user_ns(key: str, default_value: T | None = _UNSET) -> T | None:
+    """Return a value from the active IPython user namespace when available.
+
+    Args:
+        key: Namespace key to resolve.
+        default_value: Value returned when key or IPython context is unavailable.
+
+    Returns:
+        Namespace value for ``key`` or ``default_value`` when provided.
+
+    Raises:
+        KeyError: When no value is found and no default is supplied.
+    """
     if get_ipython_function := imports.resolve("IPython", "get_ipython"):
         if ipython := get_ipython_function():
             value = ipython.user_ns.get(key, _UNSET)
@@ -59,18 +74,60 @@ def ipython_user_ns(key: str, default_value: T | None = _UNSET) -> T | None:
     raise KeyError(key)
 
 
-def dbutils() -> "DBUtils":
-    """Return the ``DBUtils`` handle associated with the current Spark session."""
+def ipython(default_value: Any | None = _UNSET) -> Any | None:
+    """Return the active IPython shell object.
+
+    This preserves the legacy helper that tests and downstream callers import.
+
+    Args:
+        default_value: Value returned when no active IPython shell exists.
+
+    Returns:
+        Active IPython shell object or ``default_value``.
+
+    Raises:
+        ValueError: When IPython is unavailable and no default is supplied.
+    """
+    if get_ipython_function := imports.resolve("IPython", "get_ipython"):
+        if shell := get_ipython_function():
+            return shell
+    if default_value is not _UNSET:
+        return default_value
+    raise ValueError("IPython is not available")
+
+
+# noinspection PyUnresolvedReferences,PyTypeHints
+def dbutils(spark: bool = True) -> "DBUtils | None":
+    """Return the ``DBUtils`` handle associated with the current Spark session.
+
+    Args:
+        spark: When ``True``, attempt construction from a Spark session when a
+            notebook-injected ``dbutils`` handle is not available.
+
+    Returns:
+        ``DBUtils`` instance when available, otherwise ``None``.
+    """
     if instance := ipython_user_ns("dbutils", None):
         return instance
-    if pyspark_dbutils_class := imports.resolve("pyspark.dbutils", "DBUtils"):
-        # noinspection PyTypeChecker
-        return pyspark_dbutils_class(clients.spark())
-    raise ValueError("DBUtils is not available")
+    if spark:
+        if pyspark_dbutils_class := imports.resolve("pyspark.dbutils", "DBUtils"):
+            # noinspection PyTypeChecker
+            return pyspark_dbutils_class(clients.spark())
+    return None
 
 
 def context(default_value: dict[str, Any] | None = _UNSET) -> dict[str, Any]:
-    """Assemble runtime context information from notebook and Spark sources."""
+    """Assemble runtime context information from notebook and Spark sources.
+
+    Args:
+        default_value: Value returned when context cannot be resolved.
+
+    Returns:
+        Runtime context dictionary.
+
+    Raises:
+        ValueError: When context is unavailable and no default is supplied.
+    """
     if get_context_function := imports.resolve(
         "dbruntime.databricks_repl_context", "get_context"
     ):

@@ -1,5 +1,6 @@
 import importlib
 from functools import lru_cache
+from importlib import util as importlib_util
 from types import ModuleType
 from typing import Any
 
@@ -29,7 +30,7 @@ def resolve(
 
 
 def resolve_module(
-    name: str, package: str | None = None, cache: bool = True
+    name: str, package: str | None = None, cache: bool = True, execute: bool = True
 ) -> ModuleType | None:
     """
     Resolve a module by name.
@@ -48,29 +49,34 @@ def resolve_module(
     if not name:
         raise ValueError(f"Invalid module name: {name}")
     return (
-        _resolve_module_cached(name, package)
+        _resolve_module_cached(name, package, execute)
         if cache
-        else _resolve_module(name, package)
+        else _resolve_module(name, package, execute)
     )
 
 
-def _resolve_module(name: str, package: str | None) -> ModuleType | None:
+def _resolve_module(name: str, package: str | None, execute: bool) -> ModuleType | None:
     """
-    Internal helper to resolve a module using importlib.
+    Internal helper to resolve a module without executing it.
     """
-    # noinspection PyBroadException
     try:
-        return importlib.import_module(name, package)
-    except ModuleNotFoundError:
-        pass
-    except ImportError:
+        fullname = name if not package else f"{package}.{name}"
+        spec = importlib_util.find_spec(fullname)
+        if spec:
+            if execute:
+                return importlib.import_module(name, package)
+            else:
+                return importlib_util.module_from_spec(spec)
+    except (ModuleNotFoundError, ImportError):
         pass
     return None
 
 
 @lru_cache(maxsize=None)
-def _resolve_module_cached(name: str, package: str | None) -> ModuleType | None:
+def _resolve_module_cached(
+    name: str, package: str | None, execute: bool
+) -> ModuleType | None:
     """
     Internal helper to resolve a module with caching.
     """
-    return _resolve_module(name, package)
+    return _resolve_module(name, package, execute)

@@ -74,3 +74,22 @@ def root_project_name(path: PathLike | str | None = None) -> str | None:
         if project_name := pdata.get("project", {}).get("name", None):
             return project_name
     return root_dir(path).name
+
+
+def root_project_version(
+    path: PathLike | str | None = None, git_fallback: bool = True
+) -> str | None:
+    _, pdata = root_pyproject(path)
+    if pdata:
+        if project_version := pdata.get("project", {}).get("version", None):
+            return project_version
+    rev = None
+    if git_fallback:
+        try:
+            rev = subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], text=True
+            ).strip()
+        except Exception:
+            pass
+    version = "0.0.1"
+    return f"{version}+g{rev}" if rev else version
