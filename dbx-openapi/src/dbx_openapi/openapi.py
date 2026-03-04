@@ -89,7 +89,7 @@ def main():
 if __name__ == "__main__":
     src = Path("/Users/reggie.pierce/Projects/reggie-demo-ui/iot/src/openapi.yaml")
     tmpl = Path(__file__).parent / "openapi_template"
-    out = projects.root_dir() / "demo-iot/src/demo_iot_generated"
+    out = projects.root_dir() / "tools-iot/src/demo_iot_generated"
 
     for _ in utils.watch_file(src):
         with TemporaryDirectory() as tmp:

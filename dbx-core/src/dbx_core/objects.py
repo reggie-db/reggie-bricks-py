@@ -7,17 +7,70 @@ import inspect
 import json
 from array import array
 from collections import deque
-from typing import Any, Callable, Iterable, TypeVar
+from dataclasses import asdict, is_dataclass
+from types import NoneType
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    TypeAlias,
+    TypeVar,
+    get_args,
+    get_origin,
+)
 
 from lfp_logging import logs
+
+try:
+    from pydantic import BaseModel
+except ImportError:
+    BaseModel = None
 
 LOG = logs.logger()
 
 T = TypeVar("T")
-_DUMP_ATTRS = ["model_dump", "as_dict", "to_dict", "asDict", "toDict", "__dict__"]
-_ENUM_ATTRS = ["name", "value"]
-_DESCRIPTOR_ATTRS = ["__get__", "__set__", "__delete__"]
+DataType: TypeAlias = (
+    None | bool | int | float | str | list["DataType"] | dict["DataType", "DataType"]
+)
+_DATA_TYPE_PRIMITIVE_TYPES = tuple(
+    arg for arg in get_args(DataType) if arg is not NoneType and get_origin(arg) is None
+)
+_DATA_TYPE_TYPES = (
+    tuple(
+        get_origin(arg)
+        for arg in get_args(DataType)
+        if arg is not NoneType and get_origin(arg) is not None
+    )
+    + _DATA_TYPE_PRIMITIVE_TYPES
+)
 _COLLECTION_TYPES = (list, tuple, set, dict, frozenset, deque, array, range)
+
+
+def _generate_attr_names(*function_names: Iterable[str]) -> list[str]:
+    modifiers: list[Callable[[Iterable[str]], str]] = [
+        lambda parts: "_".join(parts),
+        lambda parts: "".join([parts[0]] + [p.capitalize() for p in parts[1:]]),
+        lambda parts: "".join(parts),
+    ]
+
+    result = []
+    for underscore in (False, True):
+        for modifier in modifiers:
+            for function_name_parts in function_names:
+                function_name = modifier(function_name_parts)
+                if underscore:
+                    function_name = f"__{function_name}__"
+                if function_name not in result:
+                    result.append(function_name)
+    return result
+
+
+_DUMP_ATTRS = _generate_attr_names(
+    ("model", "dump"), ("as", "dict"), ("to", "dict"), ("dict",)
+)
+
+_ENUM_ATTRS = ["name", "value"]
 
 
 def call(fn: Callable, *args: Any) -> Any:
@@ -79,90 +132,92 @@ def remove_keys(d: dict, *keys: str):
     _remove_keys(d, *keys)
 
 
-def dump(
-    obj: Any, recursive: bool = True, member_properties: bool = True
-) -> dict[Any, Any]:
-    """
-    Convert an object into a dictionary with optional property extraction.
+def dump(obj: Any, recursive: bool = True, member_properties: bool = True) -> DataType:
+    """Convert an object graph to JSON-like Python data structures.
 
-    Attempts multiple strategies to convert an object to a dictionary:
-    1. Checks for common dump methods (model_dump, as_dict, to_dict, etc.)
-    2. Uses __dict__ if available
-    3. Extracts class members (properties and non-callable attributes)
-
-    When recursive is True, nested objects are also converted. When member_properties
-    is True, @property values are evaluated and included.
+    Serialization order:
+    1. ``None``, mappings, collections, enums, and primitive data types are converted directly.
+    2. For custom objects, common dump helpers are attempted in order:
+       ``model_dump``, ``as_dict``, ``to_dict``, and ``dict`` (including dunder/camel variants).
+    3. Dataclasses fall back to ``dataclasses.asdict``.
+    4. Any remaining object is stringified with ``str(value)``.
 
     Args:
-        obj: Object to convert to dictionary
-        recursive: If True, recursively convert nested objects
-        member_properties: If True, include @property values and class members
+        obj: Object to serialize.
+        recursive: If ``True``, recursively serialize nested values.
+        member_properties: If ``True``, include class ``@property`` values and
+            eligible class members via :func:`_properties`.
 
     Returns:
-        Dictionary representation of the object, or the original object if conversion
-        fails and it's not a collection type
+        A JSON-compatible data representation.
     """
 
-    seen = set()
-
-    def _dump(value):
-        if value is None or id(value) in seen:
-            return value
-        seen.add(id(value))
-        if isinstance(value, dict):
-            if recursive:
-                out = {}
-                for k, v in value.items():
-                    out[k] = _dump(v)
-                return out
-            else:
-                return value
+    def _to_data(value: Any) -> DataType:
+        if value is None:
+            return None
+        elif isinstance(value, Mapping):
+            data = {}
+            for k, v in value.items():
+                data[_to_data(k) if recursive else k] = _to_data(v) if recursive else v
+            return data
         elif isinstance(value, _COLLECTION_TYPES):
-            if recursive:
-                out = []
-                for v in value:
-                    out.append(_dump(v))
-                return out
-            else:
-                return value
-        elif not isinstance(value, enum.Enum):
-            for attr in _DUMP_ATTRS:
-                if hasattr(value, attr):
-                    dump_attr = getattr(value, attr)
-                    if callable(dump_attr):
-                        sig = inspect.signature(dump_attr)
-                        arg_count = 0
-                        for _ in sig.parameters.values():
-                            arg_count += 1
-                            if arg_count > 1:
-                                break
-                        if arg_count == 1:
-                            dump_value = dump_attr(value)
-                        else:
-                            continue
-                    else:
-                        dump_value = dump_attr
-                    if dump_value is not None:
-                        return _dump(dump_value) if recursive else dump_value
-            out = None
-            for k, v in _properties(value, member_properties):
-                if out is None:
-                    out = {}
-                out[k] = _dump(v) if recursive else v
-            if out is not None:
-                return out
-        return value
+            return [_to_data(v) if recursive else v for v in value]
+        elif isinstance(value, enum.Enum):
+            return _to_data(value.value)
+        elif isinstance(value, _DATA_TYPE_TYPES):
+            return value
+        else:
+            data = None
+            for dump_attr in _DUMP_ATTRS:
+                fn = getattr(value, dump_attr, None)
+                if not callable(fn):
+                    continue
+                try:
+                    fn_result = fn()
+                except TypeError:
+                    continue
+                if isinstance(fn_result, _DATA_TYPE_TYPES):
+                    data = _to_data(fn_result)
+                    break
+            if data is None:
+                if is_dataclass(value):
+                    data = _to_data(asdict(value))
+                else:
+                    encoded, encoded_value = _encode_default(value)
+                    if encoded:
+                        data = _to_data(encoded_value)
+            if data is None or (member_properties and isinstance(data, Mapping)):
+                for k, v in _properties(value, member_properties=member_properties):
+                    k = _to_data(k) if recursive else k
+                    if data is None:
+                        data = {}
+                    elif k in data:
+                        continue
+                    data[k] = _to_data(v) if recursive else v
+            if data is None:
+                data = str(data)
+            return data
 
-    return _dump(obj)
+    return _to_data(obj)
 
 
-def to_list[T](obj: Iterable[T] | T) -> list[T]:
-    if isinstance(obj, list):
-        return obj
-    elif isinstance(obj, _COLLECTION_TYPES):
-        return list(obj)
-    else:
-        return [obj]
+def to_list[T](obj: Iterable[T] | T, flatten: bool = False) -> list[T]:
+    def _to_list(value: Iterable[T] | T) -> list:
+        if isinstance(value, list):
+            values = value
+        elif isinstance(value, _COLLECTION_TYPES):
+            values = list(value)
+        else:
+            return [value]
+        if not values or not flatten:
+            return values
+        else:
+            result = []
+            for v in values:
+                result.extend(_to_list(v))
+            return result
+
+    return _to_list(obj)
 
 
 def to_json(obj: Any, member_properties: bool = True, **kwargs) -> Any:
@@ -236,35 +291,50 @@ def _properties(obj: Any, member_properties: bool = True) -> Iterable[tuple[str,
     """
     if obj is not None:
         keys = set()
-        if member_properties:
-            for k, v in inspect.getmembers(obj.__class__):
-                if isinstance(v, property) and v.fget is not None and k not in keys:
-                    keys.add(k)
-                    yield k, v.fget(obj)
 
         for k, v in inspect.getmembers(obj.__class__):
             if (
-                not k.startswith("_")
+                k
                 and k not in keys
-                and not callable(v)
-                and not any(hasattr(v, m) for m in _DESCRIPTOR_ATTRS)
-                and not (isinstance(obj, enum.Enum) and k in _ENUM_ATTRS)
+                and not k.startswith("_")
+                and (
+                    BaseModel is None
+                    or not isinstance(obj, BaseModel)
+                    or not k.startswith("model_")
+                )
             ):
+                if isinstance(v, property):
+                    if not member_properties:
+                        continue
+                    fget = getattr(v, "fget", None)
+                    if not callable(fget):
+                        continue
+                    v = fget(obj)
+                elif callable(v) or (isinstance(obj, enum.Enum) and k in _ENUM_ATTRS):
+                    continue
                 keys.add(k)
                 yield k, v
 
 
-def _json_encoder_default(self: json.JSONEncoder, o: Any) -> Any:
+def _json_encode_default(o: Any) -> Any:
     """Default JSON encoding strategy covering dataclasses and ISO-like values."""
-    if o is None:
-        return None
-    elif hasattr(o, "isoformat") and callable(o.isoformat):
-        return o.isoformat()
-    else:
-        data = dump(o)
-        if isinstance(data, dict):
-            return data
+    encoded, encoded_value = _encode_default(o)
+    if encoded:
+        return encoded_value
+    data = dump(o)
+    if isinstance(data, dict):
+        return data
     return str(o)
+
+
+def _encode_default(o: Any) -> tuple[bool, Any]:
+    if o is None or isinstance(o, _DATA_TYPE_PRIMITIVE_TYPES):
+        return True, o
+    isoformat_attr = getattr(o, "isoformat", None)
+    isoformat = isoformat_attr() if callable(isoformat_attr) else None
+    if isinstance(isoformat, str):
+        return True, isoformat
+    return False, None
 
 
 class _JSONEncoder(json.JSONEncoder):
@@ -276,7 +346,7 @@ class _JSONEncoder(json.JSONEncoder):
     """
 
     def default(self, o: Any) -> Any:
-        return _json_encoder_default(self, o)
+        return _json_encode_default(o)
 
 
 class _JSONMemberPropertiesEncoder(json.JSONEncoder):
@@ -288,11 +358,15 @@ class _JSONMemberPropertiesEncoder(json.JSONEncoder):
     """
 
     def default(self, o: Any) -> Any:
-        return _json_encoder_default(self, o)
+        return _json_encode_default(o)
 
 
 if __name__ == "__main__":
+    print(_DUMP_ATTRS)
     LOG.info(dump({"neat": 1, "cool": "wow"}))
+    LOG.info(
+        dump({"neat": 1, "cool": "wow", "suh": [1, 2, 3, datetime.datetime.now()]})
+    )
     LOG.info(dump("ok"))
     LOG.info(hash({"neat": 1, "cool": "wow"}).hexdigest())
     LOG.info(hash({"cool": "wow", "neat": 1}).hexdigest())
@@ -305,3 +379,4 @@ if __name__ == "__main__":
     LOG.info(hash(datetime.datetime.now()).hexdigest())
     call(lambda x: LOG.info(f"suh {x}"), "wow", "cool", "neat")
     call(lambda x, y: LOG.info(f"suh {x} {y}"), "wow")
+    print(list(_generate_attr_names(("to", "data"), ["as", "dict"])))

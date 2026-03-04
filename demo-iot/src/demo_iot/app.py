@@ -20,7 +20,7 @@ from demo_iot.frame_api import router as frame_api_router
 from demo_iot.image_api import router as image_api_router
 from demo_iot_generated.main import GeneratedRouter
 
-# This module hosts the demo FastAPI application, including an SSE endpoint that
+# This module hosts the tools FastAPI application, including an SSE endpoint that
 # streams detections polled from the database.
 LOG = logs.logger()
 

@@ -33,7 +33,7 @@ Reliable real time data consumption:
 To run the IoT demo application:
 
 ```bash
-uv run --project demo-iot python -m demo_iot.app
+uv run --project tools-iot python -m demo_iot.app
 ```
 
 Note: Requires access to a Kafka cluster and Databricks workspace configuration.

@@ -33,7 +33,7 @@ def model(models: Iterable[str]) -> str | None:
 ## --- Model Categories & Selection Logic ---
 
 
-def reasoning() -> str:
+def large() -> str:
     """
     Target: PydanticAI (General Chat & Complex Logic)
     Requirements: High tool-calling accuracy and large context.
@@ -46,10 +46,10 @@ def reasoning() -> str:
         "databricks-claude-sonnet-4-5",
         "databricks-llama-4-maverick",
     ]
-    return _model("REASONING_MODEL", models)
+    return _model("LARGE_MODEL", models)
 
 
-def summarize() -> str:
+def small() -> str:
     """
     Target: Mem0 (Summarization & Fact Extraction)
     Requirements: High throughput, low cost, strict JSON adherence.
@@ -61,10 +61,10 @@ def summarize() -> str:
         "databricks-claude-haiku-4-5",
         "databricks-meta-llama-3-3-70b-instruct",
     ]
-    return _model("MEMORY_MODEL", models)
+    return _model("SMALL_MODEL", models)
 
 
-def vectorize() -> str:
+def vector() -> str:
     """
     Target: pgvector (Embeddings)
     Requirements: Consistent dimensions (essential for pgvector stability).
@@ -128,7 +128,7 @@ def _model_cache(config_key: str, model_csv: str) -> str:
 
 if __name__ == "__main__":
     print("starting")
-    LOG.info("reasoning model: %s", reasoning())
-    LOG.info("memory model: %s", summarize())
-    LOG.info("vector model: %s", vectorize())
+    LOG.info("reasoning model: %s", large())
+    LOG.info("memory model: %s", small())
+    LOG.info("vector model: %s", vector())
     LOG.info("ranker model: %s", ranker())

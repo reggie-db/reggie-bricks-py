@@ -56,7 +56,7 @@ def list(
     if not sort:
         sort = tuple(WarehouseSort)
     if name_preference is None:
-        name_preference = ["shared", "demo"]
+        name_preference = ["shared", "tools"]
     normalized_name_preference = [
         preference.lower() for preference in name_preference if preference
     ]

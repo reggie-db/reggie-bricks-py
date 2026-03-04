@@ -1,4 +1,5 @@
 import re
+import textwrap
 from itertools import chain
 from typing import Any, Iterable
 
@@ -10,6 +11,14 @@ tokens useful for search, matching, or building canonical identifiers.
 
 _SPLIT_NON_ALPHA_NUMERIC = re.compile(r"[^a-zA-Z0-9]+")
 _SPLIT_CAMEL_CASE = re.compile(r"(?<=[a-z])(?=[A-Z])")
+
+
+def trim(value: str | None, dedent: bool = True) -> str:
+    if value:
+        if dedent:
+            value = textwrap.dedent(value).rstrip()
+        value = value.strip()
+    return value or ""
 
 
 def tokenize(

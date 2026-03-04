@@ -70,7 +70,7 @@ def test_warehouse_selection_logic():
     assert warehouses.get(workspace_client=client).id == "2"
 
     w5 = MockWarehouse(
-        id="5", name="demo", cluster_size="Small", enable_serverless_compute=False
+        id="5", name="tools", cluster_size="Small", enable_serverless_compute=False
     )
     items = [w1, w4, w5]
     client = MockWorkspaceClient(items)
@@ -109,7 +109,7 @@ def test_warehouse_prefers_serverless_then_size_then_name():
         ),
         MockWarehouse(
             id="2",
-            name="demo",
+            name="tools",
             cluster_size="X-Large",
             enable_serverless_compute=True,
         ),
@@ -147,7 +147,7 @@ def test_warehouse_name_preference_breaks_size_ties_within_serverless():
         ),
         MockWarehouse(
             id="2",
-            name="demo",
+            name="tools",
             cluster_size="X-Large",
             enable_serverless_compute=True,
         ),
@@ -181,7 +181,7 @@ def test_list_name_preference_uses_tokenized_contains_matching():
 
     ranked = warehouses.list(
         warehouses.WarehouseSort.NAME,
-        name_preference=["endpoint", "demo"],
+        name_preference=["endpoint", "tools"],
         workspace_client=MockWorkspaceClient(items),
     )
     assert ranked[0].id == "1"

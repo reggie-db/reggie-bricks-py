@@ -1,9 +1,9 @@
 from typing import Union
 
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import RunContext
 
-from dbx_ai import agents, models
+from dbx_ai import agents
 
 
 # 1. Define the flexible response model
@@ -23,10 +23,6 @@ class SummarizedContent(BaseModel):
 # the RunContext is available by default.
 agent = agents.create()
 
-_summarizer_agent = Agent(
-    agents.model(models.summarize()), output_type=SummarizedContent
-)
-
 
 # 3. Define the Tool using Agent Delegation
 @agent.tool
@@ -42,7 +38,7 @@ async def summarize_text(ctx: RunContext[None], text: str) -> SummarizedContent:
 
     # Run the sub-agent.
     # Pass ctx.usage so the tokens count towards the main run's limits/tracking.
-    result = await _summarizer_agent.run(text, usage=ctx.usage)
+    result = await agents.small().run(text, usage=ctx.usage)
 
     return result.output
 

@@ -35,10 +35,12 @@ Environment variables:
 
 Utilities for converting objects to dictionaries and JSON:
 
-* **dump()**: Convert objects to dictionaries using multiple strategies:
-    * Checks for common dump methods (`model_dump`, `as_dict`, `to_dict`, etc.)
-    * Uses `__dict__` if available
-    * Extracts class members (properties and non-callable attributes)
+* **dump()**: Convert objects to JSON-compatible structures using multiple strategies:
+    * Handles mappings, collections, enums, and primitive values directly
+    * Checks common dump methods (`model_dump`, `as_dict`, `to_dict`, `dict`, etc.)
+    * Uses dataclass conversion (`dataclasses.asdict`) when needed
+    * Falls back to `str(value)` for unsupported objects
+    * Optionally extracts class members (properties and non-callable attributes)
     * Supports recursive conversion of nested objects
 * **Property extraction**: Optionally include `@property` values and class members
 * **JSON encoding**: Custom JSON encoders with ISO date handling and member property support
@@ -82,7 +84,7 @@ Tokenization helpers for names and identifiers:
 
 ```python
 from lfp_logging import logs
-from dbx_core import objects, paths
+from dbx_core import objects, paths, funcs
 
 # Automatic logging configuration
 log = logs.logger()

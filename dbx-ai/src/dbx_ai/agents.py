@@ -6,7 +6,7 @@ from dbx_tools import clients
 from openai import AsyncClient
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from dbx_ai import models
@@ -37,14 +37,24 @@ def _client_default() -> AsyncClient:
     return _client(clients.workspace_client())
 
 
+@functools.cache
+def large():
+    return create(models.large())
+
+
+@functools.cache
+def small():
+    return create(models.small())
+
+
 def model(
     model_name: str | None = None, workspace_client: WorkspaceClient | None = None
 ) -> Model:
     if model_name is None:
-        model_name = models.reasoning()
+        model_name = models.large()
     provider = OpenAIProvider(openai_client=client(workspace_client))
     # noinspection PyTypeChecker
-    return OpenAIModel(model_name=model_name, provider=provider)
+    return OpenAIChatModel(model_name=model_name, provider=provider)
 
 
 def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
