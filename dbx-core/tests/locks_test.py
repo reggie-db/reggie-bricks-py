@@ -20,23 +20,6 @@ def test_file_lock_creates_and_keeps_file(tmp_path):
     assert lock_path.exists()
 
 
-@pytest.mark.xfail(
-    reason="Separate FileLock instances on the same path are not currently re-entrant"
-)
-def test_file_lock_reentrant_same_thread(tmp_path):
-    lock_path = tmp_path / "reentrant.lock"
-    outer = FileLock(lock_path, timeout=1)
-    inner = FileLock(lock_path, timeout=1)
-    try:
-        outer.acquire()
-        inner.acquire()
-    finally:
-        inner.close()
-        outer.close()
-
-    assert lock_path.exists()
-
-
 def test_file_lock_timeout_path(monkeypatch, tmp_path):
     lock_path = tmp_path / "timeout.lock"
     monkeypatch.setattr(locks, "_try_lock_fd", lambda fd, shared: False)
@@ -49,6 +32,30 @@ def test_file_lock_timeout_path(monkeypatch, tmp_path):
         contender.close()
 
     assert time.monotonic() - start >= 0.04
+
+
+def test_file_lock_without_timeout_uses_blocking_lock(monkeypatch, tmp_path):
+    lock_path = tmp_path / "blocking.lock"
+    called = {"lock": False}
+
+    def _fake_lock_fd(fd, shared):
+        called["lock"] = True
+
+    monkeypatch.setattr(locks, "_lock_fd", _fake_lock_fd)
+    monkeypatch.setattr(
+        locks,
+        "_try_lock_fd",
+        lambda fd, shared: (_ for _ in ()).throw(
+            AssertionError("_try_lock_fd should not be used")
+        ),
+    )
+    lock = FileLock(lock_path, timeout=None)
+    try:
+        lock.acquire()
+    finally:
+        lock.close()
+
+    assert called["lock"] is True
 
 
 def test_pathlike_is_supported(tmp_path):
@@ -95,10 +102,7 @@ def test_async_file_lock_timeout_while_sync_holds_lock(tmp_path):
         locks._try_lock_fd = original_try
 
 
-@pytest.mark.xfail(
-    reason="close() can raise KeyError after internal mem-lock state is already dropped"
-)
-def test_file_lock_close_is_not_always_idempotent(tmp_path):
+def test_file_lock_close_is_idempotent(tmp_path):
     lock_path = tmp_path / "close-idempotent.lock"
     lock = FileLock(lock_path, timeout=0.01, poll_interval=0.005)
     lock.close()

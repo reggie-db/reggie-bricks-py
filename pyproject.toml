@@ -6,7 +6,7 @@ build-backend = "uv_build"
 dev = ["lfp-build @ git+https://github.com/regbo/lfp-build-py.git", "pytest"]
 
 [tool.member-project]
-project.requires-python = ">=3.12,<3.13"
+project.requires-python = ">=3.11,<3.13"
 
 [tool.uv.workspace]
 members = [

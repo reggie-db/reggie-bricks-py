@@ -4,12 +4,12 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-tools"
-version = "0.0.1+gddadd2e"
-requires-python = ">=3.12,<3.13"
+version = "0.0.1+ga436e5d"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
     #"databricks-tools-core @ git+https://github.com/databricks-solutions/ai-dev-kit.git#subdirectory=databricks-tools-core",
-    "databricks-connect>=17.3,<18.0",
+    "databricks-connect>=16.0,<18.0",
     "pydantic",
     "pyyaml",
     "python-dotenv",

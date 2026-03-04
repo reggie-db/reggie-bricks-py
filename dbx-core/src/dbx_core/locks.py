@@ -83,7 +83,10 @@ def _release_mem_lock(path: PathLike) -> None:
     """Decrease in-process lock refcount for ``path`` and drop when unused."""
     p = _norm_path(path)
     with _MEM_GUARD:
-        lock, n = _MEM_LOCKS[p]
+        entry = _MEM_LOCKS.get(p)
+        if entry is None:
+            return
+        lock, n = entry
         if n <= 1:
             _MEM_LOCKS.pop(p, None)
         else:
@@ -156,7 +159,11 @@ else:
 
 
 def _acquire_os_lock(state: _LockState) -> None:
-    """Acquire the platform file lock, polling until acquired or timed out."""
+    """Acquire the platform file lock.
+
+    Uses a blocking OS lock call when ``timeout`` is ``None`` and uses
+    non-blocking retries when a timeout is configured.
+    """
     fd = _open_lock_file(state.path)
     state.fd = fd
 
@@ -165,6 +172,10 @@ def _acquire_os_lock(state: _LockState) -> None:
         deadline = time.monotonic() + float(state.timeout)
 
     try:
+        if deadline is None:
+            _lock_fd(fd, state.shared)
+            return
+
         while True:
             if _try_lock_fd(fd, state.shared):
                 return
@@ -228,6 +239,7 @@ class FileLock:
             shared=shared,
         )
         self._mem_acquired = False
+        self._mem_registered = True
 
     def acquire(self) -> None:
         if not self._mem_acquired:
@@ -259,13 +271,18 @@ class FileLock:
         except Exception:
             pass
         try:
-            _release_mem_lock(self._mem_path)
+            self._drop_mem_registration()
         except Exception:
             pass
 
     def close(self) -> None:
         self.release()
-        _release_mem_lock(self._mem_path)
+        self._drop_mem_registration()
+
+    def _drop_mem_registration(self) -> None:
+        if self._mem_registered:
+            _release_mem_lock(self._mem_path)
+            self._mem_registered = False
 
 
 class AsyncFileLock:
@@ -295,6 +312,7 @@ class AsyncFileLock:
             shared=shared,
         )
         self._mem_acquired = False
+        self._mem_registered = True
 
     async def acquire(self) -> None:
         # Acquire in-memory lock without blocking event loop.
@@ -334,10 +352,15 @@ class AsyncFileLock:
         except Exception:
             pass
         try:
-            _release_mem_lock(self._mem_path)
+            self._drop_mem_registration()
         except Exception:
             pass
 
     async def aclose(self) -> None:
         await self.release()
-        _release_mem_lock(self._mem_path)
+        self._drop_mem_registration()
+
+    def _drop_mem_registration(self) -> None:
+        if self._mem_registered:
+            _release_mem_lock(self._mem_path)
+            self._mem_registered = False
