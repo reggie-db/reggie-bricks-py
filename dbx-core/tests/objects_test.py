@@ -101,3 +101,25 @@ def test_dump_nested_datetime_uses_isoformat_string():
     }
     dumped = objects.dump(payload)
     assert dumped["suh"][3] == "2026-03-04T14:39:46.001819"
+
+
+def test_to_list_wraps_scalar():
+    assert objects.to_list(5) == [5]
+
+
+def test_to_list_keeps_list_when_not_flattening():
+    assert objects.to_list([1, [2, 3]], flatten=False) == [1, [2, 3]]
+
+
+def test_to_list_converts_other_collections():
+    assert objects.to_list((1, 2, 3)) == [1, 2, 3]
+    assert objects.to_list(range(3)) == [0, 1, 2]
+
+
+def test_to_list_flatten_recursively():
+    value = [1, (2, [3, 4]), range(5, 7)]
+    assert objects.to_list(value, flatten=True) == [1, 2, 3, 4, 5, 6]
+
+
+def test_to_list_flatten_empty_collection():
+    assert objects.to_list([], flatten=True) == []
