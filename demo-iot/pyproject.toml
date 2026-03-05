@@ -4,15 +4,15 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+g3eb7c0a"
+version = "0.0.1+g828f4aa"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "aioreactive",
     "fastapi",
     "humanize",
     "kafka-python",
-    "dbx-concurio",
-    "dbx-tools",
+    "dbx-concurio @ file://${PROJECT_ROOT}/../dbx-concurio",
+    "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "uvicorn",
     "websockets",
     "pytimeparse",
