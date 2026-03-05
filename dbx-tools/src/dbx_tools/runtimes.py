@@ -2,13 +2,14 @@
 
 import json
 import os
+import re
 from copy import deepcopy
 from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING, Any, Collection, Mapping, TypeVar
 
-from dbx_core import imports
+from dbx_core import imports, strs
 from lfp_logging import logs
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 from dbx_tools import clients
 
@@ -30,10 +31,40 @@ class AppInfo:
 def version() -> Version | None:
     """Return the Databricks runtime version if running on a cluster."""
     if runtime_version_env := os.environ.get("DATABRICKS_RUNTIME_VERSION"):
-        runtime_version = Version(runtime_version_env)
+        runtime_version = _runtime_version(runtime_version_env)
         LOG.debug(f"Runtime Version: {runtime_version}")
         return runtime_version
     return None
+
+
+def _runtime_version(version_value: str) -> Version:
+    """Parse Databricks runtime version with fallback normalization.
+
+    The Databricks runtime environment can sometimes expose values that are not
+    valid PEP 440 versions (for example ``client.5.0``). In that case we
+    normalize to a compatible form like ``0.5.0+client``.
+    """
+    try:
+        return Version(version_value)
+    except InvalidVersion:
+        pass
+
+    version_text = str(version_value).strip()
+    if not version_text:
+        raise InvalidVersion("Invalid version: ''")
+
+    # Capture a leading non-numeric label and trailing numeric portion.
+    match = re.match(r"^(?P<label>[^\d]+)[\._-]*(?P<num>\d[\d\._-]*)$", version_text)
+    if match:
+        label = ".".join(strs.tokenize(match.group("label")))
+        numeric = match.group("num").replace("_", ".").replace("-", ".")
+        normalized = f"0.{numeric}"
+        if label:
+            normalized = f"{normalized}+{label}"
+        return Version(normalized)
+
+    # Fallback to a strict parse to preserve existing failure semantics.
+    return Version(version_text)
 
 
 def app_info() -> AppInfo | None:
