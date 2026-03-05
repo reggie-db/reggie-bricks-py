@@ -16,6 +16,7 @@ def model(models: Iterable[str]) -> str | None:
     for model_name in models:
         if not model_name:
             continue
+        LOG.debug(f"Checking model - model_name:%s", model_name)
         try:
             endpoint = clients.workspace_client().serving_endpoints.get(model_name)
             # Only choose endpoints that are serving traffic.
