@@ -18,7 +18,7 @@ def root_dir(input: PathLike | str | None = None) -> pathlib.Path:
         return _root_dir_cwd(cwd)
     if result := _root_dir(path):
         return result
-    raise ValueError(f"Could not determine root dir: {input}")
+    return cwd
 
 
 def _root_dir(path: pathlib.Path) -> pathlib.Path | None:
@@ -49,7 +49,7 @@ def _root_dir(path: pathlib.Path) -> pathlib.Path | None:
         if not parent or parent == path:
             break
         path = parent
-    raise None
+    return None
 
 
 @functools.lru_cache(maxsize=None)
