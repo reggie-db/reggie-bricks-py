@@ -23,10 +23,3 @@ members = [
     "demo-iot",
 ]
 exclude = ["prpr", "__*", "*.egg-info"]
-
-[tool.basedpyright]
-typeCheckingMode = "strict"
-reportMissingTypeStubs = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
-reportUnknownMemberType = false

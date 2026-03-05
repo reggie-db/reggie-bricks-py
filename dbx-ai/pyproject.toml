@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+ga897325"
+version = "0.0.1+g56fc7ce"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
@@ -16,10 +16,3 @@ dev = ["textual", "google-auth", "google-auth-oauthlib", "emlx"]
 
 [tool.uv.sources.dbx-tools]
 workspace = true
-
-[tool.basedpyright]
-typeCheckingMode = "strict"
-reportMissingTypeStubs = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
-reportUnknownMemberType = false

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-postgres"
-version = "0.0.1+ga897325"
+version = "0.0.1+g56fc7ce"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
@@ -16,10 +16,3 @@ dependencies = [
 
 [tool.uv.sources.dbx-core]
 workspace = true
-
-[tool.basedpyright]
-typeCheckingMode = "strict"
-reportMissingTypeStubs = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
-reportUnknownMemberType = false

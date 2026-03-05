@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-reflex"
-version = "0.0.1+ga897325"
+version = "0.0.1+g56fc7ce"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "reflex>=0.8.0",
@@ -20,10 +20,3 @@ workspace = true
 [tool.uv_build]
 package-dir = "."
 packages = [{ include = "dbx_reflex" }]
-
-[tool.basedpyright]
-typeCheckingMode = "strict"
-reportMissingTypeStubs = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
-reportUnknownMemberType = false

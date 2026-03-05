@@ -4,16 +4,9 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-core"
-version = "0.0.1+ga897325"
+version = "0.0.1+g56fc7ce"
 requires-python = ">=3.11,<3.13"
 dependencies = ["lfp-logging @ git+https://github.com/regbo/lfp-logging-py.git"]
 
 [dependency-groups]
 dev = ["pydantic>=2.12.5"]
-
-[tool.basedpyright]
-typeCheckingMode = "strict"
-reportMissingTypeStubs = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
-reportUnknownMemberType = false
