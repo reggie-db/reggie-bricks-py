@@ -4,18 +4,12 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+g52dff3c"
+version = "0.0.1+g119cfd0"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "pydantic_ai",
 ]
-
-[project.optional-dependencies]
-dbx = ["coolname"]
-
-[dependency-groups]
-dev = ["coolname"]
 
 [tool.uv.sources.dbx-tools]
 workspace = true
