@@ -281,6 +281,9 @@ def main() -> None:
     and executing SQL queries as they are generated. Creates a conversation on
     the first request and reuses it for subsequent messages.
     """
+    GENIE_SPACE_ID = os.environ.setdefault(
+        "GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e"
+    )
     config = configs.get()
     service = Service(clients.workspace_client(config), GENIE_SPACE_ID)
     spark = clients.spark(config)
@@ -312,6 +315,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    os.environ["DATABRICKS_CONFIG_PROFILE"] = "E2-DOGFOOD"
-    GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "01f09d59bdff163e88db9bc395a1e08e")
+    if not runtimes.version():
+        os.environ["DATABRICKS_CONFIG_PROFILE"] = "E2-DOGFOOD"
     main()
