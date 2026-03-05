@@ -21,7 +21,7 @@ def parse_datetime(value: str | datetime | None) -> datetime | None:
     return parsed
 
 
-def DateQuery(name: str, description: str | None = None, default: Any = None):
+def DateQuery(name: str, description: str | None = None, default: Any = None) -> Any:
     """
     A FastAPI dependency that parses a human-readable date/time query parameter.
     """

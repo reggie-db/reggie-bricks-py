@@ -38,7 +38,7 @@ def _is_allowed_stream_id(stream_id: str) -> bool:
     return not bool(_STREAM_ID_SUFFIX_NUMBER_RE.search(stream_id))
 
 
-def main():
+def main() -> FastAPI:
     LOG.debug("Starting fastapi app")
 
     app = FastAPI()

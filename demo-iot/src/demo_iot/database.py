@@ -105,12 +105,12 @@ def _lakebase_url(
     return url, url.render_as_string(hide_password=True)
 
 
-def get_db():
+def get_db() -> Generator[Session, Any, None]:
     with Session(get_engine()) as db:
         yield db
 
 
-async def get_async_db():
+async def get_async_db() -> Generator[AsyncSession, Any, None]:
     """
     Yield an AsyncSession for async endpoints.
 
@@ -122,7 +122,7 @@ async def get_async_db():
 
 
 @functools.cache
-def get_engine():
+def get_engine() -> Engine:
     instance_name, postgres_database, log_sql, slow_sql_ms = _lakebase_settings()
     workspace_client = clients.workspace_client()
     url, rendered_url = _lakebase_url(
@@ -155,7 +155,7 @@ def get_engine():
 
 
 @functools.cache
-def get_async_engine():
+def get_async_engine() -> AsyncEngine:
     """
     Return an AsyncEngine backed by asyncpg.
 

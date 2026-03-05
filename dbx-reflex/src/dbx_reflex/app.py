@@ -8,7 +8,7 @@ class SortState(rx.State):
     def sort(self) -> str:
         return self.router.url.query_parameters.get("sort", "asc").lower()
 
-    def set_sort(self, value: str):
+    def set_sort(self, value: str) -> EventSpec:
         return states.set_query_param(self, "sort", value)
 
 
@@ -19,11 +19,11 @@ class SearchState(rx.State):
     def q(self) -> str:
         return self.router.url.query_parameters.get("q", "")
 
-    def set_q(self, value: str):
+    def set_q(self, value: str) -> EventSpec:
         return states.set_query_param(self, "q", value)
 
 
-def index():
+def index() -> VStack:
     search_input = rx.input(
         name="q",
         placeholder="Type query...",

@@ -19,7 +19,9 @@ class SchemaModel(BaseModel):
     """
 
     @classmethod
-    def model_json_schema(cls, *args, exclude_keys: list[str] | None = None, **kwargs):
+    def model_json_schema(
+        cls, *args, exclude_keys: list[str] | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Generate JSON schema for the model with optional key exclusion.
 
@@ -42,7 +44,7 @@ class SchemaModel(BaseModel):
     @classmethod
     def model_response_format(
         cls, *args, exclude_keys: list[str] | None = None, **kwargs
-    ):
+    ) -> dict[str, str | dict[str, str | dict[str, Any]]]:
         """
         Generate OpenAI-compatible response format specification.
 

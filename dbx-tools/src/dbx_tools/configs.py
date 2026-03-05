@@ -278,6 +278,6 @@ class ConfigValueSource(Enum):
     OS_ENVIRON = 4
 
     @classmethod
-    def without(cls, *excluded):
+    def without(cls, *excluded) -> list[ConfigValueSource]:
         """Return members excluding any provided in ``excluded`` while preserving order."""
         return [member for member in cls if member not in excluded]

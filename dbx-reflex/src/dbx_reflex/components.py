@@ -9,7 +9,7 @@ class IntersectionObserver(rx.el.Div):
     threshold: rx.Var[float]
 
     @classmethod
-    def create(cls, *children, **props):
+    def create(cls, *children, **props) -> Div:
         if "id" not in props:
             props["id"] = rx.vars.get_unique_variable_name()
         return super().create(*children, **props)

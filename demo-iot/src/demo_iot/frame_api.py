@@ -274,7 +274,7 @@ async def _get_distinct_values_async(
 
 
 @router.get("/frames/coverage/values/store_id", response_model=list[str])
-async def available_store_ids():
+async def available_store_ids() -> list[str]:
     """
     Return distinct store_id values for UI selection.
     """
@@ -290,7 +290,7 @@ ORDER BY value ASC;
 
 
 @router.get("/frames/coverage/values/stream_id", response_model=list[str])
-async def available_stream_ids():
+async def available_stream_ids() -> list[str]:
     """
     Return distinct stream_id values for UI selection.
     """
@@ -306,7 +306,7 @@ ORDER BY value ASC;
 
 
 @router.get("/frames/coverage/values/device_name", response_model=list[str])
-async def available_device_names():
+async def available_device_names() -> list[str]:
     """
     Return distinct device_name values for UI selection.
     """
@@ -322,7 +322,7 @@ ORDER BY value ASC;
 
 
 @router.get("/frames/coverage/values/label", response_model=list[str])
-async def available_labels():
+async def available_labels() -> list[str]:
     """
     Return distinct detection labels for UI selection.
     """
@@ -349,7 +349,7 @@ async def get_frame_coverage_buckets(
     end_ts,
     store_id,
     device_name,
-):
+) -> list[FrameCoverageBucket]:
     async with AsyncSession(get_async_engine()) as db:
         # get raw asyncpg connection
         conn = await db.connection()
@@ -442,7 +442,7 @@ async def frame_coverage(
         le=1.0,
         description="Max allowed deviation from per-bucket median coverage (0.0 to 1.0)",
     ),
-):
+) -> list[FrameCoverageBucket]:
     """
     Execute the frame coverage summary query and return bucketed stats.
 
@@ -473,7 +473,9 @@ async def frame_coverage(
     "/frames/detections/bboxes",
     response_model=list[FrameDetectionsBBoxResponse],
 )
-async def frame_detection_bboxes(body: FrameDetectionsBBoxRequest):
+async def frame_detection_bboxes(
+    body: FrameDetectionsBBoxRequest,
+) -> list[Any] | list[FrameDetectionsBBoxResponse]:
     """
     Return detection bounding boxes for the given frame ids.
 

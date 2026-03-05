@@ -4,15 +4,15 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+ga436e5d"
+version = "0.0.1+g25f9efb"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "aioreactive",
     "fastapi",
     "humanize",
     "kafka-python",
-    "dbx-concurio @ file://${PROJECT_ROOT}/../dbx-concurio",
-    "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
+    "dbx-concurio",
+    "dbx-tools",
     "uvicorn",
     "websockets",
     "pytimeparse",
@@ -28,3 +28,10 @@ workspace = true
 
 [tool.uv.sources.dbx-concurio]
 workspace = true
+
+[tool.basedpyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportUnknownVariableType = false
+reportUnknownParameterType = false
+reportUnknownMemberType = false

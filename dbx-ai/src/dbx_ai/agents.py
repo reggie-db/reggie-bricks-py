@@ -38,12 +38,12 @@ def _client_default() -> AsyncClient:
 
 
 @functools.cache
-def large():
+def large() -> Agent[None, str]:
     return create(models.large())
 
 
 @functools.cache
-def small():
+def small() -> Agent[None, str]:
     return create(models.small())
 
 

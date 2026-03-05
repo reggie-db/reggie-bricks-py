@@ -20,7 +20,7 @@ def create_engine(
     admin_database: str = _DEFAULT_ADMIN_DATABASE,
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
-):
+) -> Engine:
     return _create_engine(
         url,
         *tables,
@@ -38,7 +38,7 @@ def create_async_engine(
     admin_database: str = _DEFAULT_ADMIN_DATABASE,
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
-):
+) -> AsyncEngine:
     _create_engine(
         url,
         *tables,

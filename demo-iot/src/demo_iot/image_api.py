@@ -53,7 +53,7 @@ router = APIRouter()
 
 
 @router.get("/image/{image_id}")
-async def get_image(image_id: str):
+async def get_image(image_id: str) -> Response:
     """
     Return a cached image by id.
 
@@ -108,7 +108,7 @@ async def list_frame_ids(
         ge=0,
         description="Cache TTL in seconds (0 to disable)",
     ),
-):
+) -> list[str] | list[Any]:
     """
     Return a list of frame ids for a stream within a time range.
 

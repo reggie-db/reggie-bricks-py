@@ -4,13 +4,16 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-concurio"
-version = "0.0.1+ga436e5d"
+version = "0.0.1+g25f9efb"
 requires-python = ">=3.11,<3.13"
-dependencies = [
-    "diskcache",
-    "fasteners",
-    "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
-]
+dependencies = ["diskcache", "fasteners", "dbx-core"]
 
 [tool.uv.sources.dbx-core]
 workspace = true
+
+[tool.basedpyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportUnknownVariableType = false
+reportUnknownParameterType = false
+reportUnknownMemberType = false

@@ -6,7 +6,7 @@ _BOOL_MAPPINGS = {
 }
 
 
-def to_bool(value, default=False):
+def to_bool(value, default=False) -> bool:
     """Coerce various representations to a boolean value with default fallback."""
     if isinstance(value, bool):
         return value
@@ -25,7 +25,7 @@ def to_bool(value, default=False):
     return default
 
 
-def to_float(value, default=None):
+def to_float(value, default=None) -> float | None:
     """Coerce values to float with default fallback."""
     if isinstance(value, float):
         return value
