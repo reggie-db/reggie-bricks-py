@@ -45,7 +45,10 @@ def _root_dir(path: pathlib.Path) -> pathlib.Path | None:
     while path:
         if (path / _PYPROJECT_FILE_NAME).exists():
             return path
-        path = path.parent
+        parent = path.parent
+        if not parent or parent == path:
+            break
+        path = parent
     raise None
 
 
