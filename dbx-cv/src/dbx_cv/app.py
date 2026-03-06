@@ -3,16 +3,15 @@ import subprocess
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic
 
 import cv2
 import imagehash
 import numpy as np
 from lfp_logging import logs
+from lfp_types import T
 from PIL import Image
 from skimage.metrics import structural_similarity as ssim
-
-T = TypeVar("T")
 
 LOG = logs.logger()
 

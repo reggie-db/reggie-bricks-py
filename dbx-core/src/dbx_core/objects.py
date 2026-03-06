@@ -15,12 +15,12 @@ from typing import (
     Iterable,
     Mapping,
     TypeAlias,
-    TypeVar,
     get_args,
     get_origin,
 )
 
 from lfp_logging import logs
+from lfp_types import T
 
 try:
     from pydantic import BaseModel
@@ -29,7 +29,6 @@ except ImportError:
 
 LOG = logs.logger()
 
-T = TypeVar("T")
 DataType: TypeAlias = (
     None | bool | int | float | str | list["DataType"] | dict["DataType", "DataType"]
 )

@@ -6,16 +6,16 @@ import json
 import os
 import subprocess
 from enum import Enum
-from typing import Any, Callable, Iterable, Mapping, TypeVar
+from typing import Any, Callable, Iterable, Mapping
 
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
 from dbx_core import imports, projects, strs
 from lfp_logging import logs
+from lfp_types import T
 
 from dbx_tools import catalogs, clients, runtimes
 
-T = TypeVar("T")
 _UNSET = object()
 
 LOG = logs.logger()

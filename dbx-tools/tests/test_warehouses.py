@@ -224,17 +224,23 @@ def test_warehouse_raises_when_none_found():
         warehouses.get(workspace_client=_EmptyWC())
 
 
-def test_metric_view_ddl_success():
+def test_execute_statement_polls_until_succeeded():
     statement_execution = MockStatementExecution(
         [
             SimpleNamespace(
                 status=SimpleNamespace(
-                    state=warehouses.StatementState.SUCCEEDED, error=None
+                    state=warehouses.StatementState.RUNNING,
+                    error=None,
                 ),
-                result=SimpleNamespace(
-                    data_array=[["CREATE VIEW a AS SELECT 1"], [None], ["-- end"]]
+                result=None,
+            ),
+            SimpleNamespace(
+                status=SimpleNamespace(
+                    state=warehouses.StatementState.SUCCEEDED,
+                    error=None,
                 ),
-            )
+                result=SimpleNamespace(data_array=[["ok"]]),
+            ),
         ]
     )
     wc = MockWorkspaceClientWithStatements(
@@ -249,23 +255,27 @@ def test_metric_view_ddl_success():
         statement_execution,
     )
 
-    ddl = warehouses.metric_view_ddl(
-        "databricks_demos.rtswv3.mv_portfolio_kpis", workspace_client=wc
+    response = warehouses.execute_statement(
+        statement="SELECT 1",
+        workspace_client=wc,
+        poll_interval_seconds=0,
     )
 
-    assert ddl == "CREATE VIEW a AS SELECT 1\n-- end"
+    assert response.status.state == warehouses.StatementState.SUCCEEDED
     assert statement_execution.execute_calls[0]["warehouse_id"] == "wh1"
+    assert statement_execution.execute_calls[0]["statement"] == "SELECT 1"
+    assert statement_execution.get_calls == ["stmt-1", "stmt-1"]
 
 
-def test_metric_view_ddl_failed_state_raises_runtime_error():
+def test_execute_statement_raises_on_failed_terminal_state():
     statement_execution = MockStatementExecution(
         [
             SimpleNamespace(
                 status=SimpleNamespace(
                     state=warehouses.StatementState.FAILED,
-                    error=SimpleNamespace(message="boom"),
+                    error=SimpleNamespace(message="bad sql"),
                 ),
-                result=SimpleNamespace(data_array=[]),
+                result=None,
             )
         ]
     )
@@ -281,7 +291,9 @@ def test_metric_view_ddl_failed_state_raises_runtime_error():
         statement_execution,
     )
 
-    with pytest.raises(RuntimeError, match="boom"):
-        warehouses.metric_view_ddl(
-            "databricks_demos.rtswv3.mv_portfolio_kpis", workspace_client=wc
+    with pytest.raises(RuntimeError, match="bad sql"):
+        warehouses.execute_statement(
+            statement="SELECT bad",
+            workspace_client=wc,
+            poll_interval_seconds=0,
         )

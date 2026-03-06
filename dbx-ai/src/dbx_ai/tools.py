@@ -1,13 +1,11 @@
 import asyncio
-from typing import Any, Iterable, TypeVar
+from typing import Any, Iterable
 
 from dbx_core import objects, strs
-from lfp_types import to_iterable
+from lfp_types import T, to_iterable
 from pydantic_ai import Agent, RunContext
 
 from dbx_ai import agents
-
-T = TypeVar("T")
 
 
 async def summarize(

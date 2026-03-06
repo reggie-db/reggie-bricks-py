@@ -18,65 +18,57 @@ def _load_metric_views_module():
     return module
 
 
-class _MockStatementExecution:
-    def __init__(self, response):
-        self._response = response
-        self.execute_calls = []
-
-    def execute_statement(self, **kwargs):
-        self.execute_calls.append(kwargs)
-        return self._response
-
-
-class _MockWorkspaceClient:
-    def __init__(self, statement_execution):
-        self.statement_execution = statement_execution
-
-
-def test_describe_returns_view_text_from_describe_json():
+def test_describe_returns_view_text_from_describe_json(monkeypatch):
     metric_views = _load_metric_views_module()
-    statement_execution = _MockStatementExecution(
-        SimpleNamespace(
-            status=SimpleNamespace(
-                state=metric_views.StatementState.SUCCEEDED, error=None
-            ),
-            result=SimpleNamespace(
-                data_array=[
-                    ['{"view_text":"create materialized view demo as select 1"}']
-                ]
-            ),
+    execute_calls: list[dict] = []
+    response = SimpleNamespace(
+        result=SimpleNamespace(
+            data_array=[['{"view_text":"create materialized view demo as select 1"}']]
         )
     )
-    workspace_client = _MockWorkspaceClient(statement_execution)
+
+    def _mock_execute_statement(**kwargs):
+        execute_calls.append(kwargs)
+        return response
+
+    monkeypatch.setattr(
+        metric_views.warehouses, "execute_statement", _mock_execute_statement
+    )
+    workspace_client = object()
 
     view_text = metric_views.describe(
         "databricks_demos.rtswv3.racetrac_kpi_metrics",
         workspace_client=workspace_client,
         warehouse_id="wh-1",
+        wait_timeout="10s",
     )
 
     assert view_text == "create materialized view demo as select 1"
     assert (
-        statement_execution.execute_calls[0]["statement"]
+        execute_calls[0]["statement"]
         == "DESCRIBE TABLE EXTENDED databricks_demos.rtswv3.racetrac_kpi_metrics AS JSON"
     )
+    assert execute_calls[0]["workspace_client"] is workspace_client
+    assert execute_calls[0]["warehouse_id"] == "wh-1"
+    assert execute_calls[0]["wait_timeout"] == "10s"
 
 
-def test_describe_raises_when_view_text_missing():
+def test_describe_raises_when_view_text_missing(monkeypatch):
     metric_views = _load_metric_views_module()
-    statement_execution = _MockStatementExecution(
-        SimpleNamespace(
-            status=SimpleNamespace(
-                state=metric_views.StatementState.SUCCEEDED, error=None
-            ),
-            result=SimpleNamespace(data_array=[['{"table_name":"x"}']]),
-        )
+    response = SimpleNamespace(
+        result=SimpleNamespace(data_array=[['{"table_name":"x"}']]),
     )
-    workspace_client = _MockWorkspaceClient(statement_execution)
 
-    with pytest.raises(RuntimeError, match="missing view_text"):
+    def _mock_execute_statement(**_kwargs):
+        return response
+
+    monkeypatch.setattr(
+        metric_views.warehouses, "execute_statement", _mock_execute_statement
+    )
+
+    with pytest.raises(RuntimeError, match="describe query failed"):
         metric_views.describe(
             "databricks_demos.rtswv3.racetrac_kpi_metrics",
-            workspace_client=workspace_client,
+            workspace_client=object(),
             warehouse_id="wh-1",
         )

@@ -5,16 +5,16 @@ import os
 import re
 from copy import deepcopy
 from dataclasses import dataclass, fields
-from typing import TYPE_CHECKING, Any, Collection, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Collection, Mapping
 
 from dbx_core import imports, strs
 from lfp_logging import logs
+from lfp_types import T
 from packaging.version import InvalidVersion, Version
 
 from dbx_tools import clients
 
 LOG = logs.logger()
-T = TypeVar("T")
 _UNSET = object()
 
 if TYPE_CHECKING:

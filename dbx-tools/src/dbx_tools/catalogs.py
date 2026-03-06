@@ -3,13 +3,13 @@
 import re
 import uuid
 from dataclasses import dataclass
-from typing import Any, Iterable, TypeAlias, TypeVar
+from typing import Any, Iterable, TypeAlias
 
+from lfp_types import T as _T
 from pyspark.sql import SparkSession
 
 from dbx_tools import clients, configs, runtimes
 
-_T = TypeVar("_T")
 _UNSET = object()
 
 CatalogSchemaLike: TypeAlias = str | Iterable[str] | "CatalogSchema"

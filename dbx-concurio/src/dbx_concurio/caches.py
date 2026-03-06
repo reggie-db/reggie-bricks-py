@@ -1,13 +1,14 @@
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Callable, Generic
 
 import dbx_core.paths as paths
 from dbx_core import objects, strs
 from diskcache import Cache
 from fasteners import InterProcessLock
 from lfp_logging import logs
+from lfp_types import T
 
 LOG = logs.logger()
 
@@ -16,8 +17,6 @@ Disk backed cache utilities built on diskcache with inter process locking.
 Provides a typed wrapper for cached values and a cache subclass that supports
 compute or load semantics with expiration and concurrency control.
 """
-
-T = TypeVar("T")
 
 
 @dataclass
