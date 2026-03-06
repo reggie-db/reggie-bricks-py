@@ -484,22 +484,24 @@ wheels = [
 
 [[package]]
 name = "dbx-ai"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-ai" }
 dependencies = [
     { name = "dbx-tools" },
+    { name = "lfp-types" },
     { name = "pydantic-ai" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "dbx-tools", editable = "dbx-tools" },
+    { name = "lfp-types" },
     { name = "pydantic-ai" },
 ]
 
 [[package]]
 name = "dbx-caddy"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-caddy" }
 dependencies = [
     { name = "pygithub" },
@@ -510,7 +512,7 @@ requires-dist = [{ name = "pygithub" }]
 
 [[package]]
 name = "dbx-concurio"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-concurio" }
 dependencies = [
     { name = "dbx-core" },
@@ -527,7 +529,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-core"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-core" }
 dependencies = [
     { name = "lfp-logging" },
@@ -546,7 +548,7 @@ dev = [{ name = "pydantic", specifier = ">=2.12.5" }]
 
 [[package]]
 name = "dbx-cv"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-cv" }
 dependencies = [
     { name = "dbx-core" },
@@ -566,7 +568,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-ip"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-ip" }
 dependencies = [
     { name = "dbx-core" },
@@ -577,7 +579,7 @@ requires-dist = [{ name = "dbx-core", editable = "dbx-core" }]
 
 [[package]]
 name = "dbx-openapi"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-openapi" }
 dependencies = [
     { name = "cyclopts" },
@@ -588,7 +590,7 @@ requires-dist = [{ name = "cyclopts" }]
 
 [[package]]
 name = "dbx-postgres"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-postgres" }
 dependencies = [
     { name = "dbx-core" },
@@ -609,7 +611,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-reflex"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-reflex" }
 dependencies = [
     { name = "dbx-caddy" },
@@ -624,7 +626,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-tools"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "dbx-tools" }
 dependencies = [
     { name = "databricks-connect", version = "16.1.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -661,7 +663,7 @@ dev = [{ name = "wrapt", specifier = ">=2.0" }]
 
 [[package]]
 name = "demo-iot"
-version = "0.0.1"
+version = "0.0.1+revf1f0cc0"
 source = { editable = "demo-iot" }
 dependencies = [
     { name = "aioreactive" },
@@ -1308,7 +1310,7 @@ wheels = [
 
 [[package]]
 name = "lfp-build"
-version = "0.0.13"
+version = "0.0.23"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cyclopts" },
@@ -1320,18 +1322,30 @@ dependencies = [
     { name = "tomlkit" },
     { name = "uv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/ff/9da5c780aeb2b206578b4d94113f1b5c8d7cc2148762d3cea745ba5ecd04/lfp_build-0.0.13.tar.gz", hash = "sha256:e628c0c8fd9a0d2e640f2892c0c21f57444ac13ab0af6bce0a9e3b4d41753f60", size = 22758, upload-time = "2026-03-06T08:11:15.081Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/e4/cea0f04fbedacbf378cf39c4a93b1fa4403e28c85efa1dd051538ea02ffe/lfp_build-0.0.23.tar.gz", hash = "sha256:84722519277a202ceb4b8ab79ad40a6301f93011e3deae3dc0f0d7a7bd9f29a2", size = 22954, upload-time = "2026-03-06T12:28:35.878Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/d0/dddb6166baebf5ae072a4e221477f05df4382c043e158d2f5518c82f634c/lfp_build-0.0.13-py3-none-any.whl", hash = "sha256:0746fc99816c1baa336f1e55f113435a7e69dd6796bdf0bf1842cd282020a1e3", size = 28396, upload-time = "2026-03-06T08:11:13.099Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/fb/873caa2d40eb1328a7aabce7d737ceef1124c97c9f6cd1a192e49b7e6a1a/lfp_build-0.0.23-py3-none-any.whl", hash = "sha256:aa56a84db4623351f2d475057fadbceb82d53e02779e50968203774f6087debb", size = 28589, upload-time = "2026-03-06T12:28:34.793Z" },
 ]
 
 [[package]]
 name = "lfp-logging"
-version = "0.0.4"
+version = "0.0.7"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/76/44/a81817a7debc89a5ae1c4e9327765cea018e7313b5c50acea42837ccf643/lfp_logging-0.0.4.tar.gz", hash = "sha256:dfadf3d9db763b337da76538f567655b0d3e38f0e8ee683869e504e44ed28ede", size = 6761, upload-time = "2026-03-06T04:13:17.529Z" }
+dependencies = [
+    { name = "lfp-types" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2a/9b/b08371c76d2900d6e6cb5c80e81bbb203baccf823e7f900656df6908480a/lfp_logging-0.0.7.tar.gz", hash = "sha256:2aa7a08a152bef83c42e3cb240d904d8dec940e49a21765ad3b34fa835d98694", size = 6760, upload-time = "2026-03-06T12:29:34.379Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/bc/1c8f980e914223185019c9efc56d1993198c87c03107b545f4845d1c2856/lfp_logging-0.0.4-py3-none-any.whl", hash = "sha256:d04834fa606096a44b4b86f1612152ebde0dda26c9568b902dc5376f6820bee9", size = 8102, upload-time = "2026-03-06T04:13:16.285Z" },
+    { url = "https://files.pythonhosted.org/packages/34/76/8198e4179bc5ad1efe5592b5d350ed0936de91b8b658a82ceb7e3748748b/lfp_logging-0.0.7-py3-none-any.whl", hash = "sha256:2a99b657a7cbeef062249b0f541c59ae6ed90c515e613c6873bb774b675db05d", size = 8008, upload-time = "2026-03-06T12:29:33.272Z" },
+]
+
+[[package]]
+name = "lfp-types"
+version = "0.0.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/73/25c3fd401cb2e9a052c1f7c5e47a13be1922ad5a153c651782b691dd71d1/lfp_types-0.0.7.tar.gz", hash = "sha256:51f0f0059e082bd721596b38726ad8b2808a4aeed613262e0a3c122a008925a3", size = 3543, upload-time = "2026-03-06T11:33:02.853Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/2f/09c66ce9d718559145cd0c6b60f09fc793b3b5b23c038d94443c72cebbca/lfp_types-0.0.7-py3-none-any.whl", hash = "sha256:d618dfa3e29a71f5b7cf44878cd736892c68630f408d8120608bf1d6deb84bd0", size = 3667, upload-time = "2026-03-06T11:33:01.886Z" },
 ]
 
 [[package]]

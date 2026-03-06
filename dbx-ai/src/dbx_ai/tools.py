@@ -2,6 +2,7 @@ import asyncio
 from typing import Any, Iterable, TypeVar
 
 from dbx_core import objects, strs
+from lfp_types import to_iterable
 from pydantic_ai import Agent, RunContext
 
 from dbx_ai import agents
@@ -200,7 +201,7 @@ async def _run(
 
 def _prompt(request: str, *instructions: Iterable[str] | str | None):
     prompt = []
-    for instruction in objects.to_list(instructions, flatten=True):
+    for instruction in to_iterable(instructions, flatten=True):
         instruction = strs.trim(instruction)
         if instruction:
             if not prompt:

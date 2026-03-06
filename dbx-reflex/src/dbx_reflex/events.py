@@ -34,7 +34,7 @@ def on_key_down_event(
         return rx.cond(
             objects.call(condition, key, modifiers),
             _handler(key, modifiers),
-            [],  # <--- Change this from "" to []
+            [],
         )
 
     return _condition_handler

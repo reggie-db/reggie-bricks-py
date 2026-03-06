@@ -12,7 +12,7 @@ from dbx_tools import clients, configs, runtimes
 _T = TypeVar("_T")
 _UNSET = object()
 
-CatalogSchemaLike: TypeAlias = str | Iterable["CatalogSchemaLike"] | "CatalogSchema"
+CatalogSchemaLike: TypeAlias = str | Iterable[str] | "CatalogSchema"
 
 
 @dataclass(frozen=True)
@@ -38,9 +38,7 @@ class CatalogSchema:
         return _of(cls, 2, value, default)
 
 
-CatalogSchemaTableLike: TypeAlias = (
-    str | Iterable["CatalogSchemaTableLike"] | "CatalogSchemaTable"
-)
+CatalogSchemaTableLike: TypeAlias = str | Iterable[str] | "CatalogSchemaTable"
 
 
 @dataclass(frozen=True)
