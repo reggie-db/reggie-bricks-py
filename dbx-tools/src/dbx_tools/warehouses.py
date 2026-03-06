@@ -350,7 +350,5 @@ if "__main__" == __name__:
 
     os.environ["DATABRICKS_CONFIG_PROFILE"] = "RACETRAC-DEV"
     dtable = describe_table_extended("databricks_demos.rtswv3.racetrac_kpi_metrics")
-    print(dtable.model_dump_json())
-    print(dtable.table_type)
-    print(dtable.metric_view_definition)
-    print(dtable.table_type)
+    # print(dtable.model_dump_json())
+    print(json.dumps(dtable.metric_view_definition, indent=2))

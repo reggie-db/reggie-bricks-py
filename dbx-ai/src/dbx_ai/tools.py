@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Iterable
+from typing import Any, Iterable, TypeAlias
 
 from dbx_core import objects, strs
 from lfp_types import T, to_iterable
@@ -7,23 +7,27 @@ from pydantic_ai import Agent, RunContext
 
 from dbx_ai import agents
 
+Instructions: TypeAlias = Iterable["Instructions"] | str | None
+
 
 async def summarize(
-    ctx: RunContext | None, text: str, instructions: Iterable[str] | None = None
+    ctx: RunContext | None, text: str, instructions: Instructions = None
 ) -> str:
-    if text := strs.trim(text):
-        prompt = _prompt(text, instructions, "Summarize the text without commentary")
-        return await _run(ctx, prompt, output_type=str)
-    return ""
+    return await run(
+        ctx,
+        text,
+        [instructions, "Summarize the text without commentary"],
+        output_type=str,
+    )
 
 
 async def prompt(
-    ctx: RunContext | None, *values: Any, instructions: Iterable[str] | None = None
+    ctx: RunContext | None, *values: Any, instructions: Instructions = None
 ) -> str:
     if values:
         data_json = objects.to_json(values)
         if data_json:
-            directions = """
+            tool_instructions = """
             You are a prompt generator.
             
             Your task is to take a JSON representation of data and convert it into a clean,
@@ -167,27 +171,29 @@ async def prompt(
             Input JSON will be provided below.
             Transform it into the formatted prompt following all rules above.
             """
-            prompt = _prompt(data_json, instructions, directions)
-            return await _run(ctx, prompt, output_type=str)
+            return await run(
+                ctx, data_json, [instructions, tool_instructions], output_type=str
+            )
     return ""
 
 
-async def _run(
+async def run(
     ctx: RunContext | None,
     user_prompt: str,
+    instructions: Instructions = None,
     output_type: type[T] | None = None,
     agent: Agent | None = None,
     *args,
     **kwargs,
 ) -> T | None:
-    user_prompt = strs.trim(user_prompt)
-    if not user_prompt:
+    run_prompt = _run_prompt(user_prompt, instructions)
+    if not run_prompt:
         return None
     if agent is None:
         agent = agents.small()
     usage = ctx.usage if ctx else None
     result = await agent.run(
-        user_prompt, *args, usage=usage, output_type=output_type, **kwargs
+        run_prompt, *args, usage=usage, output_type=output_type, **kwargs
     )
     if result:
         output = result.output
@@ -197,20 +203,20 @@ async def _run(
     return "" if output_type is str else None
 
 
-def _prompt(request: str, *instructions: Iterable[str] | str | None):
-    prompt = []
+def _run_prompt(user_prompt: str, instructions: Instructions) -> str:
+    run_prompt = []
     for instruction in to_iterable(instructions, flatten=True):
         instruction = strs.trim(instruction)
         if instruction:
-            if not prompt:
-                prompt.append("Instructions:\n")
-            prompt.append(instruction)
-    request = strs.trim(request)
-    if request:
-        if prompt:
-            prompt.append("\nRequest:\n")
-        prompt.append(request)
-    return "\n".join(prompt)
+            if not run_prompt:
+                run_prompt.append("Instructions:\n")
+            run_prompt.append(instruction)
+    user_prompt = strs.trim(user_prompt)
+    if user_prompt:
+        if run_prompt:
+            run_prompt.append("\nUser Prompt:\n")
+        run_prompt.append(user_prompt)
+    return "\n".join(run_prompt)
 
 
 async def main():
