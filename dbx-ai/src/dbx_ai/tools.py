@@ -13,7 +13,7 @@ Instructions: TypeAlias = Iterable["Instructions"] | str | None
 async def summarize(
     text: str,
     instructions: Instructions = None,
-    run_context: RunContext | None = None,
+    run_context: RunContext[Any] | None = None,
     agent: Agent | None = None,
 ) -> str:
     return await run(
@@ -28,7 +28,7 @@ async def summarize(
 async def prompt(
     *values: Any,
     instructions: Instructions = None,
-    run_context: RunContext | None = None,
+    run_context: RunContext[Any] | None = None,
     agent: Agent | None = None,
 ) -> str:
     if values:
@@ -192,7 +192,7 @@ async def run(
     user_prompt: str,
     instructions: Instructions = None,
     output_type: type[T] | None = None,
-    run_context: RunContext | None = None,
+    run_context: RunContext[Any] | None = None,
     agent: Agent | None = None,
     **kwargs,
 ) -> T | None:
