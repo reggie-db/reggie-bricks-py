@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Any
+from typing import Any, TypeAlias
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import urlopen
 
 from dbx_core.parsers import to_bool, to_float
+from dbx_core.strs import trim
 
 """
 IP information service helpers.
@@ -21,9 +22,9 @@ from `ipwho.is`:
 - `info(IPv6Address("2001:4860:4860::8888"))` for typed IP objects
 """
 
+IPAddressLike: TypeAlias = str | IPv4Address | IPv6Address | None
 _IPWHO_URL = "https://ipwho.is"
-_TIMEOUT_SECONDS = 10.0
-_Address = str | IPv4Address | IPv6Address | None
+_TIMEOUT_SECONDS_DEFAULT = 10.0
 
 
 @dataclass(slots=True)
@@ -53,28 +54,28 @@ class IpInfo:
     def from_payload(cls, payload: dict[str, Any]) -> IpInfo:
         """Create an ``IpInfo`` from a JSON payload."""
         return cls(
-            ip=_as_str(payload.get("ip")),
+            ip=trim(payload.get("ip"), default=None),
             success=to_bool(payload.get("success"), default=None),
-            type=_as_str(payload.get("type")),
-            continent=_as_str(payload.get("continent")),
-            continent_code=_as_str(payload.get("continent_code")),
-            country=_as_str(payload.get("country")),
-            country_code=_as_str(payload.get("country_code")),
-            region=_as_str(payload.get("region")),
-            region_code=_as_str(payload.get("region_code")),
-            city=_as_str(payload.get("city")),
+            type=trim(payload.get("type"), default=None),
+            continent=trim(payload.get("continent"), default=None),
+            continent_code=trim(payload.get("continent_code"), default=None),
+            country=trim(payload.get("country"), default=None),
+            country_code=trim(payload.get("country_code"), default=None),
+            region=trim(payload.get("region"), default=None),
+            region_code=trim(payload.get("region_code"), default=None),
+            city=trim(payload.get("city"), default=None),
             latitude=to_float(payload.get("latitude")),
             longitude=to_float(payload.get("longitude")),
             is_eu=to_bool(payload.get("is_eu"), default=None),
-            postal=_as_str(payload.get("postal")),
-            calling_code=_as_str(payload.get("calling_code")),
-            capital=_as_str(payload.get("capital")),
-            borders=_as_str(payload.get("borders")),
+            postal=trim(payload.get("postal"), default=None),
+            calling_code=trim(payload.get("calling_code"), default=None),
+            capital=trim(payload.get("capital"), default=None),
+            borders=trim(payload.get("borders"), default=None),
             raw=payload,
         )
 
 
-def info(address: _Address = None) -> IpInfo:
+def info(address: IPAddressLike = None, **kwargs: Any) -> IpInfo:
     """
     Fetch IP metadata for an optional address.
 
@@ -85,15 +86,11 @@ def info(address: _Address = None) -> IpInfo:
     Returns:
         Parsed ``IpInfo``.
     """
-    payload = _fetch_payload(address=address)
-    return IpInfo.from_payload(payload)
-
-
-def _fetch_payload(address: _Address) -> dict[str, Any]:
-    """Call ipwho.is and return a parsed JSON payload."""
     url = _build_url(address)
+    if not "timeout" in kwargs:
+        kwargs["timeout"] = _TIMEOUT_SECONDS_DEFAULT
     try:
-        with urlopen(url, timeout=_TIMEOUT_SECONDS) as response:
+        with urlopen(url, **kwargs) as response:
             body = response.read().decode("utf-8")
     except HTTPError as exc:
         raise RuntimeError(f"ipwho.is request failed with HTTP {exc.code}") from exc
@@ -107,36 +104,32 @@ def _fetch_payload(address: _Address) -> dict[str, Any]:
 
     if not isinstance(payload, dict):
         raise RuntimeError("ipwho.is returned a non-object payload")
-    return payload
+    return IpInfo.from_payload(payload)
 
 
-def _build_url(address: _Address) -> str:
+def _build_url(address: IPAddressLike) -> str:
     """Build the ipwho.is URL with an optional target address."""
-    if address is None:
-        return f"{_IPWHO_URL}/"
-    if not (clean_address := _normalize_address(address)):
-        return f"{_IPWHO_URL}/"
-    # Quote the input so hostnames and IPv6 strings remain path-safe.
-    return f"{_IPWHO_URL}/{quote(clean_address, safe='')}"
+    url = _IPWHO_URL
+    if address:
+        if address_str := _address_str(address):
+            url += f"/{quote(address_str, safe='')}"
+    return url
 
 
-def _as_str(value: Any) -> str | None:
-    if value:
-        if value_str := str(value).strip():
-            return value_str
-    return None
-
-
-def _normalize_address(address: _Address) -> str | None:
+def _address_str(address: IPAddressLike) -> str | None:
     """Normalize a target address for consistent API lookup."""
-    if address is None:
-        return None
     if isinstance(address, (IPv4Address, IPv6Address)):
         return address.compressed
-    if not (candidate := str(address).strip()):
-        return None
-    try:
-        # Normalize valid IPv4/IPv6 inputs while still allowing hostnames.
-        return ip_address(candidate).compressed
-    except ValueError:
-        return candidate
+    elif candidate := trim(address, default=None):
+        try:
+            # Normalize valid IPv4/IPv6 inputs while still allowing hostnames.
+            return ip_address(candidate).compressed
+        except ValueError:
+            pass
+    return candidate
+
+
+if __name__ == "__main__":
+    from dbx_core import objects
+
+    print(json.dumps(objects.dump(info()), indent=2))

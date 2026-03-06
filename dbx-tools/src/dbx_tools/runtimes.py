@@ -49,7 +49,7 @@ def _runtime_version(version_value: str) -> Version:
     except InvalidVersion:
         pass
 
-    version_text = str(version_value).strip()
+    version_text = strs.trim(version_value, default=None)
     if not version_text:
         raise InvalidVersion("Invalid version: ''")
 

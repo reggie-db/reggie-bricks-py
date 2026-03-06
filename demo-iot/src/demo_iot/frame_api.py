@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import pytimeparse
+from dbx_core import strs
 from fastapi import APIRouter, Query, Request
 from lfp_logging import logs
 from pydantic import BaseModel, Field
@@ -488,7 +489,7 @@ async def frame_detection_bboxes(
     seen: set[str] = set()
     frame_ids: list[str] = []
     for fid in body.frame_ids:
-        fid = str(fid).strip()
+        fid = strs.trim(fid, default=None)
         if not fid or fid in seen:
             continue
         seen.add(fid)
@@ -497,7 +498,9 @@ async def frame_detection_bboxes(
     if not frame_ids:
         return []
 
-    label = body.label.strip().lower() if body.label else None
+    label = strs.trim(body.label, default=None)
+    if label:
+        label = label.lower()
 
     sql = text(
         """

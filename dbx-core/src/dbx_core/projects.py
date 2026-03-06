@@ -6,6 +6,8 @@ import subprocess
 from os import PathLike
 from typing import Any
 
+from dbx_core import strs
+
 _PYPROJECT_FILE_NAME = "pyproject.toml"
 
 
@@ -101,6 +103,6 @@ def _run_command(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+        return proc.returncode, strs.trim(proc.stdout), strs.trim(proc.stderr)
     except Exception as exc:
-        return 1, "", str(exc).strip()
+        return 1, "", strs.trim(exc)

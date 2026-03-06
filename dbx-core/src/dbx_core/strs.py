@@ -13,12 +13,36 @@ _SPLIT_NON_ALPHA_NUMERIC = re.compile(r"[^a-zA-Z0-9]+")
 _SPLIT_CAMEL_CASE = re.compile(r"(?<=[a-z])(?=[A-Z])")
 
 
-def trim(value: str | None, dedent: bool = True) -> str:
-    if value:
+def trim(value: Any, default: str | None = "", dedent: bool = True) -> str | None:
+    """
+    Normalize a value by optionally dedenting, stripping surrounding whitespace,
+    and returning a fallback value when the result is empty.
+
+    Args:
+        value:
+            The input value to normalize. Non-string inputs are converted to
+            strings. If None or empty after processing, the function returns
+            the provided default.
+
+        default:
+            Value returned when the processed string is empty or when the input
+            is None. Defaults to an empty string.
+
+        dedent:
+            If True and the input is a string, remove common leading indentation
+            using ``textwrap.dedent`` before stripping whitespace. Trailing
+            whitespace is removed before the final ``strip`` call.
+
+    Returns:
+        The cleaned string, or ``default`` if the result is empty.
+    """
+    if value is not None:
+        if not isinstance(value, str):
+            value = str(value)
         if dedent:
-            value = textwrap.dedent(value).rstrip()
+            value = textwrap.dedent(value)
         value = value.strip()
-    return value or ""
+    return value or default
 
 
 def tokenize(
@@ -86,6 +110,5 @@ def split_camel_case(*inputs: Any) -> Iterable[str]:
 def _strings(*inputs: Any) -> Iterable[str]:
     """Yield non-empty, stripped string representations for inputs."""
     for value in inputs:
-        value_str = str(value).strip() if value is not None else None
-        if value_str:
+        if value_str := trim(value, default=None):
             yield value_str

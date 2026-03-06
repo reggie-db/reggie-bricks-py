@@ -11,24 +11,24 @@ Instructions: TypeAlias = Iterable["Instructions"] | str | None
 
 
 async def summarize(
-    ctx: RunContext | None,
     text: str,
     instructions: Instructions = None,
+    run_context: RunContext | None = None,
     agent: Agent | None = None,
 ) -> str:
     return await run(
-        ctx,
         text,
         [instructions, "Summarize the text without commentary"],
         agent=agent,
+        run_context=run_context,
         output_type=str,
     )
 
 
 async def prompt(
-    ctx: RunContext | None,
     *values: Any,
     instructions: Instructions = None,
+    run_context: RunContext | None = None,
     agent: Agent | None = None,
 ) -> str:
     if values:
@@ -179,20 +179,20 @@ async def prompt(
             Transform it into the formatted prompt following all rules above.
             """
             return await run(
-                ctx,
                 data_json,
                 [instructions, tool_instructions],
                 agent=agent,
+                run_context=run_context,
                 output_type=str,
             )
     return ""
 
 
 async def run(
-    ctx: RunContext | None,
     user_prompt: str,
     instructions: Instructions = None,
     output_type: type[T] | None = None,
+    run_context: RunContext | None = None,
     agent: Agent | None = None,
     **kwargs,
 ) -> T | None:
@@ -201,7 +201,7 @@ async def run(
         return None
     if agent is None:
         agent = agents.small()
-    usage = ctx.usage if ctx else None
+    usage = run_context.usage if run_context else None
     result = await agent.run(run_prompt, usage=usage, output_type=output_type, **kwargs)
     if result:
         output = result.output

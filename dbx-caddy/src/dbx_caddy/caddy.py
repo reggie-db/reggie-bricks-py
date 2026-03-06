@@ -13,6 +13,7 @@ import zipfile
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
+from dbx_core.strs import trim
 from lfp_logging import logs
 
 """
@@ -226,7 +227,7 @@ def _flags_from_args(args: tuple[object, ...]) -> list[str]:
     for a in args:
         if a is None:
             continue
-        s = str(a).strip()
+        s = trim(a, default=None)
         if not s:
             continue
         if s.startswith("-"):
