@@ -3,10 +3,16 @@
 import re
 import uuid
 from dataclasses import dataclass
+from typing import Any, Iterable, TypeAlias, TypeVar
 
 from pyspark.sql import SparkSession
 
 from dbx_tools import clients, configs, runtimes
+
+_T = TypeVar("_T")
+_UNSET = object()
+
+CatalogSchemaLike: TypeAlias = str | Iterable["CatalogSchemaLike"] | "CatalogSchema"
 
 
 @dataclass(frozen=True)
@@ -16,8 +22,25 @@ class CatalogSchema:
     catalog: str
     schema: str
 
+    def __post_init__(self):
+        if not self.catalog:
+            raise ValueError("Catalog cannot be empty")
+        if not self.schema:
+            raise ValueError("Schema cannot be empty")
+
     def __str__(self) -> str:
         return f"{self.catalog}.{self.schema}"
+
+    @classmethod
+    def of(
+        cls, value: CatalogSchemaLike, default: "CatalogSchema" = _UNSET
+    ) -> "CatalogSchema":
+        return _of(cls, 2, value, default)
+
+
+CatalogSchemaTableLike: TypeAlias = (
+    str | Iterable["CatalogSchemaTableLike"] | "CatalogSchemaTable"
+)
 
 
 @dataclass(frozen=True)
@@ -26,8 +49,59 @@ class CatalogSchemaTable(CatalogSchema):
 
     table: str
 
+    def __post_init__(self):
+        super().__post_init__()
+        if not self.table:
+            raise ValueError("Table cannot be empty")
+
     def __str__(self) -> str:
         return f"{self.catalog}.{self.schema}.{self.table}"
+
+    @classmethod
+    def of(
+        cls,
+        value: CatalogSchemaTableLike,
+        default: "CatalogSchemaTable" = _UNSET,
+    ) -> "CatalogSchemaTable":
+        return _of(cls, 3, value, default)
+
+
+def _of(
+    cls: type[_T], min_segments: int, value: Any, default: _T | None = _UNSET
+) -> _T | None:
+    if isinstance(value, cls):
+        return value
+
+    def _parts(raw: Any) -> Iterable[str]:
+        """Yield flattened name segments across nested iterables."""
+        if isinstance(raw, str):
+            if not raw:
+                raise ValueError("Empty segment")
+            # Split all segments so extra dotted parts can be rejected.
+            for segment in raw.split("."):
+                if not segment:
+                    raise ValueError("Empty segment")
+                yield segment
+            return
+        if isinstance(raw, Iterable):
+            for item in raw:
+                yield from _parts(item)
+            return
+        if raw is None:
+            raise ValueError("Empty segment")
+        yield from _parts(str(raw))
+
+    try:
+        result = [segment for segment in _parts(value)]
+    except ValueError:
+        result = []
+
+    # Reject over-qualified names instead of truncating.
+    if min_segments <= len(result) <= 3:
+        return cls(*result[0:min_segments])
+    if default is not _UNSET:
+        return default
+    raise ValueError(f"Invalid {cls.__name__}: {value}")
 
 
 def _catalog_schema_config() -> CatalogSchema | None:
@@ -98,7 +172,7 @@ def catalog_schema(spark: SparkSession | None = None) -> CatalogSchema | None:
 
 
 def catalog_schema_table(
-    table: str, spark: SparkSession | None = None
+    spark: SparkSession | None = None, table: str | None = None
 ) -> CatalogSchemaTable | None:
     """Return a fully qualified table reference for the provided table name.
 
@@ -140,3 +214,8 @@ def schema(spark: SparkSession | None = None) -> str | None:
     """
     cs = catalog_schema(spark)
     return cs.schema if cs else None
+
+
+if __name__ == "__main__":
+    print(CatalogSchema.of("main.analytics"))
+    print(CatalogSchemaTable.of("main.analytics", ["table"]))

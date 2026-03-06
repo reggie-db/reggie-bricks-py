@@ -1,7 +1,9 @@
 import enum
 
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.service.sql import EndpointInfo
+from databricks.sdk.service.sql import (
+    EndpointInfo,
+)
 from dbx_core import strs
 
 from dbx_tools.clients import _WAREHOUSE_SIZE_PATTERN

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,6 +25,29 @@ class MockWarehouses:
 class MockWorkspaceClient:
     def __init__(self, items: list[MockWarehouse]):
         self.warehouses = MockWarehouses(items)
+
+
+class MockStatementExecution:
+    def __init__(self, responses):
+        self._responses = list(responses)
+        self.execute_calls = []
+        self.get_calls = []
+
+    def execute_statement(self, **kwargs):
+        self.execute_calls.append(kwargs)
+        return SimpleNamespace(statement_id="stmt-1")
+
+    def get_statement(self, statement_id):
+        self.get_calls.append(statement_id)
+        return self._responses.pop(0)
+
+
+class MockWorkspaceClientWithStatements(MockWorkspaceClient):
+    def __init__(
+        self, items: list[MockWarehouse], statement_execution: MockStatementExecution
+    ):
+        super().__init__(items)
+        self.statement_execution = statement_execution
 
 
 def test_warehouse_size_rank():
@@ -198,3 +222,66 @@ def test_warehouse_raises_when_none_found():
 
     with pytest.raises(ValueError):
         warehouses.get(workspace_client=_EmptyWC())
+
+
+def test_metric_view_ddl_success():
+    statement_execution = MockStatementExecution(
+        [
+            SimpleNamespace(
+                status=SimpleNamespace(
+                    state=warehouses.StatementState.SUCCEEDED, error=None
+                ),
+                result=SimpleNamespace(
+                    data_array=[["CREATE VIEW a AS SELECT 1"], [None], ["-- end"]]
+                ),
+            )
+        ]
+    )
+    wc = MockWorkspaceClientWithStatements(
+        [
+            MockWarehouse(
+                id="wh1",
+                name="shared",
+                cluster_size="Small",
+                enable_serverless_compute=True,
+            )
+        ],
+        statement_execution,
+    )
+
+    ddl = warehouses.metric_view_ddl(
+        "databricks_demos.rtswv3.mv_portfolio_kpis", workspace_client=wc
+    )
+
+    assert ddl == "CREATE VIEW a AS SELECT 1\n-- end"
+    assert statement_execution.execute_calls[0]["warehouse_id"] == "wh1"
+
+
+def test_metric_view_ddl_failed_state_raises_runtime_error():
+    statement_execution = MockStatementExecution(
+        [
+            SimpleNamespace(
+                status=SimpleNamespace(
+                    state=warehouses.StatementState.FAILED,
+                    error=SimpleNamespace(message="boom"),
+                ),
+                result=SimpleNamespace(data_array=[]),
+            )
+        ]
+    )
+    wc = MockWorkspaceClientWithStatements(
+        [
+            MockWarehouse(
+                id="wh1",
+                name="shared",
+                cluster_size="Small",
+                enable_serverless_compute=True,
+            )
+        ],
+        statement_execution,
+    )
+
+    with pytest.raises(RuntimeError, match="boom"):
+        warehouses.metric_view_ddl(
+            "databricks_demos.rtswv3.mv_portfolio_kpis", workspace_client=wc
+        )
