@@ -33,37 +33,24 @@ Streamlined event triggers:
 
 * **Keyboard Events**: Simplified handling of specific key presses (e.g., Enter) for form submissions and interactive elements.
 
-### Reflex Single-Port Runner (`run.py`)
-
-Run Reflex directly in single-port mode so local behavior matches Databricks Apps
-without an external proxy.
-
-Key behavior:
-
-* **Single-Port Mode**: Uses Reflex native single-port serving.
-* **Databricks Port Alignment**: Reads `DATABRICKS_APP_PORT` or `--app-port`.
-* **Single Reflex Process**: Runs one `reflex run` process directly.
-* **Clean Shutdown**: On SIGINT/SIGTERM, terminates the Reflex process.
-* **Reflex-like Invocation**: Supports forwarding args to `reflex run`.
-
 ## Usage
 
 ### Run Reflex
 
 ```bash
-uv run --directory dbx-reflex dbx-reflex-run
+uv run --directory dbx-reflex reflex run --env dev
 ```
 
 Forward custom `reflex run` args:
 
 ```bash
-uv run --directory dbx-reflex dbx-reflex-run -- --env dev --backend-only false
+uv run --directory dbx-reflex reflex run --env prod
 ```
 
 Set explicit app port:
 
 ```bash
-uv run --directory dbx-reflex dbx-reflex-run --app-port 8000
+DATABRICKS_APP_PORT=8000 uv run --directory dbx-reflex reflex run --env dev
 ```
 
 ### Query Parameter Binding
