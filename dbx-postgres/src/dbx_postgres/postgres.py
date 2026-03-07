@@ -4,6 +4,7 @@ import time
 from lfp_logging import logs
 from sqlalchemy import URL, Engine, text
 from sqlalchemy import create_engine as sql_create_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine as sql_create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
