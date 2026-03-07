@@ -128,8 +128,8 @@ def _model_cache(config_key: str, model_csv: str) -> str:
 
 
 if __name__ == "__main__":
-    print("starting")
+    LOG.info("vector model: %s", vector())
     LOG.info("reasoning model: %s", large())
     LOG.info("memory model: %s", small())
-    LOG.info("vector model: %s", vector())
+
     LOG.info("ranker model: %s", ranker())
