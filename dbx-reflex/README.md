@@ -33,23 +33,22 @@ Streamlined event triggers:
 
 * **Keyboard Events**: Simplified handling of specific key presses (e.g., Enter) for form submissions and interactive elements.
 
-### Reflex + Caddy Runner (`run.py`)
+### Reflex Single-Port Runner (`run.py`)
 
-Run Reflex with `dbx-caddy` as a front proxy so local behavior matches Databricks
-Apps routing and HMR paths.
+Run Reflex directly in single-port mode so local behavior matches Databricks Apps
+without an external proxy.
 
 Key behavior:
 
-* **Caddy Front Proxy**: Proxies public app traffic to Reflex frontend/backend.
-* **Randomized Internal Ports**: Picks random backend/frontend ports each run, then exports them to Reflex and Caddy.
-* **HMR Support**: Routes `/_hmr` to frontend and `/_upload` plus websocket upgrades to backend.
-* **Single Reflex Process**: Runs one `reflex run` process with randomized backend/frontend port settings, matching the dbx-lottery approach.
-* **Clean Shutdown**: On SIGINT/SIGTERM, terminates the Reflex process and Caddy.
+* **Single-Port Mode**: Uses Reflex native single-port serving.
+* **Databricks Port Alignment**: Reads `DATABRICKS_APP_PORT` or `--app-port`.
+* **Single Reflex Process**: Runs one `reflex run` process directly.
+* **Clean Shutdown**: On SIGINT/SIGTERM, terminates the Reflex process.
 * **Reflex-like Invocation**: Supports forwarding args to `reflex run`.
 
 ## Usage
 
-### Run Reflex Behind Caddy
+### Run Reflex
 
 ```bash
 uv run --directory dbx-reflex dbx-reflex-run
@@ -61,10 +60,10 @@ Forward custom `reflex run` args:
 uv run --directory dbx-reflex dbx-reflex-run -- --env dev --backend-only false
 ```
 
-Set explicit ports:
+Set explicit app port:
 
 ```bash
-uv run --directory dbx-reflex dbx-reflex-run --app-port 8000 --backend-port 5000 --frontend-port 5173
+uv run --directory dbx-reflex dbx-reflex-run --app-port 8000
 ```
 
 ### Query Parameter Binding

@@ -5,76 +5,30 @@ import pytest
 from dbx_reflex import run
 
 
-def test_caddyfile_contains_hmr_and_websocket_routes():
-    data = run._caddyfile(app_port=8000, backend_port=5000, frontend_port=5173)
-    assert ":8000 {" in data
-    assert "handle /_hmr" in data
-    assert "reverse_proxy localhost:5173" in data
-    assert "handle /_upload" in data
-    assert "reverse_proxy localhost:5000" in data
-    assert "reverse_proxy @websockets localhost:5000" in data
+def test_resolve_app_port_prefers_cli_value(monkeypatch):
+    monkeypatch.setenv("DATABRICKS_APP_PORT", "9100")
+    parsed = run._parse_args(["--app-port", "8010"])
+    assert run._resolve_app_port(parsed) == 8010
+
+
+def test_resolve_app_port_uses_env_when_cli_missing(monkeypatch):
+    monkeypatch.setenv("DATABRICKS_APP_PORT", "9100")
+    parsed = run._parse_args([])
+    assert run._resolve_app_port(parsed) == 9100
 
 
 def test_normalize_reflex_args_defaults_when_empty():
-    assert run._normalize_reflex_args([]) == [
-        "--env",
-        "dev",
-        "--backend-only",
-        "false",
-    ]
-    assert run._normalize_reflex_args(["--"]) == [
-        "--env",
-        "dev",
-        "--backend-only",
-        "false",
-    ]
+    assert run._normalize_reflex_args([]) == ["--env", "dev"]
+    assert run._normalize_reflex_args(["--"]) == ["--env", "dev"]
 
 
 def test_normalize_reflex_args_passes_through_custom_values():
-    args = ["--env", "prod", "--backend-only", "true"]
+    args = ["--env", "prod"]
     assert run._normalize_reflex_args(args) == args
 
 
-def test_resolve_ports_prefers_cli_values(monkeypatch):
-    monkeypatch.setenv("DATABRICKS_APP_PORT", "9000")
-    monkeypatch.setenv("REFLEX_BACKEND_PORT", "9001")
-    monkeypatch.setenv("REFLEX_FRONTEND_PORT", "9002")
-
-    parsed = run._parse_args(
-        [
-            "--app-port",
-            "8010",
-            "--backend-port",
-            "5010",
-            "--frontend-port",
-            "5180",
-        ]
-    )
-    app_port, backend_port, frontend_port = run._resolve_ports(parsed)
-    assert app_port == 8010
-    assert backend_port == 5010
-    assert frontend_port == 5180
-
-
-def test_resolve_ports_randomizes_backend_and_frontend_by_default(monkeypatch):
-    monkeypatch.setenv("DATABRICKS_APP_PORT", "9100")
-    monkeypatch.setenv("REFLEX_BACKEND_PORT", "9001")
-    monkeypatch.setenv("REFLEX_FRONTEND_PORT", "9002")
-
-    free_ports = iter([5011, 5179])
-    monkeypatch.setattr(run, "_get_free_port", lambda: next(free_ports))
-    parsed = run._parse_args([])
-    app_port, backend_port, frontend_port = run._resolve_ports(parsed)
-    assert app_port == 9100
-    assert backend_port == 5011
-    assert frontend_port == 5179
-    assert backend_port != frontend_port
-
-
-def test_main_sets_env_and_uses_caddy_and_reflex(monkeypatch):
+def test_main_sets_env_and_runs_reflex(monkeypatch):
     calls = {
-        "caddy_config": None,
-        "caddy_flags": None,
         "start": None,
         "stops": 0,
     }
@@ -95,20 +49,7 @@ def test_main_sets_env_and_uses_caddy_and_reflex(monkeypatch):
         def wait(self, timeout=None):
             return 0
 
-    class _FakeCaddyContext:
-        def __enter__(self):
-            return object()
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    def _fake_caddy_run(config, *flags, **kwargs):
-        calls["caddy_config"] = config
-        calls["caddy_flags"] = flags
-        return _FakeCaddyContext()
-
     reflex_proc = _FakeProc(os.getpid() + 1, poll_values=[None, 17])
-    caddy_proc = _FakeProc(os.getpid() + 3, poll_values=[None, None, None])
 
     def _fake_start_reflex(reflex_args, env):
         calls["start"] = {"args": list(reflex_args), "env": dict(env)}
@@ -117,28 +58,21 @@ def test_main_sets_env_and_uses_caddy_and_reflex(monkeypatch):
     def _fake_stop_process(_proc):
         calls["stops"] += 1
 
-    def _fake_wait_until_any_exits(_processes):
+    def _fake_wait_until_any_exits(processes):
+        assert processes == [reflex_proc]
         return 0, 17
 
-    def _fake_caddy_enter(self):
-        return caddy_proc
-
-    monkeypatch.setattr(run.caddy, "run", _fake_caddy_run)
-    monkeypatch.setattr(_FakeCaddyContext, "__enter__", _fake_caddy_enter)
     monkeypatch.setattr(run, "_start_reflex", _fake_start_reflex)
     monkeypatch.setattr(run, "_stop_process", _fake_stop_process)
     monkeypatch.setattr(run, "_wait_until_any_exits", _fake_wait_until_any_exits)
     monkeypatch.setattr(run.signal, "signal", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(run, "_get_free_port", lambda: 5111)
 
     exit_code = run.main([])
     assert exit_code == 17
-    assert calls["caddy_flags"] == ("watch",)
-    assert "handle /_hmr" in str(calls["caddy_config"])
-    assert calls["start"]["args"] == ["--env", "dev", "--backend-only", "false"]
+    assert calls["start"]["args"] == ["--env", "dev"]
     assert calls["start"]["env"]["DATABRICKS_APP_PORT"]
-    assert calls["start"]["env"]["REFLEX_BACKEND_PORT"]
-    assert calls["start"]["env"]["REFLEX_FRONTEND_PORT"]
+    assert "REFLEX_BACKEND_PORT" not in calls["start"]["env"]
+    assert "REFLEX_FRONTEND_PORT" not in calls["start"]["env"]
     assert calls["stops"] == 1
 
 

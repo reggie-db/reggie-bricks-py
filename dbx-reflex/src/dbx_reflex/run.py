@@ -2,12 +2,9 @@ import argparse
 import logging
 import os
 import signal
-import socket
 import subprocess
 import sys
 import time
-
-from dbx_caddy import caddy
 
 LOG = logging.getLogger(__name__)
 _DEFAULT_APP_PORT = 8000
@@ -16,10 +13,8 @@ _DEFAULT_APP_PORT = 8000
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="dbx-reflex-run",
-        description="Run a Reflex app behind Caddy with HMR proxy support.",
+        description="Run a Reflex app in single-port mode.",
     )
-    parser.add_argument("--backend-port", type=int, default=None)
-    parser.add_argument("--frontend-port", type=int, default=None)
     parser.add_argument("--app-port", type=int, default=None)
     parser.add_argument("reflex_args", nargs=argparse.REMAINDER)
     return parser.parse_args(argv)
@@ -35,43 +30,9 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-def _get_free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("", 0))
-        sock.listen(1)
-        return int(sock.getsockname()[1])
-
-
-def _resolve_ports(args: argparse.Namespace) -> tuple[int, int, int]:
-    app_port = args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
-    # Always randomize internal Reflex ports unless explicitly specified via CLI.
-    backend_port = args.backend_port or _get_free_port()
-    frontend_port = args.frontend_port or _get_free_port()
-    if frontend_port == backend_port:
-        frontend_port = _get_free_port()
-    return app_port, backend_port, frontend_port
-
-
-def _caddyfile(app_port: int, backend_port: int, frontend_port: int) -> str:
-    return (
-        f":{app_port} {{\n"
-        f"    handle /_hmr {{\n"
-        f"        reverse_proxy localhost:{frontend_port}\n"
-        f"    }}\n\n"
-        f"    handle /_upload {{\n"
-        f"        reverse_proxy localhost:{backend_port}\n"
-        f"    }}\n\n"
-        f"    handle /_event {{\n"
-        f"        reverse_proxy localhost:{backend_port}\n"
-        f"    }}\n\n"
-        f"    @frontend_websockets {{\n"
-        f"        header Connection *Upgrade*\n"
-        f"        header Upgrade websocket\n"
-        f"    }}\n\n"
-        f"    reverse_proxy @frontend_websockets localhost:{frontend_port}\n"
-        f"    reverse_proxy localhost:{frontend_port}\n"
-        f"}}\n"
-    )
+def _resolve_app_port(args: argparse.Namespace) -> int:
+    """Resolve app port from CLI first, then Databricks app environment."""
+    return args.app_port or _env_int("DATABRICKS_APP_PORT", _DEFAULT_APP_PORT)
 
 
 def _default_reflex_args() -> list[str]:
@@ -149,18 +110,14 @@ def _wait_until_any_exits(processes: list[subprocess.Popen]) -> tuple[int, int]:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv if argv is not None else sys.argv[1:])
-    app_port, backend_port, frontend_port = _resolve_ports(args)
+    app_port = _resolve_app_port(args)
     reflex_args = _normalize_reflex_args(args.reflex_args)
     env = dict(os.environ)
     env["DATABRICKS_APP_PORT"] = str(app_port)
-    env["REFLEX_BACKEND_PORT"] = str(backend_port)
-    env["REFLEX_FRONTEND_PORT"] = str(frontend_port)
-    LOG.info(
-        "Resolved ports: app=%s backend=%s frontend=%s",
-        app_port,
-        backend_port,
-        frontend_port,
-    )
+    # Ensure Reflex uses single-port mode with no stale split-port overrides.
+    env.pop("REFLEX_BACKEND_PORT", None)
+    env.pop("REFLEX_FRONTEND_PORT", None)
+    LOG.info("Resolved app port: %s", app_port)
 
     proc_holder: dict[str, list[subprocess.Popen]] = {}
 
@@ -172,21 +129,15 @@ def main(argv: list[str] | None = None) -> int:
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    with caddy.run(
-        _caddyfile(app_port, backend_port, frontend_port), "watch"
-    ) as caddy_proc:
-        reflex_proc = _start_reflex(reflex_args=reflex_args, env=env)
-        reflex_processes = [reflex_proc]
-        proc_holder["reflex"] = reflex_processes
-        try:
-            idx, exit_code = _wait_until_any_exits([reflex_proc, caddy_proc])
-            if idx == 0:
-                LOG.error("Reflex exited with code %s", exit_code)
-            else:
-                LOG.error("Caddy exited with code %s", exit_code)
-            return exit_code
-        finally:
-            _stop_all(reflex_processes)
+    reflex_proc = _start_reflex(reflex_args=reflex_args, env=env)
+    reflex_processes = [reflex_proc]
+    proc_holder["reflex"] = reflex_processes
+    try:
+        _, exit_code = _wait_until_any_exits(reflex_processes)
+        LOG.error("Reflex exited with code %s", exit_code)
+        return exit_code
+    finally:
+        _stop_all(reflex_processes)
 
 
 if __name__ == "__main__":
