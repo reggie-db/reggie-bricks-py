@@ -1,4 +1,5 @@
 import functools
+from typing import Any
 
 import httpx
 from databricks.sdk import WorkspaceClient
@@ -13,9 +14,13 @@ from dbx_ai import models
 
 
 def create(
-    model_name: str | None = None, workspace_client: WorkspaceClient | None = None
+    model_name: str | None = None,
+    workspace_client: WorkspaceClient | None = None,
+    **kwargs: Any,
 ) -> Agent:
-    return Agent(model(model_name=model_name, workspace_client=workspace_client))
+    return Agent(
+        model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
+    )
 
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
