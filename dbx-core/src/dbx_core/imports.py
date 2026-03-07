@@ -1,6 +1,8 @@
 import importlib
+import os
 from functools import lru_cache
 from importlib import util as importlib_util
+from pathlib import Path
 from types import ModuleType
 from typing import Any
 
@@ -80,3 +82,40 @@ def _resolve_module_cached(
     Internal helper to resolve a module with caching.
     """
     return _resolve_module(name, package, execute)
+
+
+def module_name(module: str | os.PathLike[str] | ModuleType) -> str | None:
+    """Return module name from a module object or module-name-like string.
+
+    File paths (including `__file__` values) return ``None``.
+    """
+    if isinstance(module, ModuleType):
+        return module.__name__
+    if isinstance(module, str):
+        if "/" in module or "\\" in module or module.endswith(".py"):
+            return None
+        return module
+    return None
+
+
+def module_file_path(module: str | os.PathLike[str] | ModuleType) -> Path | None:
+    """Return module file path from module object, module name, or file path."""
+    if isinstance(module, ModuleType):
+        module_file = getattr(module, "__file__", None)
+        return Path(module_file).resolve() if module_file else None
+
+    if isinstance(module, os.PathLike) or (
+        isinstance(module, str)
+        and ("/" in module or "\\" in module or module.endswith(".py"))
+    ):
+        return Path(module).resolve()
+
+    module_name_value = module_name(module)
+    if not module_name_value:
+        return None
+
+    resolved_module = resolve_module(module_name_value)
+    if not resolved_module:
+        return None
+    module_file = getattr(resolved_module, "__file__", None)
+    return Path(module_file).resolve() if module_file else None

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-core"
-version = "0.0.1+rev85581cc"
+version = "0.0.1+revc6e7937"
 requires-python = ">=3.11,<3.13"
 dependencies = ["lfp-logging"]
 
