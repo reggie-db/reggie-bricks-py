@@ -8,10 +8,11 @@ from dbx_core import objects, strs
 from dbx_tools import clients
 from lfp_logging import logs
 from openai import AsyncClient
+from openinference.instrumentation.pydantic_ai import OpenInferenceSpanProcessor
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -120,21 +121,17 @@ def _configure_phoenix_tracing() -> bool:
     collector_endpoint = strs.trim(os.environ.get("PHOENIX_COLLECTOR_ENDPOINT"))
     if not collector_endpoint:
         return False
-
-    tracer_provider = trace.get_tracer_provider()
-    if not isinstance(tracer_provider, TracerProvider):
-        tracer_provider = TracerProvider()
-        trace.set_tracer_provider(tracer_provider)
-
-    api_key = strs.trim(os.environ.get("PHOENIX_API_KEY"))
-    headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
     exporter_endpoint = f"{collector_endpoint.rstrip('/')}/v1/traces"
-    exporter = OTLPSpanExporter(
-        endpoint=exporter_endpoint,
-        headers=headers,
-    )
+    tracer_provider = TracerProvider()
+    exporter_headers: dict[str, str] = {}
+    phoenix_api_key = os.getenv("PHOENIX_API_KEY", "").strip()
+    if phoenix_api_key:
+        exporter_headers["Authorization"] = f"Bearer {phoenix_api_key}"
 
-    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    exporter = OTLPSpanExporter(endpoint=exporter_endpoint, headers=exporter_headers)
+    tracer_provider.add_span_processor(OpenInferenceSpanProcessor())
+    tracer_provider.add_span_processor(BatchSpanProcessor(exporter))
+    trace.set_tracer_provider(tracer_provider)
     LOG.info(
         f"Configured OpenTelemetry export to Phoenix collector: {exporter_endpoint}"
     )
