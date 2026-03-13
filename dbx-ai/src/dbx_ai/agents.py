@@ -3,6 +3,7 @@ from typing import Any
 
 import httpx
 from databricks.sdk import WorkspaceClient
+from dbx_core import objects, strs
 from dbx_tools import clients
 from openai import AsyncClient
 from pydantic_ai import Agent
@@ -12,12 +13,25 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 from dbx_ai import models
 
+_DEFAULT_INSTRUCTIONS = strs.trim("""
+Do not include emojis, em dashes, or en dashes in responses.
+If dashes are needed, use a standard hyphen (-) instead.
+""")
+
 
 def create(
     model_name: str | None = None,
     workspace_client: WorkspaceClient | None = None,
     **kwargs: Any,
 ) -> Agent:
+    """Create a configured PydanticAI agent with baseline response instructions."""
+
+    instructions = [_DEFAULT_INSTRUCTIONS]
+    if kwargs_instructions := strs.trim(kwargs.pop("instructions", None)):
+        for instruction in objects.to_list(kwargs_instructions, flatten=True):
+            if instruction := strs.trim(instruction):
+                instructions.append(instruction)
+    kwargs["instructions"] = "\n\n".join(instructions)
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
     )
