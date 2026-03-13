@@ -92,7 +92,6 @@ class ReactMarkdown(rx.Component):
 
 def react_markdown(
     content: str | rx.Var[str],
-    use_gfm: bool = True,
     **props: Any,
 ) -> ReactMarkdown:
     """Render markdown text using `react-markdown`.
@@ -106,8 +105,7 @@ def react_markdown(
         A configured `ReactMarkdown` component instance.
     """
     remark_plugins = list(props.pop("remark_plugins", []))
-    if use_gfm:
+    if not remark_plugins:
         remark_plugins.append(rx.markdown.plugin.gfm)
-    if remark_plugins:
-        props["remark_plugins"] = remark_plugins
+    props["remark_plugins"] = remark_plugins
     return ReactMarkdown.create(content, **props)

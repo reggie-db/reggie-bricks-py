@@ -69,7 +69,7 @@ def small() -> Agent[None, str]:
 def model(
     model_name: str | None = None, workspace_client: WorkspaceClient | None = None
 ) -> Model:
-    if model_name is None:
+    if not model_name:
         model_name = models.large()
     provider = OpenAIProvider(openai_client=client(workspace_client))
     # noinspection PyTypeChecker
