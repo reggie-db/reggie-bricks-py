@@ -9,7 +9,7 @@ class IntersectionObserver(rx.el.Div):
     threshold: rx.Var[float]
 
     @classmethod
-    def create(cls, *children, **props) -> Div:
+    def create(cls, *children, **props) -> rx.el.Div:
         if "id" not in props:
             props["id"] = rx.vars.get_unique_variable_name()
         return super().create(*children, **props)
@@ -75,3 +75,27 @@ class IntersectionObserver(rx.el.Div):
             """
             % script_props
         )
+
+
+class ReactMarkdown(rx.Component):
+    """Reflex wrapper for the `react-markdown` React component."""
+
+    library = "react-markdown@10.1.0"
+    tag = "Markdown"
+    is_default = True
+
+    skip_html: rx.Var[bool]
+    unwrap_disallowed: rx.Var[bool]
+
+
+def react_markdown(content: str | rx.Var[str], **props: Any) -> ReactMarkdown:
+    """Render markdown text using `react-markdown`.
+
+    Args:
+        content: Markdown source text.
+        **props: Props supported by `react-markdown` (for example `skip_html`).
+
+    Returns:
+        A configured `ReactMarkdown` component instance.
+    """
+    return ReactMarkdown.create(content, **props)
