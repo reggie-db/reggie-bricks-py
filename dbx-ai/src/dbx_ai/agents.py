@@ -1,4 +1,5 @@
 import functools
+import os
 from typing import Any
 
 import httpx
@@ -6,6 +7,10 @@ from databricks.sdk import WorkspaceClient
 from dbx_core import objects, strs
 from dbx_tools import clients
 from openai import AsyncClient
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -17,6 +22,7 @@ _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
 If dashes are needed, use a standard hyphen (-) instead.
 """)
+_PHOENIX_INSTRUMENTED = False
 
 
 def create(
@@ -32,6 +38,10 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     kwargs["instructions"] = "\n\n".join(instructions)
+    if kwargs.get("instrument", None) is None:
+        if collector_endpoint := _phoenix_collector_endpoint():
+            _configure_phoenix_tracing(collector_endpoint)
+            kwargs.setdefault("instrument", True)
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
     )
@@ -101,6 +111,33 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
         auth=bearer_auth,
         http2=http2,
     )
+
+
+def _phoenix_collector_endpoint() -> str | None:
+    """Return the configured Phoenix collector endpoint if present."""
+    return strs.trim(os.environ.get("PHOENIX_COLLECTOR_ENDPOINT"))
+
+
+def _configure_phoenix_tracing(collector_endpoint: str) -> None:
+    """Configure OpenTelemetry export to Phoenix collector."""
+    global _PHOENIX_INSTRUMENTED
+    if _PHOENIX_INSTRUMENTED:
+        return
+
+    tracer_provider = trace.get_tracer_provider()
+    if not isinstance(tracer_provider, TracerProvider):
+        tracer_provider = TracerProvider()
+        trace.set_tracer_provider(tracer_provider)
+
+    api_key = strs.trim(os.environ.get("PHOENIX_API_KEY"))
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
+    exporter = OTLPSpanExporter(
+        endpoint=f"{collector_endpoint.rstrip('/')}/v1/traces",
+        headers=headers,
+    )
+
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    _PHOENIX_INSTRUMENTED = True
 
 
 if __name__ == "__main__":

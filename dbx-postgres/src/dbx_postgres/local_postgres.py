@@ -20,23 +20,9 @@ from dbx_postgres import postgres
 
 
 @cache
-def _pixi() -> bool:
-    pproject, pdata = projects.root_pyproject()
-    if pdata.get("tool", {}).get("pixi", None) is not None:
-        return True
-    return False
-
-
-@cache
 def _bin_dir():
     if cmd_path := shutil.which("postgres"):
         return Path(cmd_path).parent
-    pproject, pdata = projects.root_pyproject()
-    if pdata.get("tool", {}).get("pixi", None) is not None:
-        pixi_run = ["pixi", "run", "which", "postgres"]
-        proc = subprocess.run(pixi_run, stdout=subprocess.PIPE)
-        if proc.returncode == 0:
-            return Path(proc.stdout.decode().strip()).parent
     raise FileNotFoundError(f"Postgres binary not found")
 
 
