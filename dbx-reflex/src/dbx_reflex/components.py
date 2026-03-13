@@ -86,16 +86,28 @@ class ReactMarkdown(rx.Component):
 
     skip_html: rx.Var[bool]
     unwrap_disallowed: rx.Var[bool]
+    remark_plugins: rx.Var[list[rx.Var | tuple[rx.Var, rx.Var]]]
+    rehype_plugins: rx.Var[list[rx.Var | tuple[rx.Var, rx.Var]]]
 
 
-def react_markdown(content: str | rx.Var[str], **props: Any) -> ReactMarkdown:
+def react_markdown(
+    content: str | rx.Var[str],
+    use_gfm: bool = True,
+    **props: Any,
+) -> ReactMarkdown:
     """Render markdown text using `react-markdown`.
 
     Args:
         content: Markdown source text.
+        use_gfm: Enable GitHub-flavored markdown parsing (tables, task lists).
         **props: Props supported by `react-markdown` (for example `skip_html`).
 
     Returns:
         A configured `ReactMarkdown` component instance.
     """
+    remark_plugins = list(props.pop("remark_plugins", []))
+    if use_gfm:
+        remark_plugins.append(rx.markdown.plugin.gfm)
+    if remark_plugins:
+        props["remark_plugins"] = remark_plugins
     return ReactMarkdown.create(content, **props)
