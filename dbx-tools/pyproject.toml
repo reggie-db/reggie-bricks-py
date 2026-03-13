@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-tools"
-version = "0.0.1+rev9c1e347"
+version = "0.0.1+revd71168c"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-core @ file://${PROJECT_ROOT}/../dbx-core",
@@ -19,7 +19,7 @@ dependencies = [
 dbx = ["coolname"]
 
 [dependency-groups]
-dev = ["wrapt>=2.0"]
+dev = ["wrapt>=1.16,<2.0"]
 
 [tool.uv.sources.dbx-core]
 workspace = true
