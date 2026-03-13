@@ -633,12 +633,13 @@ wheels = [
 
 [[package]]
 name = "dbx-ai"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-ai" }
 dependencies = [
     { name = "dbx-tools" },
+    { name = "openinference-instrumentation-pydantic-ai" },
     { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic-ai" },
 ]
@@ -646,15 +647,16 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dbx-tools", editable = "dbx-tools" },
+    { name = "openinference-instrumentation-pydantic-ai" },
     { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic-ai", specifier = ">=1.60" },
 ]
 
 [[package]]
 name = "dbx-caddy"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-caddy" }
 dependencies = [
     { name = "pygithub" },
@@ -665,7 +667,7 @@ requires-dist = [{ name = "pygithub" }]
 
 [[package]]
 name = "dbx-concurio"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-concurio" }
 dependencies = [
     { name = "dbx-core" },
@@ -682,7 +684,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-core"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-core" }
 dependencies = [
     { name = "lfp-logging" },
@@ -701,7 +703,7 @@ dev = [{ name = "pydantic", specifier = ">=2.12.5" }]
 
 [[package]]
 name = "dbx-cv"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-cv" }
 dependencies = [
     { name = "dbx-core" },
@@ -721,7 +723,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-ip"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-ip" }
 dependencies = [
     { name = "dbx-core" },
@@ -732,7 +734,7 @@ requires-dist = [{ name = "dbx-core", editable = "dbx-core" }]
 
 [[package]]
 name = "dbx-openapi"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-openapi" }
 dependencies = [
     { name = "cyclopts" },
@@ -743,7 +745,7 @@ requires-dist = [{ name = "cyclopts" }]
 
 [[package]]
 name = "dbx-postgres"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-postgres" }
 dependencies = [
     { name = "dbx-core" },
@@ -764,7 +766,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-reflex"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-reflex" }
 dependencies = [
     { name = "reflex" },
@@ -775,7 +777,7 @@ requires-dist = [{ name = "reflex", specifier = ">=0.8.26" }]
 
 [[package]]
 name = "dbx-tools"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "dbx-tools" }
 dependencies = [
     { name = "databricks-connect", version = "16.1.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -812,7 +814,7 @@ dev = [{ name = "wrapt", specifier = ">=1.16,<2.0" }]
 
 [[package]]
 name = "demo-iot"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 source = { editable = "demo-iot" }
 dependencies = [
     { name = "aioreactive" },
@@ -2039,6 +2041,48 @@ wheels = [
 ]
 
 [[package]]
+name = "openinference-instrumentation"
+version = "0.1.46"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "openinference-semantic-conventions" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-sdk" },
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/8d/9b76b43e8b2ee2ccf1fe15b21c924095f9c0e4839919bcd4951b1c99c2ab/openinference_instrumentation-0.1.46.tar.gz", hash = "sha256:0b520002a1c682c525dcab49005c209bfd71611e8e4e4933b49779d5e899e6db", size = 23937, upload-time = "2026-03-04T10:13:48.883Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/d1/f6668492152a4180492044313e2dc427fbc237904f6bb1629abd030e3469/openinference_instrumentation-0.1.46-py3-none-any.whl", hash = "sha256:f7b63ccd5f93ce82e4e40035c9faa6b021984cbe06ad791f4cf033551533bc48", size = 30124, upload-time = "2026-03-04T10:13:47.613Z" },
+]
+
+[[package]]
+name = "openinference-instrumentation-pydantic-ai"
+version = "0.1.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "openinference-instrumentation" },
+    { name = "openinference-semantic-conventions" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "typing-extensions" },
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/db/0335c9cbc5abfaec07562963ce57bf37f12de73bb90dde5f7c534256d164/openinference_instrumentation_pydantic_ai-0.1.12.tar.gz", hash = "sha256:85df8ef69edac1ab342a2ae57f6c26685c686b144974e3e568886028e5fc7791", size = 18115, upload-time = "2026-02-12T18:56:20.828Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/22/80e175d95eee8fc00dba39ae965ea948c9c78b411274cfead48e5a545710/openinference_instrumentation_pydantic_ai-0.1.12-py3-none-any.whl", hash = "sha256:d81b22cab0f11454ec26955925a6e095cd20d1116e139937363d2d4e824db52c", size = 15866, upload-time = "2026-02-12T18:56:19.739Z" },
+]
+
+[[package]]
+name = "openinference-semantic-conventions"
+version = "0.1.28"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/32/c79bf8bd3ea5a00e492449b31ca600bbc2a8e88a301e42c872af925a156c/openinference_semantic_conventions-0.1.28.tar.gz", hash = "sha256:6388465174e8ab3f27ebc6a9e9bb2e1b804d30caefb57234e16db874da1c6a7b", size = 12893, upload-time = "2026-03-11T04:45:46.543Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/40/34b570462c3ce250277254bb0cca655eb39b64c0dffe63cd7751f103f8d6/openinference_semantic_conventions-0.1.28-py3-none-any.whl", hash = "sha256:a2fed5bb167aa56c1c7448cdb7a8d775f989339ba1f8b04a7b45d4f8388cccfb", size = 10522, upload-time = "2026-03-11T04:45:45.423Z" },
+]
+
+[[package]]
 name = "opentelemetry-api"
 version = "1.39.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2052,6 +2096,19 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-exporter-otlp"
+version = "1.39.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-exporter-otlp-proto-grpc" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/30/9c/3ab1db90f32da200dba332658f2bbe602369e3d19f6aba394031a42635be/opentelemetry_exporter_otlp-1.39.1.tar.gz", hash = "sha256:7cf7470e9fd0060c8a38a23e4f695ac686c06a48ad97f8d4867bc9b420180b9c", size = 6147, upload-time = "2025-12-11T13:32:40.309Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/6c/bdc82a066e6fb1dcf9e8cc8d4e026358fe0f8690700cc6369a6bf9bd17a7/opentelemetry_exporter_otlp-1.39.1-py3-none-any.whl", hash = "sha256:68ae69775291f04f000eb4b698ff16ff685fdebe5cb52871bc4e87938a7b00fe", size = 7019, upload-time = "2025-12-11T13:32:19.387Z" },
+]
+
+[[package]]
 name = "opentelemetry-exporter-otlp-proto-common"
 version = "1.39.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2061,6 +2118,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e9/9d/22d241b66f7bbde88a3bfa6847a351d2c46b84de23e71222c6aae25c7050/opentelemetry_exporter_otlp_proto_common-1.39.1.tar.gz", hash = "sha256:763370d4737a59741c89a67b50f9e39271639ee4afc999dadfe768541c027464", size = 20409, upload-time = "2025-12-11T13:32:40.885Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8c/02/ffc3e143d89a27ac21fd557365b98bd0653b98de8a101151d5805b5d4c33/opentelemetry_exporter_otlp_proto_common-1.39.1-py3-none-any.whl", hash = "sha256:08f8a5862d64cc3435105686d0216c1365dc5701f86844a8cd56597d0c764fde", size = 18366, upload-time = "2025-12-11T13:32:20.2Z" },
+]
+
+[[package]]
+name = "opentelemetry-exporter-otlp-proto-grpc"
+version = "1.39.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "googleapis-common-protos" },
+    { name = "grpcio" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-common" },
+    { name = "opentelemetry-proto" },
+    { name = "opentelemetry-sdk" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/48/b329fed2c610c2c32c9366d9dc597202c9d1e58e631c137ba15248d8850f/opentelemetry_exporter_otlp_proto_grpc-1.39.1.tar.gz", hash = "sha256:772eb1c9287485d625e4dbe9c879898e5253fea111d9181140f51291b5fec3ad", size = 24650, upload-time = "2025-12-11T13:32:41.429Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/a3/cc9b66575bd6597b98b886a2067eea2693408d2d5f39dad9ab7fc264f5f3/opentelemetry_exporter_otlp_proto_grpc-1.39.1-py3-none-any.whl", hash = "sha256:fa1c136a05c7e9b4c09f739469cbdb927ea20b34088ab1d959a849b5cc589c18", size = 19766, upload-time = "2025-12-11T13:32:21.027Z" },
 ]
 
 [[package]]

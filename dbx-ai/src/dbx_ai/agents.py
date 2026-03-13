@@ -6,6 +6,7 @@ import httpx
 from databricks.sdk import WorkspaceClient
 from dbx_core import objects, strs
 from dbx_tools import clients
+from lfp_logging import logs
 from openai import AsyncClient
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -17,6 +18,8 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from dbx_ai import models
+
+LOG = logs.logger()
 
 _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
@@ -125,12 +128,16 @@ def _configure_phoenix_tracing() -> bool:
 
     api_key = strs.trim(os.environ.get("PHOENIX_API_KEY"))
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
+    exporter_endpoint = f"{collector_endpoint.rstrip('/')}/v1/traces"
     exporter = OTLPSpanExporter(
-        endpoint=f"{collector_endpoint.rstrip('/')}/v1/traces",
+        endpoint=exporter_endpoint,
         headers=headers,
     )
 
     tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    LOG.info(
+        f"Configured OpenTelemetry export to Phoenix collector: {exporter_endpoint}"
+    )
     return True
 
 

@@ -4,13 +4,14 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+rev010fbbe"
+version = "0.0.1+rev4a31acc"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "opentelemetry-api",
-    "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "openinference-instrumentation-pydantic-ai",
     "pydantic_ai>=1.60",
 ]
 
