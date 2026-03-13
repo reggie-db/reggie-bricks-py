@@ -22,7 +22,6 @@ _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
 If dashes are needed, use a standard hyphen (-) instead.
 """)
-_PHOENIX_INSTRUMENTED = False
 
 
 def create(
@@ -38,10 +37,9 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     kwargs["instructions"] = "\n\n".join(instructions)
-    if kwargs.get("instrument", None) is None:
-        if collector_endpoint := _phoenix_collector_endpoint():
-            _configure_phoenix_tracing(collector_endpoint)
-            kwargs.setdefault("instrument", True)
+    instrument = kwargs.get("instrument", None)
+    if (instrument is None or instrument) and _configure_phoenix_tracing():
+        kwargs.setdefault("instrument", True)
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
     )
@@ -113,16 +111,12 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
     )
 
 
-def _phoenix_collector_endpoint() -> str | None:
-    """Return the configured Phoenix collector endpoint if present."""
-    return strs.trim(os.environ.get("PHOENIX_COLLECTOR_ENDPOINT"))
-
-
-def _configure_phoenix_tracing(collector_endpoint: str) -> None:
+@functools.cache
+def _configure_phoenix_tracing() -> bool:
     """Configure OpenTelemetry export to Phoenix collector."""
-    global _PHOENIX_INSTRUMENTED
-    if _PHOENIX_INSTRUMENTED:
-        return
+    collector_endpoint = strs.trim(os.environ.get("PHOENIX_COLLECTOR_ENDPOINT"))
+    if not collector_endpoint:
+        return False
 
     tracer_provider = trace.get_tracer_provider()
     if not isinstance(tracer_provider, TracerProvider):
@@ -137,7 +131,7 @@ def _configure_phoenix_tracing(collector_endpoint: str) -> None:
     )
 
     tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
-    _PHOENIX_INSTRUMENTED = True
+    return True
 
 
 if __name__ == "__main__":
