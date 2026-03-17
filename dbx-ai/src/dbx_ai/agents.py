@@ -5,20 +5,14 @@ clients, and optional MLflow/OpenTelemetry tracing setup.
 """
 
 import functools
-import os
 from typing import Any
 
 import httpx
 from databricks.sdk import WorkspaceClient
 from dbx_core import objects, strs
-from dbx_tools import clients, configs, experiments
+from dbx_tools import clients
 from lfp_logging import logs
 from openai import AsyncClient
-from openinference.instrumentation.pydantic_ai import OpenInferenceSpanProcessor
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -61,9 +55,6 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     kwargs["instructions"] = "\n\n".join(instructions)
-    instrument = kwargs.get("instrument", None)
-    if (instrument is None or instrument) and _configure_tracing():
-        kwargs.setdefault("instrument", True)
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
     )
@@ -139,38 +130,6 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
         auth=bearer_auth,
         http2=http2,
     )
-
-
-@functools.cache
-def _configure_tracing() -> bool:
-    """Configure OpenTelemetry export for MLflow trace ingestion.
-
-    Returns:
-        ``True`` when tracing is configured successfully, otherwise ``False`` if
-        the required environment configuration is not present.
-    """
-    if experiment_id := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
-        experiment = experiments.get(experiment_request=experiment_id)
-    elif experiment_name := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
-        experiment = experiments.get(experiment_request=experiment_name)
-    else:
-        LOG.info(f"OpenTelemetry export disabled")
-        return False
-    config = configs.get()
-    exporter_endpoint = f"{config.host.rstrip('/')}/api/2.0/mlflow/otel/v1/traces"
-    exporter_headers: dict[str, str] = {
-        "Authorization": f"Bearer {configs.token(config)}",
-        "x-mlflow-experiment-id": experiment.experiment_id,
-    }
-    tracer_provider = TracerProvider()
-    exporter = OTLPSpanExporter(endpoint=exporter_endpoint, headers=exporter_headers)
-    tracer_provider.add_span_processor(OpenInferenceSpanProcessor())
-    tracer_provider.add_span_processor(BatchSpanProcessor(exporter))
-    trace.set_tracer_provider(tracer_provider)
-    LOG.info(
-        f"Configured OpenTelemetry export to mlflow experiment: {exporter_endpoint}"
-    )
-    return True
 
 
 if __name__ == "__main__":
