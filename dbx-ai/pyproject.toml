@@ -4,11 +4,12 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+reveefe720"
+version = "0.0.1+revbf37c11"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
     "pydantic_ai>=1.60",
+    "mlflow[databricks]>=3.10.1",
 ]
 
 [tool.uv.sources.dbx-tools]

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-concurio"
-version = "0.0.1+reveefe720"
+version = "0.0.1+revbf37c11"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "diskcache",

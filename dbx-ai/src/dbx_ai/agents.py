@@ -5,12 +5,13 @@ clients, and optional MLflow/OpenTelemetry tracing setup.
 """
 
 import functools
+import os
 from typing import Any
 
 import httpx
 from databricks.sdk import WorkspaceClient
-from dbx_core import objects, strs
-from dbx_tools import clients
+from dbx_core import objects, projects, strs
+from dbx_tools import clients, experiments
 from lfp_logging import logs
 from lfp_types import D, O
 from openai import AsyncClient
@@ -27,6 +28,30 @@ _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
 If dashes are needed, use a standard hyphen (-) instead.
 """)
+
+
+@functools.cache
+def auto_log():
+    """Configure MLflow autologging for PydanticAI against Databricks.
+
+    This helper resolves the target MLflow experiment in the following order:
+    ``MLFLOW_EXPERIMENT_ID``, ``MLFLOW_EXPERIMENT_NAME``, then a normalized
+    version of the root project name. Once resolved, it points MLflow at the
+    Databricks tracking backend, selects the experiment, and enables
+    ``mlflow.pydantic_ai.autolog()``.
+    """
+    import mlflow
+
+    if experiment_id := os.environ.get("MLFLOW_EXPERIMENT_ID", None):
+        experiment = experiments.get(experiment_id=experiment_id)
+    else:
+        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
+        if not experiment_name:
+            experiment_name = "-".join(strs.tokenize(projects.root_project_name()))
+        experiment = experiments.get(experiment_request=experiment_name)
+    mlflow.set_tracking_uri("databricks")
+    mlflow.set_experiment(experiment_id=experiment.experiment_id)  # pyright: ignore[reportUnusedCallResult]
+    mlflow.pydantic_ai.autolog()
 
 
 def create(
