@@ -52,6 +52,11 @@ def auto_log():
     mlflow.set_tracking_uri("databricks")
     mlflow.set_experiment(experiment_id=experiment.experiment_id)  # pyright: ignore[reportUnusedCallResult]
     mlflow.pydantic_ai.autolog()
+    LOG.info(
+        "MLflow autolog configured - experiment:%s experiment_id:%s",
+        experiment.name,
+        experiment.experiment_id,
+    )
 
 
 def create(
