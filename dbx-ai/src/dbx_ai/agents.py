@@ -31,7 +31,7 @@ If dashes are needed, use a standard hyphen (-) instead.
 
 
 @functools.cache
-def auto_log():
+def autolog():
     """Configure MLflow autologging for PydanticAI against Databricks.
 
     This helper resolves the target MLflow experiment in the following order:
