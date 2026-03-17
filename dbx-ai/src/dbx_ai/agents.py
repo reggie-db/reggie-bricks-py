@@ -12,6 +12,7 @@ from databricks.sdk import WorkspaceClient
 from dbx_core import objects, strs
 from dbx_tools import clients
 from lfp_logging import logs
+from lfp_types import D, O
 from openai import AsyncClient
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
@@ -32,7 +33,7 @@ def create(
     model_name: str | None = None,
     workspace_client: WorkspaceClient | None = None,
     **kwargs: Any,
-) -> Agent:
+) -> Agent[D, O]:
     """Create a configured PydanticAI agent.
 
     The created agent always includes baseline response instructions and, when
@@ -55,8 +56,10 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     kwargs["instructions"] = "\n\n".join(instructions)
-    return Agent(
-        model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
+    return Agent[D, O](
+        model=model(model_name=model_name, workspace_client=workspace_client),
+        **kwargs,
+        output_type=O,
     )
 
 
