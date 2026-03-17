@@ -108,24 +108,27 @@ def call(fn: Callable, *args: Any) -> Any:
     return fn(*adj)
 
 
-def get_attr(obj: Any, *attrs: str, default: Any = None) -> Any:
+def attribute(obj: Any, *attrs: str, default: Any = None) -> Any:
     """
     Safely traverse a chain of attributes on an object.
 
     Iteratively applies ``getattr`` for each attribute name in ``attrs``.
     If at any point the object is ``None`` or an attribute does not exist,
-    ``None`` is returned immediately.
+    traversal stops and ``default`` is returned.
 
     Args:
         obj: The base object to traverse.
         *attrs: One or more attribute names to access in sequence.
+        default: Value to return if any attribute in the chain is missing
+            or resolves to ``None``. Defaults to ``None``.
 
     Returns:
-        The final attribute value if all attributes exist, otherwise ``None``.
+        The final attribute value if all attributes exist and are not ``None``,
+        otherwise ``default``.
 
     Examples:
-        get_attr(event, "part", "tool_name")
-        get_attr(user, "profile", "address", "city")
+        attribute(event, "part", "tool_name")
+        attribute(user, "profile", "address", "city", default="unknown")
     """
     if obj is not None:
         for attr in attrs:
