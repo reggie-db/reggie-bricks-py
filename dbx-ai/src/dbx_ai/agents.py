@@ -154,6 +154,7 @@ def _configure_tracing() -> bool:
     elif experiment_name := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
         experiment = experiments.get(experiment_request=experiment_name)
     else:
+        LOG.info(f"OpenTelemetry export disabled")
         return False
     config = configs.get()
     exporter_endpoint = f"{config.host.rstrip('/')}/api/2.0/mlflow/otel/v1/traces"
