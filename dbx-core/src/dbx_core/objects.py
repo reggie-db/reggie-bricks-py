@@ -108,6 +108,33 @@ def call(fn: Callable, *args: Any) -> Any:
     return fn(*adj)
 
 
+def get_attr(obj: Any, *attrs: str) -> Any:
+    """
+    Safely traverse a chain of attributes on an object.
+
+    Iteratively applies ``getattr`` for each attribute name in ``attrs``.
+    If at any point the object is ``None`` or an attribute does not exist,
+    ``None`` is returned immediately.
+
+    Args:
+        obj: The base object to traverse.
+        *attrs: One or more attribute names to access in sequence.
+
+    Returns:
+        The final attribute value if all attributes exist, otherwise ``None``.
+
+    Examples:
+        get_attr(event, "part", "tool_name")
+        get_attr(user, "profile", "address", "city")
+    """
+    if obj is not None:
+        for attr in attrs:
+            obj = getattr(obj, attr, None)
+            if obj is None:
+                return None
+    return obj
+
+
 def remove_keys(d: dict, *keys: str):
     """
     Recursively remove specified keys from a dictionary and all nested dictionaries.
