@@ -1,3 +1,9 @@
+"""Helpers for building PydanticAI agents backed by Databricks endpoints.
+
+This module centralizes agent creation, OpenAI-compatible Databricks serving
+clients, and optional MLflow/OpenTelemetry tracing setup.
+"""
+
 import functools
 import os
 from typing import Any
@@ -33,7 +39,21 @@ def create(
     workspace_client: WorkspaceClient | None = None,
     **kwargs: Any,
 ) -> Agent:
-    """Create a configured PydanticAI agent with baseline response instructions."""
+    """Create a configured PydanticAI agent.
+
+    The created agent always includes baseline response instructions and, when
+    tracing is available, enables PydanticAI instrumentation automatically.
+
+    Args:
+        model_name: Optional Databricks model serving endpoint name. When
+            omitted, the default large model is used.
+        workspace_client: Optional Databricks workspace client used for serving
+            and tracing configuration.
+        **kwargs: Additional keyword arguments forwarded to ``pydantic_ai.Agent``.
+
+    Returns:
+        A configured ``Agent`` instance.
+    """
 
     instructions = [_DEFAULT_INSTRUCTIONS]
     if kwargs_instructions := strs.trim(kwargs.pop("instructions", None)):
@@ -50,10 +70,12 @@ def create(
 
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
+    """Return an OpenAI-compatible async client backed by Databricks serving."""
     return _client(workspace_client) if workspace_client else _client_default()
 
 
 def _client(workspace_client: WorkspaceClient) -> AsyncClient:
+    """Build an async OpenAI client that routes requests to Databricks serving."""
     http_client = _http_client(workspace_client)
     client_params = {
         "base_url": workspace_client.config.host + "/serving-endpoints",
@@ -81,6 +103,7 @@ def small() -> Agent[None, str]:
 def model(
     model_name: str | None = None, workspace_client: WorkspaceClient | None = None
 ) -> Model:
+    """Return a PydanticAI model wrapper for a Databricks serving endpoint."""
     if not model_name:
         model_name = models.large()
     provider = OpenAIProvider(openai_client=client(workspace_client))
@@ -89,12 +112,15 @@ def model(
 
 
 def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
+    """Create an authenticated HTTP client for Databricks serving endpoints."""
+
     class AsyncBearerAuth(httpx.Auth):
         def __init__(self, header_fn):
             self._header_fn = header_fn
 
         async def async_auth_flow(self, request: httpx.Request):
-            # Databricks SDK authenticate() is sync, but safe to call
+            # Databricks SDK authentication is synchronous but returns the
+            # authorization headers needed for each outgoing request.
             auth_headers = self._header_fn()
             request.headers["Authorization"] = auth_headers["Authorization"]
             yield request
@@ -117,11 +143,16 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
 
 @functools.cache
 def _configure_tracing() -> bool:
-    """Configure OpenTelemetry export to Phoenix collector."""
-    if expiriment_id := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
-        experiment = experiments.get(experiment_request=expiriment_id)
-    elif expiriment_name := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
-        experiment = experiments.get(experiment_request=expiriment_name)
+    """Configure OpenTelemetry export for MLflow trace ingestion.
+
+    Returns:
+        ``True`` when tracing is configured successfully, otherwise ``False`` if
+        the required environment configuration is not present.
+    """
+    if experiment_id := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
+        experiment = experiments.get(experiment_request=experiment_id)
+    elif experiment_name := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
+        experiment = experiments.get(experiment_request=experiment_name)
     else:
         return False
     config = configs.get()
@@ -136,7 +167,7 @@ def _configure_tracing() -> bool:
     tracer_provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(tracer_provider)
     LOG.info(
-        f"Configured OpenTelemetry export to Phoenix collector: {exporter_endpoint}"
+        f"Configured OpenTelemetry export to mlflow experiment: {exporter_endpoint}"
     )
     return True
 

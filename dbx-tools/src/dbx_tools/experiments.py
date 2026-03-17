@@ -1,4 +1,14 @@
-"""Helpers for working with Databricks MLflow experiments."""
+"""Helpers for resolving and creating Databricks MLflow experiments.
+
+This module accepts experiment requests as either:
+- An experiment id like ``123456789``
+- A plain experiment name like ``my-experiment``
+- A workspace path like ``/Shared/my-experiment`` or
+  ``/Users/user@example.com/my-experiment``
+
+Lookup helpers expand plain names into the most common Databricks workspace
+locations so callers can be less strict about the exact stored experiment name.
+"""
 
 from enum import Enum
 from functools import cache
@@ -26,17 +36,30 @@ def get(
     create_experiment_path_type: ExperimentPathType | None = ExperimentPathType.USER,
     workspace_client: WorkspaceClient | None = None,
 ) -> Experiment:
-    """Return a Databricks experiment by id or name.
+    """Return a Databricks experiment for an id, name, or workspace path.
 
     Args:
         experiment_request: MLflow experiment id, name, or workspace path to
             look up.
-        create: If True, create the experiment if it does not exist.
+        create_experiment_path_type: Optional path type to use when creating a
+            missing experiment after lookup fails. When set to
+            ``ExperimentPathType.USER`` or ``ExperimentPathType.SHARED``, the
+            request is converted into the corresponding workspace path. When
+            ``None``, missing experiments are not created.
         workspace_client: Optional Databricks workspace client. When omitted,
             the shared default client is used.
 
     Returns:
         The matching Databricks ``Experiment``.
+
+    Raises:
+        ValueError: If an experiment id is used where a creatable path is
+            required, or if the requested create path type conflicts with the
+            request format.
+        ResourceDoesNotExist: If no experiment can be found and creation is
+            disabled or unsuccessful.
+        RuntimeError: If more than one candidate path resolves to an existing
+            experiment.
     """
     if not workspace_client:
         workspace_client = clients.workspace_client()
@@ -106,7 +129,7 @@ def fetch(
     experiment_request: str,
     workspace_client: WorkspaceClient | None = None,
 ) -> Iterator[Experiment]:
-    """Return Databricks experiments matching an id or name request.
+    """Yield experiments that match an experiment id, name, or workspace path.
 
     Args:
         experiment_request: MLflow experiment id, name, or workspace path to
@@ -114,12 +137,13 @@ def fetch(
         workspace_client: Optional Databricks workspace client. When omitted,
             the shared default client is used.
 
-    Returns:
-        The matching Databricks ``Experiment``.
+    Yields:
+        Each matching Databricks ``Experiment`` found from the normalized
+        request candidates.
 
-    Raises:
-        RuntimeError: If Databricks returns a successful response without an
-            experiment payload.
+    Notes:
+        Plain experiment names are expanded into user and shared workspace
+        paths before the bare name is attempted.
     """
     if not experiment_request:
         return []
@@ -139,6 +163,7 @@ def fetch(
 def _get(
     workspace_client: WorkspaceClient, experiment_request: str
 ) -> Experiment | None:
+    """Resolve a single experiment request candidate to an experiment."""
     if experiment_request.isdigit():
         try:
             return workspace_client.experiments.get_experiment(
@@ -167,7 +192,12 @@ def _get(
 def _experiment_requests(
     experiment_request: str, current_user_name_fn: Callable[[], str]
 ) -> Iterator[str]:
-    """Expand an experiment request into the candidate ids and workspace paths."""
+    """Expand an experiment request into candidate ids and workspace paths.
+
+    A numeric request is treated as an experiment id. For non-numeric requests,
+    workspace-style paths are preserved and plain names are expanded into:
+    ``/Users/<current-user>/<name>``, ``/Shared/<name>``, then ``<name>``.
+    """
     if experiment_request.isdigit():
         yield experiment_request
     else:
@@ -183,7 +213,16 @@ def _experiment_requests(
 
 
 def _experiment_path(experiment_request: str) -> tuple[str, str | None]:
-    """Normalize a request into a relative experiment path and optional username."""
+    """Normalize a request into a relative experiment path and optional username.
+
+    Args:
+        experiment_request: Plain experiment name or a Databricks workspace path.
+
+    Returns:
+        A tuple of ``(experiment_path, user_name)`` where ``experiment_path`` is
+        relative to the workspace root and ``user_name`` is only populated for
+        ``/Users/<user>/<path>`` requests.
+    """
     path_parts = experiment_request.split("/")
     if len(path_parts) > 1:
         if path_parts[0] == _SHARED_PATH:
