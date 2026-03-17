@@ -4,6 +4,6 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-openapi"
-version = "0.0.1+rev2442256"
+version = "0.0.1+revc8780c6"
 requires-python = ">=3.11,<3.13"
 dependencies = ["cyclopts"]
