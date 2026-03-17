@@ -108,7 +108,7 @@ def call(fn: Callable, *args: Any) -> Any:
     return fn(*adj)
 
 
-def get_attr(obj: Any, *attrs: str) -> Any:
+def get_attr(obj: Any, *attrs: str, default: Any = None) -> Any:
     """
     Safely traverse a chain of attributes on an object.
 
@@ -131,8 +131,8 @@ def get_attr(obj: Any, *attrs: str) -> Any:
         for attr in attrs:
             obj = getattr(obj, attr, None)
             if obj is None:
-                return None
-    return obj
+                break
+    return obj if obj is not None else default
 
 
 def remove_keys(d: dict, *keys: str):
