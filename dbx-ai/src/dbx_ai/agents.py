@@ -33,7 +33,7 @@ def create(
     model_name: str | None = None,
     workspace_client: WorkspaceClient | None = None,
     **kwargs: Any,
-) -> Agent[D, O]:
+) -> Agent[Any, Any]:
     """Create a configured PydanticAI agent.
 
     The created agent always includes baseline response instructions and, when

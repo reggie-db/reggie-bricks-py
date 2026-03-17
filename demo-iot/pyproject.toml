@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "demo-iot"
-version = "0.0.1+reva37e226"
+version = "0.0.1+reveefe720"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "aioreactive",
