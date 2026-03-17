@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 from databricks.sdk import WorkspaceClient
 from dbx_core import objects, strs
-from dbx_tools import clients
+from dbx_tools import clients, configs, experiments
 from lfp_logging import logs
 from openai import AsyncClient
 from openinference.instrumentation.pydantic_ai import OpenInferenceSpanProcessor
@@ -42,7 +42,7 @@ def create(
                 instructions.append(instruction)
     kwargs["instructions"] = "\n\n".join(instructions)
     instrument = kwargs.get("instrument", None)
-    if (instrument is None or instrument) and _configure_phoenix_tracing():
+    if (instrument is None or instrument) and _configure_tracing():
         kwargs.setdefault("instrument", True)
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client), **kwargs
@@ -116,18 +116,21 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
 
 
 @functools.cache
-def _configure_phoenix_tracing() -> bool:
+def _configure_tracing() -> bool:
     """Configure OpenTelemetry export to Phoenix collector."""
-    collector_endpoint = strs.trim(os.environ.get("PHOENIX_COLLECTOR_ENDPOINT"))
-    if not collector_endpoint:
+    if expiriment_id := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
+        experiment = experiments.get(experiment_request=expiriment_id)
+    elif expiriment_name := os.environ.get("MLFLOW_EXPERIMENT_NAME", None):
+        experiment = experiments.get(experiment_request=expiriment_name)
+    else:
         return False
-    exporter_endpoint = f"{collector_endpoint.rstrip('/')}/v1/traces"
+    config = configs.get()
+    exporter_endpoint = f"{config.host.rstrip('/')}/api/2.0/mlflow/otel/v1/traces"
+    exporter_headers: dict[str, str] = {
+        "Authorization": f"Bearer {configs.token(config)}",
+        "x-mlflow-experiment-id": experiment.experiment_id,
+    }
     tracer_provider = TracerProvider()
-    exporter_headers: dict[str, str] = {}
-    phoenix_api_key = os.getenv("PHOENIX_API_KEY", "").strip()
-    if phoenix_api_key:
-        exporter_headers["Authorization"] = f"Bearer {phoenix_api_key}"
-
     exporter = OTLPSpanExporter(endpoint=exporter_endpoint, headers=exporter_headers)
     tracer_provider.add_span_processor(OpenInferenceSpanProcessor())
     tracer_provider.add_span_processor(BatchSpanProcessor(exporter))
