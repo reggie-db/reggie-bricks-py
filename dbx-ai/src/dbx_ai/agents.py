@@ -1,7 +1,7 @@
 """Helpers for building PydanticAI agents backed by Databricks endpoints.
 
 This module centralizes agent creation, OpenAI-compatible Databricks serving
-clients, and optional MLflow/OpenTelemetry tracing setup.
+clients, and optional MLflow autologging setup for PydanticAI.
 """
 
 import functools
@@ -38,16 +38,18 @@ def create(
 ) -> Agent[Any, Any]:
     """Create a configured PydanticAI agent.
 
-    The created agent always includes baseline response instructions and, when
-    tracing is available, enables PydanticAI instrumentation automatically.
+    The created agent always includes baseline response instructions. When
+    ``instrument="auto"``, this helper enables MLflow autologging and turns on
+    PydanticAI instrumentation unless an explicit ``output_type`` was supplied.
 
     Args:
         model_name: Optional Databricks model serving endpoint name. When
             omitted, the default large model is used.
-        instrument: Optional instrumentation configuration. When "auto", PydanticAI
-            instrumentation is enabled automatically when tracing is available.
+        instrument: Instrumentation configuration. When set to ``"auto"``, this
+            helper enables autologging and uses ``instrument=True`` unless an
+            explicit ``output_type`` disables that default path.
         workspace_client: Optional Databricks workspace client used for serving
-            and tracing configuration.
+            requests. When omitted, cached default clients are used.
         **kwargs: Additional keyword arguments forwarded to ``pydantic_ai.Agent``.
 
     Returns:
@@ -76,6 +78,12 @@ def create(
 
 @functools.cache
 def _auto_instrument():
+    """Configure MLflow PydanticAI autologging once per process.
+
+    The tracking URI is set to Databricks when not already configured. The
+    target experiment is sourced from ``MLFLOW_EXPERIMENT_ID`` first, then
+    ``MLFLOW_EXPERIMENT_NAME``, and finally the root project name.
+    """
     config_profile = configs.profile()
     if not mlflow.is_tracking_uri_set():
         mlflow.set_tracking_uri("databricks")
@@ -98,12 +106,16 @@ def _auto_instrument():
 
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
-    """Return an OpenAI-compatible async client backed by Databricks serving."""
+    """Return an OpenAI-compatible async client backed by Databricks serving.
+
+    Passing ``workspace_client`` creates a client bound to that workspace.
+    Omitting it reuses the cached default client stack.
+    """
     return _client(workspace_client) if workspace_client else _client_default()
 
 
-def _client(workspace_client: WorkspaceClient | None) -> AsyncClient:
-    """Build an async OpenAI client that routes requests to Databricks serving."""
+def _client(workspace_client: WorkspaceClient) -> AsyncClient:
+    """Build an async OpenAI client for an explicit Databricks workspace."""
     hclient = http_client(workspace_client)
     client_params = {
         "base_url": workspace_client.config.host + "/serving-endpoints",
@@ -115,7 +127,13 @@ def _client(workspace_client: WorkspaceClient | None) -> AsyncClient:
 
 @functools.cache
 def _client_default() -> AsyncClient:
-    return _client(None)
+    """Return the cached default OpenAI-compatible Databricks client."""
+    client_params = {
+        "base_url": configs.get().host + "/serving-endpoints",
+        "api_key": "no-token",  # Passing in a placeholder to pass validations, this will not be used
+        "http_client": _http_client_default(),
+    }
+    return AsyncClient(**client_params)
 
 
 @functools.cache
@@ -140,6 +158,11 @@ def model(
 
 
 def http_client(workspace_client: WorkspaceClient | None = None) -> httpx.AsyncClient:
+    """Return an authenticated HTTP client for Databricks serving requests.
+
+    Passing ``workspace_client`` creates a client bound to that workspace.
+    Omitting it reuses the cached default HTTP client.
+    """
     return (
         _http_client_default()
         if workspace_client is None
@@ -180,7 +203,8 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
 
 
 @functools.cache
-def _http_client_default() -> AsyncClient:
+def _http_client_default() -> httpx.AsyncClient:
+    """Return the cached default authenticated HTTP client."""
     return _http_client(clients.workspace_client())
 
 
