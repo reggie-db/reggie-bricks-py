@@ -13,6 +13,7 @@ def model(models: Iterable[str]) -> str | None:
     1. Registered as an endpoint in your Databricks workspace.
     2. Currently in a 'READY' state.
     """
+    model_name_match: str | None = None
     for model_name in models:
         if not model_name:
             continue
@@ -23,12 +24,18 @@ def model(models: Iterable[str]) -> str | None:
             if endpoint.state and endpoint.state.ready:
                 ready_state = endpoint.state.ready.value
                 if str(ready_state).lower() == "ready":
+                    if ai_gateway := endpoint.ai_gateway:
+                        if guardrails := ai_gateway.guardrails:
+                            if guardrails.output:
+                                if model_name_match is None:
+                                    model_name_match = model_name
+                                continue
                     return model_name
         except Exception:
             LOG.debug(f"Model not found - model_name:%s", model_name, exc_info=True)
             continue
 
-    return None
+    return model_name_match
 
 
 ## --- Model Categories & Selection Logic ---

@@ -63,7 +63,6 @@ def create(
         output_type_kwarg = "output_type"
         output_type = kwargs.get(output_type_kwarg, None)
         if output_type is None:
-            kwargs[output_type_kwarg] = None
             _auto_instrument()
             instrument = True
         else:
@@ -174,7 +173,6 @@ async def main():
     from pydantic_ai import RunContext
 
     calculator_agent = create(
-        model_name="databricks-gpt-5-2",
         system_prompt="You are a calculator assistant. Use the tools to perform calculations.",
     )
 
