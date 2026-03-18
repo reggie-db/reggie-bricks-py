@@ -82,12 +82,13 @@ def _auto_instrument() -> bool:
             if not mlflow.is_tracking_uri_set():
                 if expiriment_request := _expiriment_request():
                     tracking_uri = "databricks"
+                    experiment = experiments.get(experiment_request=expiriment_request)
                     LOG.info(
-                        "MLflow autolog setup - tracking_uri:%s experiment:%s",
+                        "MLflow autolog setup - tracking_uri:%s experiment_request:%s experiment:%s",
                         tracking_uri,
                         expiriment_request,
+                        experiment,
                     )
-                    experiment = experiments.get(experiment_request=expiriment_request)
                     mlflow.set_tracking_uri(tracking_uri)
                     mlflow.set_experiment(experiment_id=experiment.experiment_id)
                     mlflow.pydantic_ai.autolog()
