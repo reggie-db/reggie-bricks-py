@@ -16,14 +16,17 @@ from lfp_types import T
 
 from dbx_tools import catalogs, clients, runtimes
 
-_UNSET = object()
-
 LOG = logs.logger()
 
+_UNSET = object()
+_DEFAULT_PROFILE_NAME = "DEFAULT"
 
-def get() -> Config:
+
+def get(profile_name: str | None = None) -> Config:
     """Return the Databricks SDK ``Config`` used by workspace clients."""
-    if runtimes.version() or runtimes.app_info():
+    if profile_name:
+        config = Config(profile_name=profile_name)
+    elif runtimes.version() or runtimes.app_info():
         config = Config()
     else:
         config = _get()
@@ -42,6 +45,40 @@ def _get() -> Config:
         return lazy_object_proxy(_load, interface=Config)
     else:
         return _load()
+
+
+def profile() -> str | None:
+    """Return the active CLI profile name."""
+    if cfg_profile := os.environ.get("DATABRICKS_CONFIG_PROFILE", None):
+        return cfg_profile
+    names = profiles()
+    if len(names) == 1:
+        name = next(iter(names))
+    elif _DEFAULT_PROFILE_NAME in names:
+        name = _DEFAULT_PROFILE_NAME
+    else:
+        return None
+    os.environ["DATABRICKS_CONFIG_PROFILE"] = name
+    return name
+
+
+@functools.cache
+def profiles() -> list[str]:
+    """Return available CLI profile names."""
+    names: list[str] = []
+    if auth_profiles := _cli_run(
+        "auth", "profiles", "--skip-validate", "--output", "json"
+    ):
+        profiles_data = auth_profiles.get("profiles", None)
+        if profiles_data and isinstance(profiles_data, list):
+            for profile_data in profiles_data:
+                name = profile_data.get("name", None)
+                if name and name not in names:
+                    if _DEFAULT_PROFILE_NAME == name:
+                        names.insert(0, name)
+                    else:
+                        names.append(name)
+    return names
 
 
 def token(config: Config | None = None) -> str | None:

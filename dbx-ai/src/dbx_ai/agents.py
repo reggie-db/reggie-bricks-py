@@ -6,14 +6,13 @@ clients, and optional MLflow/OpenTelemetry tracing setup.
 
 import functools
 import os
-import threading
 from typing import Any, Literal
 
 import httpx
 import mlflow
 from databricks.sdk import WorkspaceClient
 from dbx_core import objects, projects, strs
-from dbx_tools import clients, experiments
+from dbx_tools import clients, configs, experiments
 from lfp_logging import logs
 from openai import AsyncClient
 from pydantic_ai import Agent
@@ -24,8 +23,6 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from dbx_ai import models
 
 LOG = logs.logger()
-
-_TRACKING_URI_LOCK = threading.Lock()
 
 _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
@@ -47,6 +44,8 @@ def create(
     Args:
         model_name: Optional Databricks model serving endpoint name. When
             omitted, the default large model is used.
+        instrument: Optional instrumentation configuration. When "auto", PydanticAI
+            instrumentation is enabled automatically when tracing is available.
         workspace_client: Optional Databricks workspace client used for serving
             and tracing configuration.
         **kwargs: Additional keyword arguments forwarded to ``pydantic_ai.Agent``.
@@ -61,7 +60,8 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     if "auto" == instrument:
-        instrument = _auto_instrument()
+        _auto_instrument()
+        instrument = True
     kwargs["instrument"] = instrument
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client),
@@ -69,30 +69,27 @@ def create(
     )
 
 
-def _auto_instrument() -> bool:
-
-    def _expiriment_request() -> str:
-        for envvar_name in ("MLFLOW_EXPERIMENT_ID", "MLFLOW_EXPERIMENT_NAME"):
-            if envvar_value := os.environ.get(envvar_name, None):
-                return envvar_value
-        return projects.root_project_name()
-
-    if not mlflow.is_tracking_uri_set() and _expiriment_request():
-        with _TRACKING_URI_LOCK:
-            if not mlflow.is_tracking_uri_set():
-                if expiriment_request := _expiriment_request():
-                    tracking_uri = "databricks"
-                    experiment = experiments.get(experiment_request=expiriment_request)
-                    LOG.info(
-                        "MLflow autolog setup - tracking_uri:%s experiment_request:%s experiment:%s",
-                        tracking_uri,
-                        expiriment_request,
-                        experiment,
-                    )
-                    mlflow.set_tracking_uri(tracking_uri)
-                    mlflow.set_experiment(experiment_id=experiment.experiment_id)
-                    mlflow.pydantic_ai.autolog()
-    return mlflow.is_tracking_uri_set()
+@functools.cache
+def _auto_instrument():
+    config_profile = configs.profile()
+    if not mlflow.is_tracking_uri_set():
+        mlflow.set_tracking_uri("databricks")
+    experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID", None)
+    if experiment_id:
+        experiment_name = None
+    else:
+        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
+        if not experiment_name:
+            experiment = experiments.get(experiment_lookup=projects.root_project_name())
+            mlflow.set_experiment(experiment_id=experiment.experiment_id)
+    LOG.info(
+        "MLflow auto instrument - config_profile:%s tracking_uri:%s experiment_id:%s experiment_name:%s",
+        config_profile,
+        mlflow.get_tracking_uri(),
+        experiment_id,
+        experiment_name,
+    )
+    mlflow.pydantic_ai.autolog()
 
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
@@ -167,5 +164,38 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
     )
 
 
+async def main():
+    from pydantic_ai import RunContext
+
+    calculator_agent = create(
+        model_name="databricks-gpt-5-2",
+        system_prompt="You are a calculator assistant. Use the tools to perform calculations.",
+    )
+
+    @calculator_agent.tool
+    def add(ctx: RunContext[None], a: float, b: float) -> float:
+        """Add two numbers together."""
+        return a + b
+
+    @calculator_agent.tool
+    def multiply(ctx: RunContext[None], a: float, b: float) -> float:
+        """Multiply two numbers together."""
+        return a * b
+
+    @calculator_agent.tool
+    def subtract(ctx: RunContext[None], a: float, b: float) -> float:
+        """Subtract b from a."""
+        return a - b
+
+    print("Streaming calculation response:")
+    async with calculator_agent.run_stream(
+        "Calculate (5 + 3) * 2 - 1. Show your work step by step."
+    ) as response:
+        async for chunk in response.stream_text(delta=True):
+            print(chunk, end="", flush=True)
+
+
 if __name__ == "__main__":
-    print(create())
+    import asyncio
+
+    asyncio.run(main())

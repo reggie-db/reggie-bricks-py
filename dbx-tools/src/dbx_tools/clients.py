@@ -46,11 +46,6 @@ def workspace_client(config: Config | None = None) -> WorkspaceClient:
 
 @functools.cache
 def _workspace_client_default() -> WorkspaceClient:
-    """Create a Databricks ``WorkspaceClient`` using the default cached config."""
-    return _workspace_client()
-
-
-def _workspace_client() -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` with the current context and environment variables.
 
     This function implements a priority-based authentication flow for Databricks clients:
@@ -98,7 +93,7 @@ def _workspace_client() -> WorkspaceClient:
     elif host:
         client = WorkspaceClient(host=host, **product_kwargs)
     else:
-        client = WorkspaceClient(**product_kwargs)
+        client = WorkspaceClient(profile=configs.profile(), **product_kwargs)
     client.config.with_user_agent_extra("project", _product_name())
     return client
 

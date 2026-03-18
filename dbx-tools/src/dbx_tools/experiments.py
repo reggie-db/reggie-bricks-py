@@ -1,45 +1,72 @@
 """Helpers for resolving and creating Databricks MLflow experiments.
 
-This module accepts experiment requests as either:
-- An experiment id like ``123456789``
-- A plain experiment name like ``my-experiment``
-- A workspace path like ``/Shared/my-experiment`` or
-  ``/Users/user@example.com/my-experiment``
+This module accepts experiment lookups as either an experiment id, a plain
+experiment name, or a Databricks workspace path such as ``/Shared/foo`` or
+``/Users/user@example.com/foo``.
 
-Lookup helpers expand plain names into the most common Databricks workspace
-locations so callers can be less strict about the exact stored experiment name.
+Plain names are expanded into the most common Databricks workspace locations so
+callers do not need to know the exact stored experiment path ahead of time.
 """
 
 from enum import Enum
-from functools import cache
-from typing import Callable, Iterator
+from typing import Iterator
 
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import ResourceAlreadyExists, ResourceDoesNotExist
-from databricks.sdk.service.ml import Experiment
+from databricks.sdk.service.ml import CreateExperimentResponse, Experiment
 from lfp_logging import logs
 
 from dbx_tools import clients
 
 LOG = logs.logger()
-_SHARED_PATH = "Shared"
-_USERS_PATH = "Users"
+_SHARED_PATH = "/Shared/"
+_USERS_PATH = "/Users/"
 
 
 class ExperimentPathType(Enum):
+    """Workspace path types supported when creating missing experiments."""
+
     SHARED = "shared"
     USER = "user"
 
 
+class _ExperimentLookupContext:
+    """Lazy lookup context shared across experiment resolution helpers.
+
+    The context caches the resolved workspace client and current user name so
+    repeated candidate lookups do not need to make duplicate SDK calls.
+    """
+
+    def __init__(self, workspace_client: WorkspaceClient):
+        self._workspace_client = workspace_client
+        self._current_user_name = None
+
+    @property
+    def workspace_client(self) -> WorkspaceClient:
+        """Return the resolved workspace client for experiment operations."""
+        if self._workspace_client is None:
+            self._workspace_client = clients.workspace_client()
+        return self._workspace_client
+
+    @property
+    def current_user_name(self) -> str:
+        """Return the current Databricks user name, caching the first lookup."""
+        if self._current_user_name is None:
+            self._current_user_name = (
+                self.workspace_client.current_user.me().user_name or ""
+            )
+        return self._current_user_name
+
+
 def get(
-    experiment_request: str,
+    experiment_lookup: str,
     create_experiment_path_type: ExperimentPathType | None = ExperimentPathType.USER,
     workspace_client: WorkspaceClient | None = None,
 ) -> Experiment:
     """Return a Databricks experiment for an id, name, or workspace path.
 
     Args:
-        experiment_request: MLflow experiment id, name, or workspace path to
+        experiment_lookup: MLflow experiment id, name, or workspace path to
             look up.
         create_experiment_path_type: Optional path type to use when creating a
             missing experiment after lookup fails. When set to
@@ -61,179 +88,162 @@ def get(
         RuntimeError: If more than one candidate path resolves to an existing
             experiment.
     """
-    if not workspace_client:
-        workspace_client = clients.workspace_client()
-
-    @cache
-    def _current_user_name() -> str:
-        return workspace_client.current_user.me().user_name
-
+    if not experiment_lookup:
+        raise ValueError(f"Experiment lookup is required: {experiment_lookup}")
+    lookup_ctx = _ExperimentLookupContext(workspace_client)
     for experiment_path_type in {create_experiment_path_type, None}:
         matched_experiment: Experiment | None = None
-        for request in _experiment_requests(
-            experiment_request=experiment_request,
-            current_user_name_fn=_current_user_name,
-        ):
-            if experiment := _get(
-                workspace_client=workspace_client, experiment_request=request
-            ):
+        for lookup in _experiment_lookups(lookup_ctx, experiment_lookup):
+            if experiment := _get(lookup_ctx, lookup):
                 if matched_experiment is not None:
                     raise RuntimeError(
-                        f"Multiple experiments found for request: {experiment_request}"
+                        f"Multiple experiments found for lookup: {experiment_lookup}"
                     )
                 matched_experiment = experiment
 
         if matched_experiment:
             return matched_experiment
         elif experiment_path_type:
-            if experiment_request.isdigit():
-                raise ValueError(
-                    f"Experiment ID cannot be used as a path: {experiment_request}"
-                )
-            experiment_path, user_name = _experiment_path(
-                experiment_request=experiment_request
-            )
-            if ExperimentPathType.SHARED == experiment_path_type:
-                if user_name:
-                    raise ValueError(
-                        f"Shared experiment path type cannot have a user_name: {experiment_request}"
-                    )
-                experiment_path = f"/Shared/{experiment_path}"
-            elif ExperimentPathType.USER == experiment_path_type:
-                if not user_name:
-                    user_name = _current_user_name()
-                experiment_path = f"/Users/{user_name}/{experiment_path}"
-            else:
-                raise ValueError(
-                    f"Invalid experiment path type: {experiment_path_type}"
-                )
+            create_experiment_response: CreateExperimentResponse | None = None
             try:
-                LOG.debug(f"Creating experiment - experiment_path:%s", experiment_path)
-                experiment_id = workspace_client.experiments.create_experiment(
-                    experiment_path
-                ).experiment_id
-                return workspace_client.experiments.get_experiment(
-                    experiment_id=experiment_id
-                ).experiment
+                create_experiment_response = (
+                    lookup_ctx.workspace_client.experiments.create_experiment(
+                        _experiment_path(
+                            lookup_ctx, experiment_lookup, experiment_path_type
+                        )
+                    )
+                )
             except ResourceAlreadyExists:
                 LOG.debug(
-                    f"Error creating experiment - experiment_request:%s",
-                    experiment_request,
+                    f"Experiment exists: %s",
+                    experiment_lookup,
                     exc_info=True,
                 )
                 continue
-    raise ResourceDoesNotExist(f"Experiment not found: {experiment_request}")
+            if create_experiment_response and create_experiment_response.experiment_id:
+                return lookup_ctx.workspace_client.experiments.get_experiment(
+                    experiment_id=create_experiment_response.experiment_id
+                ).experiment
+    raise ResourceDoesNotExist(f"Experiment not found: {experiment_lookup}")
 
 
 def fetch(
-    experiment_request: str,
+    experiment_lookup: str,
     workspace_client: WorkspaceClient | None = None,
 ) -> Iterator[Experiment]:
     """Yield experiments that match an experiment id, name, or workspace path.
 
     Args:
-        experiment_request: MLflow experiment id, name, or workspace path to
+        experiment_lookup: MLflow experiment id, name, or workspace path to
             look up.
         workspace_client: Optional Databricks workspace client. When omitted,
             the shared default client is used.
 
     Yields:
         Each matching Databricks ``Experiment`` found from the normalized
-        request candidates.
+        lookup candidates.
 
     Notes:
         Plain experiment names are expanded into user and shared workspace
         paths before the bare name is attempted.
     """
-    if not experiment_request:
-        return []
-    if not workspace_client:
-        workspace_client = clients.workspace_client()
-    # Normalize ids and workspace-style names into the candidate lookup paths.
-    experiment_requests = _experiment_requests(
-        experiment_request=experiment_request,
-        current_user_name_fn=lambda: workspace_client.current_user.me().user_name,
-    )
-    for request in experiment_requests:
-        experiment = _get(workspace_client=workspace_client, experiment_request=request)
-        if experiment:
+    lookup_ctx = _ExperimentLookupContext(workspace_client)
+    for lookup in _experiment_lookups(lookup_ctx, experiment_lookup):
+        if experiment := _get(lookup_ctx, lookup):
             yield experiment
 
 
-def _get(
-    workspace_client: WorkspaceClient, experiment_request: str
-) -> Experiment | None:
-    """Resolve a single experiment request candidate to an experiment."""
-    if experiment_request.isdigit():
-        try:
-            return workspace_client.experiments.get_experiment(
-                experiment_id=experiment_request
-            ).experiment
-        except ResourceDoesNotExist:
-            LOG.debug(
-                f"Error fetching experiment - experiment_id:%s",
-                experiment_request,
-                exc_info=True,
-            )
-    else:
-        try:
-            return workspace_client.experiments.get_by_name(
-                experiment_name=experiment_request
-            ).experiment
-        except ResourceDoesNotExist:
-            LOG.debug(
-                f"Error fetching experiment - experiment_name:%s",
-                experiment_request,
-                exc_info=True,
-            )
-    return None
-
-
-def _experiment_requests(
-    experiment_request: str, current_user_name_fn: Callable[[], str]
-) -> Iterator[str]:
-    """Expand an experiment request into candidate ids and workspace paths.
-
-    A numeric request is treated as an experiment id. For non-numeric requests,
-    workspace-style paths are preserved and plain names are expanded into:
-    ``/Users/<current-user>/<name>``, ``/Shared/<name>``, then ``<name>``.
-    """
-    if experiment_request.isdigit():
-        yield experiment_request
-    else:
-        experiment_path, user_name = _experiment_path(
-            experiment_request=experiment_request
-        )
-        if not user_name:
-            yield f"/Users/{current_user_name_fn()}/{experiment_path}"
-            yield f"/Shared/{experiment_path}"
-            yield experiment_path
-        else:
-            yield f"/Users/{user_name}/{experiment_path}"
-
-
-def _experiment_path(experiment_request: str) -> tuple[str, str | None]:
-    """Normalize a request into a relative experiment path and optional username.
+def _experiment_path(
+    lookup_ctx: _ExperimentLookupContext,
+    experiment_lookup: str,
+    experiment_path_type: ExperimentPathType | None = None,
+) -> str:
+    """Return a creatable workspace path for an experiment lookup.
 
     Args:
-        experiment_request: Plain experiment name or a Databricks workspace path.
+        lookup_ctx: Shared lookup context used to resolve the current user name.
+        experiment_lookup: Experiment id, plain name, or workspace path.
+        experiment_path_type: Target path type to enforce for creation.
 
     Returns:
-        A tuple of ``(experiment_path, user_name)`` where ``experiment_path`` is
-        relative to the workspace root and ``user_name`` is only populated for
-        ``/Users/<user>/<path>`` requests.
+        A Databricks workspace path suitable for experiment creation.
+
+    Raises:
+        ValueError: If the requested path type conflicts with the incoming
+            lookup format.
     """
-    path_parts = experiment_request.split("/")
-    if len(path_parts) > 1:
-        if path_parts[0] == _SHARED_PATH:
-            return "/".join(path_parts[1:]), None
-        elif path_parts[0] == _USERS_PATH and len(path_parts) > 2:
-            return "/".join(path_parts[2:]), path_parts[1]
-    return experiment_request, None
+    if experiment_path_type:
+        if experiment_path_type == ExperimentPathType.SHARED:
+            if experiment_lookup.startswith(_USERS_PATH):
+                raise ValueError(
+                    f"User experiment path type cannot be used for shared experiments: {experiment_lookup}"
+                )
+            elif not experiment_lookup.startswith(_SHARED_PATH):
+                return f"/Shared/{experiment_lookup}"
+        elif experiment_path_type == ExperimentPathType.USER:
+            if experiment_lookup.startswith(_SHARED_PATH):
+                raise ValueError(
+                    f"Shared experiment path type cannot be used for user experiments: {experiment_lookup}"
+                )
+            elif not experiment_lookup.startswith(_USERS_PATH):
+                return f"/Users/{lookup_ctx.current_user_name}/{experiment_lookup}"
+    return experiment_lookup
+
+
+def _experiment_lookups(
+    lookup_ctx: _ExperimentLookupContext, experiment_lookup: str
+) -> Iterator[str]:
+    """Expand an experiment lookup into candidate ids and workspace paths.
+
+    The original lookup is always yielded first. Bare experiment names are then
+    expanded into the current user's workspace path and the shared workspace
+    path. Fully qualified ``/Users/...`` and ``/Shared/...`` lookups are left
+    unchanged.
+    """
+    if experiment_lookup:
+        yield experiment_lookup
+        if not experiment_lookup.startswith(
+            _USERS_PATH
+        ) and not experiment_lookup.startswith(_SHARED_PATH):
+            if current_user_name := lookup_ctx.current_user_name:
+                yield f"/Users/{current_user_name}/{experiment_lookup}"
+            yield f"/Shared/{experiment_lookup}"
+
+
+def _get(
+    lookup_ctx: _ExperimentLookupContext, experiment_lookup: str
+) -> Experiment | None:
+    """Resolve a single experiment lookup candidate to an experiment.
+
+    Numeric values are attempted as experiment ids first. All values are then
+    attempted as exact Databricks experiment names.
+    """
+    if experiment_lookup.isdigit():
+        try:
+            return lookup_ctx.workspace_client.experiments.get_experiment(
+                experiment_id=experiment_lookup
+            ).experiment
+        except ResourceDoesNotExist:
+            LOG.debug(
+                f"Experiment ID does not exist:%s",
+                experiment_lookup,
+                exc_info=True,
+            )
+    try:
+        return lookup_ctx.workspace_client.experiments.get_by_name(
+            experiment_name=experiment_lookup
+        ).experiment
+    except ResourceDoesNotExist:
+        LOG.debug(
+            f"Experiment name does not exist:%s",
+            experiment_lookup,
+            exc_info=True,
+        )
+    return None
 
 
 if __name__ == "__main__":
     import os
 
     os.environ["DATABRICKS_CONFIG_PROFILE"] = "RACETRAC-DEV"
-    print(get(experiment_request="store-intelligence-v3"))
+    print(get(experiment_lookup="store-intelligence-v3"))
