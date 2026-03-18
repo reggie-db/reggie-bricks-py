@@ -6,9 +6,11 @@ clients, and optional MLflow/OpenTelemetry tracing setup.
 
 import functools
 import os
-from typing import Any
+import threading
+from typing import Any, Literal
 
 import httpx
+import mlflow
 from databricks.sdk import WorkspaceClient
 from dbx_core import objects, projects, strs
 from dbx_tools import clients, experiments
@@ -23,43 +25,17 @@ from dbx_ai import models
 
 LOG = logs.logger()
 
+_TRACKING_URI_LOCK = threading.Lock()
+
 _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
 If dashes are needed, use a standard hyphen (-) instead.
 """)
 
 
-@functools.cache
-def autolog():
-    """Configure MLflow autologging for PydanticAI against Databricks.
-
-    This helper resolves the target MLflow experiment in the following order:
-    ``MLFLOW_EXPERIMENT_ID``, ``MLFLOW_EXPERIMENT_NAME``, then a normalized
-    version of the root project name. Once resolved, it points MLflow at the
-    Databricks tracking backend, selects the experiment, and enables
-    ``mlflow.pydantic_ai.autolog()``.
-    """
-    import mlflow
-
-    if experiment_id := os.environ.get("MLFLOW_EXPERIMENT_ID", None):
-        experiment = experiments.get(experiment_id=experiment_id)
-    else:
-        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
-        if not experiment_name:
-            experiment_name = "-".join(strs.tokenize(projects.root_project_name()))
-        experiment = experiments.get(experiment_request=experiment_name)
-    mlflow.set_tracking_uri("databricks")
-    mlflow.set_experiment(experiment_id=experiment.experiment_id)  # pyright: ignore[reportUnusedCallResult]
-    mlflow.pydantic_ai.autolog()
-    LOG.info(
-        "MLflow autolog configured - experiment:%s experiment_id:%s",
-        experiment.name,
-        experiment.experiment_id,
-    )
-
-
 def create(
     model_name: str | None = None,
+    instrument: Literal[True, False, "auto"] = "auto",
     workspace_client: WorkspaceClient | None = None,
     **kwargs: Any,
 ) -> Agent[Any, Any]:
@@ -84,11 +60,38 @@ def create(
         for instruction in objects.to_list(kwargs_instructions, flatten=True):
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
-    kwargs["instructions"] = "\n\n".join(instructions)
+    if "auto" == instrument:
+        instrument = _auto_instrument()
+    kwargs["instrument"] = instrument
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client),
         **kwargs,
     )
+
+
+def _auto_instrument() -> bool:
+
+    def _expiriment_request() -> str:
+        for envvar_name in ("MLFLOW_EXPERIMENT_ID", "MLFLOW_EXPERIMENT_NAME"):
+            if envvar_value := os.environ.get(envvar_name, None):
+                return envvar_value
+        return projects.root_project_name()
+
+    if not mlflow.is_tracking_uri_set() and _expiriment_request():
+        with _TRACKING_URI_LOCK:
+            if not mlflow.is_tracking_uri_set():
+                if expiriment_request := _expiriment_request():
+                    tracking_uri = "databricks"
+                    LOG.info(
+                        "MLflow autolog setup - tracking_uri:%s experiment:%s",
+                        tracking_uri,
+                        expiriment_request,
+                    )
+                    experiment = experiments.get(experiment_request=expiriment_request)
+                    mlflow.set_tracking_uri(tracking_uri)
+                    mlflow.set_experiment(experiment_id=experiment.experiment_id)
+                    mlflow.pydantic_ai.autolog()
+    return mlflow.is_tracking_uri_set()
 
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
