@@ -9,12 +9,11 @@ import os
 import re
 from contextvars import ContextVar
 from datetime import datetime
-from typing import Callable
 
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.config import Config
-from dbx_core import imports, projects
+from dbx_core import projects
 from lfp_logging import logs
 from pyspark.sql import SparkSession
 
@@ -56,8 +55,6 @@ def _workspace_client_default() -> WorkspaceClient:
 
     The client is configured with product identity in the user-agent.
     """
-    if fn := _databricks_tools_core_get_workspace_client_fn():
-        return fn()
     # Context variables allow request-scoped auth overrides in shared runtimes.
     host = _HOST_CONTEXT.get()
     token = _TOKEN_CONTEXT.get()
@@ -151,32 +148,3 @@ def _product_name() -> str:
 def _product_version() -> str:
     """Return the version of the root project."""
     return projects.root_project_version()
-
-
-@functools.cache
-def _databricks_tools_core_get_workspace_client_fn() -> (
-    Callable[[], WorkspaceClient] | None
-):
-    """Search for and return a `get_workspace_client` function from the `databricks_tools_core` package.
-
-    This function attempts to use `databricks-tools-core` for workspace client creation
-    if the module is available. This ensures that if the import is available, we'll
-    use its established logic. However, since the import might not be available,
-    equivalent logic is also implemented within this module's `_workspace_client`.
-    """
-    module_name = "databricks_tools_core"
-    if imports.resolve_module(module_name, execute=False):
-        import logging
-
-        class IgnoreVersionWarning(logging.Filter):
-            def filter(self, record):
-                message = record.getMessage() if record else None
-                if message and "VERSION file not found" in message:
-                    return False
-                else:
-                    return True
-
-        logger = logging.getLogger(f"{module_name}.identity")
-        logger.addFilter(IgnoreVersionWarning())
-        return imports.resolve(module_name, "get_workspace_client")
-    return None
