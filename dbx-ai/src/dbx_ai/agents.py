@@ -60,10 +60,10 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     if "auto" == instrument:
-        result_type_kwarg = "result_type"
-        result_type = kwargs.get(result_type_kwarg, None)
-        if result_type is None:
-            kwargs[result_type_kwarg] = None
+        output_type_kwarg = "output_type"
+        output_type = kwargs.get(output_type_kwarg, None)
+        if output_type is None:
+            kwargs[output_type_kwarg] = None
             _auto_instrument()
             instrument = True
         else:
