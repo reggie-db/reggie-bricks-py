@@ -60,8 +60,14 @@ def create(
             if instruction := strs.trim(instruction):
                 instructions.append(instruction)
     if "auto" == instrument:
-        _auto_instrument()
-        instrument = True
+        result_type_kwarg = "result_type"
+        result_type = kwargs.get(result_type_kwarg, None)
+        if result_type is None:
+            kwargs[result_type_kwarg] = None
+            _auto_instrument()
+            instrument = True
+        else:
+            instrument = False
     kwargs["instrument"] = instrument
     return Agent(
         model=model(model_name=model_name, workspace_client=workspace_client),
