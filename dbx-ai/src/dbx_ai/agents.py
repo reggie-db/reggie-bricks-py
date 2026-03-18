@@ -102,20 +102,20 @@ def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
     return _client(workspace_client) if workspace_client else _client_default()
 
 
-def _client(workspace_client: WorkspaceClient) -> AsyncClient:
+def _client(workspace_client: WorkspaceClient | None) -> AsyncClient:
     """Build an async OpenAI client that routes requests to Databricks serving."""
-    http_client = _http_client(workspace_client)
+    hclient = http_client(workspace_client)
     client_params = {
         "base_url": workspace_client.config.host + "/serving-endpoints",
         "api_key": "no-token",  # Passing in a placeholder to pass validations, this will not be used
-        "http_client": http_client,
+        "http_client": hclient,
     }
     return AsyncClient(**client_params)
 
 
 @functools.cache
 def _client_default() -> AsyncClient:
-    return _client(clients.workspace_client())
+    return _client(None)
 
 
 @functools.cache
@@ -139,6 +139,14 @@ def model(
     return OpenAIChatModel(model_name=model_name, provider=provider)
 
 
+def http_client(workspace_client: WorkspaceClient | None = None) -> httpx.AsyncClient:
+    return (
+        _http_client_default()
+        if workspace_client is None
+        else _http_client(workspace_client)
+    )
+
+
 def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
     """Create an authenticated HTTP client for Databricks serving endpoints."""
 
@@ -157,6 +165,7 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
     bearer_auth = AsyncBearerAuth(
         workspace_client.serving_endpoints._api._cfg.authenticate
     )
+    timeout = httpx.Timeout(connect=10.0, read=300.0, write=30.0, pool=30.0)
     try:
         import h2  # noqa: F401  # pyright: ignore[reportMissingImports]
 
@@ -165,8 +174,14 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
         http2 = False
     return httpx.AsyncClient(
         auth=bearer_auth,
+        timeout=timeout,
         http2=http2,
     )
+
+
+@functools.cache
+def _http_client_default() -> AsyncClient:
+    return _http_client(clients.workspace_client())
 
 
 async def main():
