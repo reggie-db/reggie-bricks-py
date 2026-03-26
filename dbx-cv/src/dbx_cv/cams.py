@@ -85,17 +85,9 @@ async def consumer(q: asyncio.Queue):
 
 async def main():
     rtsp_url = "rtsp://localhost:8554/cam"
-
-    producer = asyncio.create_task(
-        ffmpeg_reader(
-            q,
-            rtsp_url,
-        )
-    )
-    setattr(producer, "frame_queue", q)
-    consumer_task = asyncio.create_task(consumer(producer.frame_queue))
-
-    await asyncio.gather(producer, consumer_task)
+    frame_producer = producer(ProducerOptions(url=rtsp_url))
+    consumer_task = asyncio.create_task(consumer(frame_producer.queue))
+    await asyncio.gather(frame_producer.task, consumer_task)
 
 
 if __name__ == "__main__":

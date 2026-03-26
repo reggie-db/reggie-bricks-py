@@ -18,7 +18,7 @@ from databricks.sdk.service.dashboards import GenieMessage, GenieSpace, MessageS
 from dbx_core import objects
 from lfp_logging import logs
 
-from dbx_tools import clients, configs
+from dbx_tools import clients, configs, runtimes
 
 LOG = logs.logger()
 

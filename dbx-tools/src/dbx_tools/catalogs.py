@@ -160,9 +160,11 @@ def catalog_schema(spark: SparkSession | None = None) -> CatalogSchema | None:
                 current_schema = spark_catalog.currentDatabase()
                 if current_catalog and current_schema:
                     return CatalogSchema(current_catalog, current_schema)
-        catalog_schema_row = spark.sql(
-            "SELECT current_catalog() AS catalog, current_schema() AS schema"
-        ).first()
+        catalog_schema_row = (
+            clients.spark()
+            .sql("SELECT current_catalog() AS catalog, current_schema() AS schema")
+            .first()
+        )
         # Fallback to SQL when the API path did not return values
         if catalog_schema_row.catalog and catalog_schema_row.schema:
             return CatalogSchema(catalog_schema_row.catalog, catalog_schema_row.schema)

@@ -1,4 +1,5 @@
 import reflex as rx
+from reflex.event import EventSpec
 
 from dbx_reflex import events, states
 
@@ -23,7 +24,7 @@ class SearchState(rx.State):
         return states.set_query_param(self, "q", value)
 
 
-def index() -> VStack:
+def index():
     search_input = rx.input(
         name="q",
         placeholder="Type query...",

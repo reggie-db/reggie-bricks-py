@@ -5,6 +5,8 @@ from dbx_tools import clients
 if __name__ == "__main__":
     os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "FIELD-ENG-EAST")
     genie_space_id = "01f0cfa53c571bbb9b36f0e14a4e408d"
+    conversation_id = os.environ.get("GENIE_CONVERSATION_ID", "")
+    message_id = os.environ.get("GENIE_MESSAGE_ID", "")
     wc = clients.workspace_client()
     resp: dict = wc.genie._api.do(
         "GET",
