@@ -56,7 +56,7 @@ def auto_instrument():
         experiment_id,
         experiment_name,
     )
-    pydantic_ai_mlflow.autolog()
+    pydantic_ai_mlflow.autolog(log_traces=True)
 
 def create(
     model_name: str | None = None,
