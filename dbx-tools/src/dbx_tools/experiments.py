@@ -14,6 +14,7 @@ from typing import Iterator
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import ResourceAlreadyExists, ResourceDoesNotExist
 from databricks.sdk.service.ml import CreateExperimentResponse, Experiment
+from dbx_ai.agents import projects, strs
 from lfp_logging import logs
 
 from dbx_tools import clients
@@ -37,7 +38,7 @@ class _ExperimentLookupContext:
     repeated candidate lookups do not need to make duplicate SDK calls.
     """
 
-    def __init__(self, workspace_client: WorkspaceClient):
+    def __init__(self, workspace_client: WorkspaceClient | None = None):
         self._workspace_client = workspace_client
         self._current_user_name = None
 
@@ -59,7 +60,7 @@ class _ExperimentLookupContext:
 
 
 def get(
-    experiment_lookup: str,
+    experiment_lookup: str | None = None,
     create_experiment_path_type: ExperimentPathType | None = ExperimentPathType.USER,
     workspace_client: WorkspaceClient | None = None,
 ) -> Experiment:
@@ -88,6 +89,11 @@ def get(
         RuntimeError: If more than one candidate path resolves to an existing
             experiment.
     """
+    if not experiment_lookup and create_experiment_path_type is not None:
+        root_project_name = projects.root_project_name()
+        if root_project_name:
+            if root_project_name := "-".join(strs.tokenize(root_project_name)):
+                experiment_lookup = root_project_name
     if not experiment_lookup:
         raise ValueError(f"Experiment lookup is required: {experiment_lookup}")
     lookup_ctx = _ExperimentLookupContext(workspace_client)
@@ -115,15 +121,16 @@ def get(
                 )
             except ResourceAlreadyExists:
                 LOG.debug(
-                    f"Experiment exists: %s",
+                    "Experiment exists: %s",
                     experiment_lookup,
                     exc_info=True,
                 )
                 continue
             if create_experiment_response and create_experiment_response.experiment_id:
-                return lookup_ctx.workspace_client.experiments.get_experiment(
+                if experiment := lookup_ctx.workspace_client.experiments.get_experiment(
                     experiment_id=create_experiment_response.experiment_id
-                ).experiment
+                ).experiment:
+                    return experiment
     raise ResourceDoesNotExist(f"Experiment not found: {experiment_lookup}")
 
 
@@ -225,7 +232,7 @@ def _get(
             ).experiment
         except ResourceDoesNotExist:
             LOG.debug(
-                f"Experiment ID does not exist:%s",
+                "Experiment ID does not exist:%s",
                 experiment_lookup,
                 exc_info=True,
             )
@@ -235,7 +242,7 @@ def _get(
         ).experiment
     except ResourceDoesNotExist:
         LOG.debug(
-            f"Experiment name does not exist:%s",
+            "Experiment name does not exist:%s",
             experiment_lookup,
             exc_info=True,
         )

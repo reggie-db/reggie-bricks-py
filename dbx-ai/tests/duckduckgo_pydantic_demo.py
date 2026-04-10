@@ -16,7 +16,7 @@ import asyncio
 import logging
 import sys
 from dbx_ai import agents
-from ddgs import DDGS, engines
+from ddgs import DDGS
 from lfp_logging import logs
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.test import TestModel

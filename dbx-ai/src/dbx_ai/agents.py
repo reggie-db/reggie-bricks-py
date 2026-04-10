@@ -47,7 +47,7 @@ def auto_instrument():
     else:
         experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
         if not experiment_name:
-            experiment = experiments.get(experiment_lookup=projects.root_project_name())
+            experiment = experiments.get()
             mlflow.set_experiment(experiment_id=experiment.experiment_id)
     LOG.info(
         "MLflow auto instrument - config_profile:%s tracking_uri:%s experiment_id:%s experiment_name:%s",
@@ -56,7 +56,7 @@ def auto_instrument():
         experiment_id,
         experiment_name,
     )
-    pydantic_ai_mlflow.autolog(log_traces=True)
+    pydantic_ai_mlflow.autolog()
 
 def create(
     model_name: str | None = None,
