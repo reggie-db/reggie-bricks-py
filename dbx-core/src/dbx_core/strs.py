@@ -1,7 +1,7 @@
 import re
 import textwrap
 from itertools import chain
-from typing import Any, Iterable
+from typing import Any, Iterable, overload
 
 """Utilities for normalizing names/identifiers into token fragments.
 
@@ -11,6 +11,14 @@ tokens useful for search, matching, or building canonical identifiers.
 
 _SPLIT_NON_ALPHA_NUMERIC = re.compile(r"[^a-zA-Z0-9]+")
 _SPLIT_CAMEL_CASE = re.compile(r"(?<=[a-z])(?=[A-Z])")
+
+
+@overload
+def trim(value: Any, default: str = "", dedent: bool = True) -> str: ...
+
+
+@overload
+def trim(value: Any, default: None, dedent: bool = True) -> str | None: ...
 
 
 def trim(value: Any, default: str | None = "", dedent: bool = True) -> str | None:
@@ -34,7 +42,10 @@ def trim(value: Any, default: str | None = "", dedent: bool = True) -> str | Non
             whitespace is removed before the final ``strip`` call.
 
     Returns:
-        The cleaned string, or ``default`` if the result is empty.
+        The cleaned string, or ``default`` if the result is empty. When
+        ``default`` is omitted or is a :class:`str`, the return type is
+        :class:`str`; when ``default`` is ``None``, the return type may be
+        ``None`` (see overloads for static analysis).
     """
     if value is not None:
         if not isinstance(value, str):

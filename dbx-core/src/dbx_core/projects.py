@@ -56,13 +56,13 @@ def root_pyproject(
         try:
             import tomllib  # py3.11+
         except ModuleNotFoundError:
-            import tomli as tomllib  # fallback
+            import tomli as tomllib  # pyright: ignore [reportMissingImports]
         with pyproject.open("rb") as f:
             return pyproject, tomllib.load(f)
     return None, {}
 
 
-def root_project_name(path: PathLike | str | None = None) -> str | None:
+def root_project_name(path: PathLike | str | None = None) -> str:
     _, pdata = root_pyproject(path)
     if pdata:
         if project_name := pdata.get("project", {}).get("name", None):

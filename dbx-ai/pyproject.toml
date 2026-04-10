@@ -12,5 +12,11 @@ dependencies = [
     "mlflow[databricks]>=3.10.1",
 ]
 
+[dependency-groups]
+dev = [
+    "ddgs>=9.12.0",
+    "unitycatalog-ai[databricks]",
+]
+
 [tool.uv.sources.dbx-tools]
 workspace = true
