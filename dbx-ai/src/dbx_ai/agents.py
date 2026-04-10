@@ -30,33 +30,7 @@ Do not include emojis, em dashes, or en dashes in responses.
 If dashes are needed, use a standard hyphen (-) instead.
 """)
 
-@functools.cache
-def auto_instrument():
-    """Configure MLflow PydanticAI autologging once per process.
 
-    The tracking URI is set to Databricks when not already configured. The
-    target experiment is sourced from ``MLFLOW_EXPERIMENT_ID`` first, then
-    ``MLFLOW_EXPERIMENT_NAME``, and finally the root project name.
-    """
-    config_profile = configs.profile()
-    if not mlflow.is_tracking_uri_set():
-        mlflow.set_tracking_uri("databricks")
-    experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID", None)
-    if experiment_id:
-        experiment_name = None
-    else:
-        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
-        if not experiment_name:
-            experiment = experiments.get()
-            mlflow.set_experiment(experiment_id=experiment.experiment_id)
-    LOG.info(
-        "MLflow auto instrument - config_profile:%s tracking_uri:%s experiment_id:%s experiment_name:%s",
-        config_profile,
-        mlflow.get_tracking_uri(),
-        experiment_id,
-        experiment_name,
-    )
-    pydantic_ai_mlflow.autolog()
 
 def create(
     model_name: str | None = None,
@@ -93,7 +67,7 @@ def create(
         output_type_kwarg = "output_type"
         output_type = kwargs.get(output_type_kwarg, None)
         if output_type is None:
-            auto_instrument()
+            _auto_instrument()
             instrument = True
         else:
             instrument = False
@@ -106,7 +80,33 @@ def create(
 
 
 
+@functools.cache
+def _auto_instrument():
+    """Configure MLflow PydanticAI autologging once per process.
 
+    The tracking URI is set to Databricks when not already configured. The
+    target experiment is sourced from ``MLFLOW_EXPERIMENT_ID`` first, then
+    ``MLFLOW_EXPERIMENT_NAME``, and finally the root project name.
+    """
+    config_profile = configs.profile()
+    if not mlflow.is_tracking_uri_set():
+        mlflow.set_tracking_uri("databricks")
+    experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID", None)
+    if experiment_id:
+        experiment_name = None
+    else:
+        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
+        if not experiment_name:
+            experiment = experiments.get()
+            mlflow.set_experiment(experiment_id=experiment.experiment_id)
+    LOG.info(
+        "MLflow auto instrument - config_profile:%s tracking_uri:%s experiment_id:%s experiment_name:%s",
+        config_profile,
+        mlflow.get_tracking_uri(),
+        experiment_id,
+        experiment_name,
+    )
+    pydantic_ai_mlflow.autolog()
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
     """Return an OpenAI-compatible async client backed by Databricks serving.
