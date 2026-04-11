@@ -97,8 +97,8 @@ def _auto_instrument():
     else:
         experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
         if not experiment_name:
-            experiment = experiments.get()
-            mlflow.set_experiment(experiment_id=experiment.experiment_id)
+            experiment_id = experiments.get().experiment_id
+            mlflow.set_experiment(experiment_id=experiment_id)
     LOG.info(
         "MLflow auto instrument - config_profile:%s tracking_uri:%s experiment_id:%s experiment_name:%s",
         config_profile,
