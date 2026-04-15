@@ -144,6 +144,15 @@ def _patch_mlflow_circular_ref() -> None:
                     return '"[unserializable span input]"'
 
         _mlu.dump_span_attribute_value = _safe_dump
+        # Patch the canonical module so future imports get the safe version.
+        _mlu.dump_span_attribute_value = _safe_dump
+        # Patch the already-bound name inside span.py's module namespace,
+        # which holds a direct import reference set at module load time.
+        # setattr used intentionally - patching an external untyped module namespace.
+        import mlflow.entities.span as _span_mod
+        if hasattr(_span_mod, "dump_span_attribute_value"):
+            setattr(_span_mod, "dump_span_attribute_value", _safe_dump)
+
         LOG.debug("MLflow circular-reference guard installed")
     except Exception:
         LOG.warning("MLflow circular-reference guard could not be installed")
