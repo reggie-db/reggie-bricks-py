@@ -93,7 +93,7 @@ def _auto_instrument():
     config_profile = configs.profile()
     if not mlflow.is_tracking_uri_set():
         mlflow.set_tracking_uri("databricks")
-    log_message = f"MLflow auto instrument - config_profile:{config_profile} tracking_uri:{mlflow.get_tracking_uri()} experiment_id:{experiment_id} experiment_name:{experiment_name}"
+    log_message = f"MLflow auto instrument - config_profile:{config_profile} tracking_uri:{mlflow.get_tracking_uri()}"
     experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID", None)
     if experiment_id:
         log_message += f" experiment_id:{experiment_id}"
