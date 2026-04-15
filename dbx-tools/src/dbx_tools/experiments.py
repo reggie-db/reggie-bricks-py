@@ -13,11 +13,16 @@ from typing import Iterator
 
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import ResourceAlreadyExists, ResourceDoesNotExist
-from databricks.sdk.service.ml import CreateExperimentResponse, Experiment
+from databricks.sdk.service.ml import (
+    CreateExperimentResponse,
+    Experiment,
+    ExperimentAccessControlRequest,
+    ExperimentPermissionLevel,
+)
 from dbx_ai.agents import projects, strs
 from lfp_logging import logs
 
-from dbx_tools import clients
+from dbx_tools import clients, runtimes
 
 LOG = logs.logger()
 _SHARED_PATH = "/Shared/"
@@ -97,18 +102,18 @@ def get(
     if not experiment_lookup:
         raise ValueError(f"Experiment lookup is required: {experiment_lookup}")
     lookup_ctx = _ExperimentLookupContext(workspace_client)
+    result_experiment: Experiment | None = None
     for experiment_path_type in {create_experiment_path_type, None}:
-        matched_experiment: Experiment | None = None
         for lookup in _experiment_lookups(lookup_ctx, experiment_lookup):
             if experiment := _get(lookup_ctx, lookup):
-                if matched_experiment is not None:
+                if result_experiment is not None:
                     raise RuntimeError(
                         f"Multiple experiments found for lookup: {experiment_lookup}"
                     )
-                matched_experiment = experiment
+                result_experiment = experiment
 
-        if matched_experiment:
-            return matched_experiment
+        if result_experiment:
+            break
         elif experiment_path_type:
             create_experiment_response: CreateExperimentResponse | None = None
             try:
@@ -127,11 +132,17 @@ def get(
                 )
                 continue
             if create_experiment_response and create_experiment_response.experiment_id:
-                if experiment := lookup_ctx.workspace_client.experiments.get_experiment(
+                result_experiment = lookup_ctx.workspace_client.experiments.get_experiment(
                     experiment_id=create_experiment_response.experiment_id
-                ).experiment:
-                    return experiment
-    raise ResourceDoesNotExist(f"Experiment not found: {experiment_lookup}")
+                ).experiment
+                break
+
+    if result_experiment is None or not result_experiment.experiment_id:
+        raise ResourceDoesNotExist(f"Experiment not found: {experiment_lookup}")
+
+    _grant_app_creator_permissions(lookup_ctx, result_experiment.experiment_id)
+        
+    return result_experiment
 
 
 def fetch(
@@ -215,6 +226,80 @@ def _experiment_lookups(
             if current_user_name := lookup_ctx.current_user_name:
                 yield f"/Users/{current_user_name}/{experiment_lookup}"
             yield f"/Shared/{experiment_lookup}"
+
+
+def _grant_app_creator_permissions(
+    lookup_ctx: _ExperimentLookupContext, experiment_id: str
+) -> None:
+    """Grant CAN_MANAGE to the app creator when running inside a Databricks App.
+
+    When the process is detected as a Databricks App via ``runtimes.app_info()``,
+    the app's creator is fetched and added to the experiment's permission list so
+    they retain access even when the app runs under a service principal identity.
+    Fetches the current ACL, merges in the creator entry, then resets all permissions.
+    No-ops silently if the creator already has CAN_MANAGE.
+
+    Args:
+        lookup_ctx: Shared lookup context used to reach the workspace client.
+        experiment_id: The experiment id to grant permissions on.
+    """
+    app = runtimes.app_info()
+    if not app:
+        return
+    try:
+        creator = lookup_ctx.workspace_client.apps.get(app.name).creator
+    except Exception:
+        LOG.warning("Could not retrieve app creator for %s", app.name, exc_info=True)
+        return
+    if not creator:
+        return
+    try:
+        current = lookup_ctx.workspace_client.experiments.get_permissions(
+            experiment_id=experiment_id
+        )
+        existing = [
+            ExperimentAccessControlRequest(
+                user_name=acl.user_name,
+                group_name=acl.group_name,
+                service_principal_name=acl.service_principal_name,
+                permission_level=acl.all_permissions[0].permission_level
+                if acl.all_permissions
+                else None,
+            )
+            for acl in (current.access_control_list or [])
+            if acl.user_name != creator
+        ]
+        creator_acl = next(
+            (acl for acl in (current.access_control_list or []) if acl.user_name == creator),
+            None,
+        )
+        if creator_acl and any(
+            p.permission_level == ExperimentPermissionLevel.CAN_MANAGE
+            for p in (creator_acl.all_permissions or [])
+        ):
+            return
+        lookup_ctx.workspace_client.experiments.set_permissions(
+            experiment_id=experiment_id,
+            access_control_list=existing
+            + [
+                ExperimentAccessControlRequest(
+                    user_name=creator,
+                    permission_level=ExperimentPermissionLevel.CAN_MANAGE,
+                )
+            ],
+        )
+        LOG.info(
+            "Granted CAN_MANAGE on experiment %s to app creator %s",
+            experiment_id,
+            creator,
+        )
+    except Exception:
+        LOG.warning(
+            "Failed to grant CAN_MANAGE on experiment %s to app creator %s",
+            experiment_id,
+            creator,
+            exc_info=True,
+        )
 
 
 def _get(
