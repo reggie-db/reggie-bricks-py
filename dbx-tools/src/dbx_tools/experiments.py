@@ -95,10 +95,14 @@ def get(
             experiment.
     """
     if not experiment_lookup and create_experiment_path_type is not None:
-        root_project_name = projects.root_project_name()
-        if root_project_name:
-            if root_project_name := "-".join(strs.tokenize(root_project_name)):
-                experiment_lookup = root_project_name
+        app_info = runtimes.app_info()
+        if app_info and app_info.name:
+            experiment_lookup = app_info.name
+        if not experiment_lookup:
+            root_project_name = projects.root_project_name()
+            if root_project_name:
+                if root_project_name := "-".join(strs.tokenize(root_project_name)):
+                    experiment_lookup = root_project_name
     if not experiment_lookup:
         raise ValueError(f"Experiment lookup is required: {experiment_lookup}")
     lookup_ctx = _ExperimentLookupContext(workspace_client)
