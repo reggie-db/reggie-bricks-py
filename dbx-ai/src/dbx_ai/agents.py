@@ -110,7 +110,6 @@ def _auto_instrument():
     _patch_mlflow_circular_ref()
 
 
-@functools.cache
 def _patch_mlflow_circular_ref() -> None:
     """Patch MLflow's span serializer to handle circular references.
 
