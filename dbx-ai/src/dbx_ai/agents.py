@@ -107,6 +107,46 @@ def _auto_instrument():
         experiment_name,
     )
     pydantic_ai_mlflow.autolog()
+    _patch_mlflow_circular_ref()
+
+
+@functools.cache
+def _patch_mlflow_circular_ref() -> None:
+    """Patch MLflow's span serializer to handle circular references.
+
+    mlflow.pydantic_ai.autolog() wraps every model request and calls
+    json.dumps on the ModelRequest inputs. Tool closures registered on an
+    agent capture the agent itself, creating a circular reference that raises
+    ValueError at serialization time. This patch retries with
+    check_circular=False and falls back to a sentinel string rather than
+    letting the error propagate and kill the streaming response.
+    """
+    import json as _json
+
+    try:
+        import mlflow.tracing.utils as _mlu
+        from mlflow.tracing.utils import TraceJSONEncoder
+
+        _orig = _mlu.dump_span_attribute_value
+
+        def _safe_dump(value, **kw):  # type: ignore[override]
+            try:
+                return _orig(value, **kw)
+            except (ValueError, TypeError):
+                try:
+                    return _json.dumps(
+                        value,
+                        cls=TraceJSONEncoder,
+                        ensure_ascii=False,
+                        check_circular=False,
+                    )
+                except Exception:
+                    return '"[unserializable span input]"'
+
+        _mlu.dump_span_attribute_value = _safe_dump
+        LOG.debug("MLflow circular-reference guard installed")
+    except Exception:
+        LOG.warning("MLflow circular-reference guard could not be installed")
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
     """Return an OpenAI-compatible async client backed by Databricks serving.
