@@ -7,7 +7,7 @@ clients, and optional MLflow autologging setup for PydanticAI.
 import functools
 import os
 from typing import Any, Literal
-
+import json
 import httpx
 import mlflow
 import mlflow.pydantic_ai as pydantic_ai_mlflow
@@ -29,7 +29,6 @@ _DEFAULT_INSTRUCTIONS = strs.trim("""
 Do not include emojis, em dashes, or en dashes in responses.
 If dashes are needed, use a standard hyphen (-) instead.
 """)
-
 
 
 def create(
@@ -79,7 +78,6 @@ def create(
     )
 
 
-
 @functools.cache
 def _auto_instrument():
     """Configure MLflow PydanticAI autologging once per process.
@@ -95,21 +93,19 @@ def _auto_instrument():
     config_profile = configs.profile()
     if not mlflow.is_tracking_uri_set():
         mlflow.set_tracking_uri("databricks")
+    log_message = f"MLflow auto instrument - config_profile:{config_profile} tracking_uri:{mlflow.get_tracking_uri()} experiment_id:{experiment_id} experiment_name:{experiment_name}"
     experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID", None)
     if experiment_id:
-        experiment_name = None
+        log_message += f" experiment_id:{experiment_id}"
     else:
         experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
-        if not experiment_name:
-            experiment_id = experiments.get().experiment_id
-            mlflow.set_experiment(experiment_id=experiment_id)
-    LOG.info(
-        "MLflow auto instrument - config_profile:%s tracking_uri:%s experiment_id:%s experiment_name:%s",
-        config_profile,
-        mlflow.get_tracking_uri(),
-        experiment_id,
-        experiment_name,
-    )
+        if experiment_name:
+            log_message += f" experiment_name:{experiment_name}"
+        else:
+            experiment=experiments.get()
+            log_message += f" experiment:{json.dumps(experiment.as_dict())}"
+            mlflow.set_experiment(experiment_id=experiment.experiment_id)
+    LOG.info(log_message)
     pydantic_ai_mlflow.autolog()
     _patch_mlflow_circular_ref()
 
@@ -159,6 +155,7 @@ def _patch_mlflow_circular_ref() -> None:
         LOG.debug("MLflow circular-reference guard installed")
     except Exception:
         LOG.warning("MLflow circular-reference guard could not be installed")
+
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
     """Return an OpenAI-compatible async client backed by Databricks serving.
