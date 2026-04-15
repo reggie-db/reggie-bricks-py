@@ -87,6 +87,10 @@ def _auto_instrument():
     The tracking URI is set to Databricks when not already configured. The
     target experiment is sourced from ``MLFLOW_EXPERIMENT_ID`` first, then
     ``MLFLOW_EXPERIMENT_NAME``, and finally the root project name.
+
+    pydantic-ai is pinned to <1.69 (see pyproject.toml) to stay within the
+    range MLflow's autologger supports. The circular-reference patch below is
+    still required because Tool closures capture the agent object.
     """
     config_profile = configs.profile()
     if not mlflow.is_tracking_uri_set():
@@ -116,17 +120,20 @@ def _patch_mlflow_circular_ref() -> None:
     mlflow.pydantic_ai.autolog() wraps every model request and calls
     json.dumps on the ModelRequest inputs. Tool closures registered on an
     agent capture the agent itself, creating a circular reference that raises
-    ValueError at serialization time. This patch retries with
-    check_circular=False and falls back to a sentinel string rather than
-    letting the error propagate and kill the streaming response.
+    ValueError at serialization time.
+
+    mlflow.entities.span imports dump_span_attribute_value by name at module
+    load time, so patching mlflow.tracing.utils alone is insufficient - the
+    already-bound reference in span.py must also be replaced.
     """
     import json as _json
 
     try:
-        import mlflow.tracing.utils as _mlu
+        import mlflow.entities.span as _span_mod
+        import mlflow.tracing.utils as _utils_mod
         from mlflow.tracing.utils import TraceJSONEncoder
 
-        _orig = _mlu.dump_span_attribute_value
+        _orig = _utils_mod.dump_span_attribute_value
 
         def _safe_dump(value, **kw):  # type: ignore[override]
             try:
@@ -142,13 +149,10 @@ def _patch_mlflow_circular_ref() -> None:
                 except Exception:
                     return '"[unserializable span input]"'
 
-        _mlu.dump_span_attribute_value = _safe_dump
         # Patch the canonical module so future imports get the safe version.
-        _mlu.dump_span_attribute_value = _safe_dump
-        # Patch the already-bound name inside span.py's module namespace,
-        # which holds a direct import reference set at module load time.
+        _utils_mod.dump_span_attribute_value = _safe_dump
+        # Patch the already-bound name inside span.py's module namespace.
         # setattr used intentionally - patching an external untyped module namespace.
-        import mlflow.entities.span as _span_mod
         if hasattr(_span_mod, "dump_span_attribute_value"):
             setattr(_span_mod, "dump_span_attribute_value", _safe_dump)
 

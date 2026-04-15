@@ -8,7 +8,7 @@ version = "0.0.1+revd5112ed"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
-    "pydantic_ai>=1.60",
+    "pydantic_ai>=1.60,<1.69",
     "mlflow[databricks]>=3.10.1",
 ]
 
