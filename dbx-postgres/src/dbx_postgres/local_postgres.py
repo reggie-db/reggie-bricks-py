@@ -20,13 +20,15 @@ from dbx_postgres import postgres
 
 
 @cache
-def _bin_dir():
+def _bin_dir() -> Path:
+    """Return the directory containing local Postgres CLI binaries."""
     if cmd_path := shutil.which("postgres"):
         return Path(cmd_path).parent
     raise FileNotFoundError(f"Postgres binary not found")
 
 
-def _run(cmds: list[Any], quiet=True) -> subprocess.CompletedProcess[bytes]:
+def _run(cmds: list[Any], quiet: bool = True) -> subprocess.CompletedProcess[bytes]:
+    """Run a Postgres CLI command with optional quiet output."""
     if cmds:
         cmds = [_bin_dir() / cmds[0]] + cmds[1:]
     return subprocess.run(
@@ -38,7 +40,10 @@ def _run(cmds: list[Any], quiet=True) -> subprocess.CompletedProcess[bytes]:
 
 
 class LocalPostgres:
+    """Manage a local unix-socket Postgres instance for development."""
+
     def __init__(self, project: str | None = None):
+        """Initialize per-project Postgres paths and metadata."""
         if not project:
             project = projects.root_project_name()
         if not project:
@@ -72,7 +77,7 @@ class LocalPostgres:
 
     # ---------- readiness ----------
 
-    def _wait_ready(self):
+    def _wait_ready(self) -> None:
         for _ in range(80):
             if list(self.socket_dir.glob(".s.PGSQL.*")):
                 r = _run(["pg_isready", "-h", str(self.socket_dir)])
@@ -83,7 +88,7 @@ class LocalPostgres:
 
     # ---------- initialization ----------
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         _run(
@@ -113,6 +118,7 @@ class LocalPostgres:
     # ---------- public API ----------
 
     def up(self) -> pathlib.Path:
+        """Start local Postgres if needed and return the unix socket directory."""
         self.socket_dir.mkdir(parents=True, exist_ok=True)
         os.chmod(self.socket_dir, 0o700)
 
@@ -132,7 +138,8 @@ class LocalPostgres:
             self._wait_ready()
         return self.socket_dir.resolve()
 
-    def down(self):
+    def down(self) -> None:
+        """Stop the local Postgres instance when it is running."""
         if not self.data_dir.exists():
             return
 
@@ -140,6 +147,7 @@ class LocalPostgres:
             _run(["pg_ctl", "-D", str(self.data_dir), "-m", "fast", "stop"])
 
     def url(self, db_name: str, up: bool = True) -> URL:
+        """Build a SQLAlchemy URL for a database over the local unix socket."""
         if up:
             self.up()
         return URL.create(

@@ -289,19 +289,20 @@ def describe_table_extended(
     warehouse_id: str | None = None,
     **kwargs: Any,
 ) -> TableDescription:
-    """Return metric view YAML/SQL text from DESCRIBE TABLE EXTENDED AS JSON.
+    """Return parsed metadata from ``DESCRIBE TABLE EXTENDED ... AS JSON``.
 
     Args:
-        name: Metric view name accepted by ``CatalogSchemaTable.of``.
+        name: Table or view name accepted by ``CatalogSchemaTable.of``.
         workspace_client: Optional Databricks workspace client.
         warehouse_id: Optional SQL warehouse id. Uses ranked default when omitted.
-        wait_timeout: Statement execution wait timeout.
+        **kwargs: Additional statement execution options forwarded to
+            ``execute_statement`` (for example ``wait_timeout``).
 
     Returns:
-        The ``view_text`` field from DESCRIBE TABLE EXTENDED JSON output.
+        Parsed table metadata wrapped in ``TableDescription``.
 
     Raises:
-        RuntimeError: When statement execution fails or ``view_text`` is missing.
+        RuntimeError: When statement execution fails or JSON output is missing.
     """
     fqname = CatalogSchemaTable.of(name)
     response = execute_statement(
@@ -318,9 +319,7 @@ def describe_table_extended(
             payload = None
         if payload:
             return TableDescription(name=fqname, data=payload)
-    raise RuntimeError(
-        f"Table'{fqname}' describe extended failed - response: {response}"
-    )
+    raise RuntimeError(f"Table '{fqname}' describe extended failed - response: {response}")
 
 
 def _warehouse_size_rank(cluster_size: str | None) -> int:

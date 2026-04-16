@@ -41,6 +41,8 @@ def resolve_module(
         name: The name of the module to resolve.
         package: The package name if resolving a relative import.
         cache: Whether to use the cached version of the module.
+        execute: Whether to import and execute module code. When ``False``,
+            returns a module object created from spec without importing.
 
     Returns:
         The resolved module or None if not found.
@@ -59,7 +61,7 @@ def resolve_module(
 
 def _resolve_module(name: str, package: str | None, execute: bool) -> ModuleType | None:
     """
-    Internal helper to resolve a module without executing it.
+    Internal helper to resolve a module with optional execution.
     """
     try:
         fullname = name if not package else f"{package}.{name}"

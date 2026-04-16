@@ -113,7 +113,7 @@ def value(
     name: str,
     default_value: T | None = _UNSET,
     bundle_path: str | None = None,
-    config_value_sources: list["ConfigValueSource"] = None,
+    config_value_sources: list["ConfigValueSource"] | None = None,
 ) -> T:
     """Fetch a configuration value by checking the configured sources in order.
     The first loader that returns a truthy value wins. Callers can pass a subset of sources to control resolution order.

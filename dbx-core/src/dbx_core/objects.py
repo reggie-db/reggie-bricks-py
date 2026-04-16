@@ -138,7 +138,7 @@ def attribute(obj: Any, *attrs: str, default: Any = None) -> Any:
     return obj if obj is not None else default
 
 
-def remove_keys(d: dict, *keys: str):
+def remove_keys(d: dict, *keys: str) -> None:
     """
     Recursively remove specified keys from a dictionary and all nested dictionaries.
 
@@ -150,7 +150,7 @@ def remove_keys(d: dict, *keys: str):
         *keys: Keys to remove from the dictionary and all nested dictionaries
     """
 
-    def _remove_keys(obj: Any, *keys: str):
+    def _remove_keys(obj: Any, *keys: str) -> None:
         if keys and isinstance(obj, dict) and obj:
             for key in keys:
                 if key in obj:

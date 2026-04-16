@@ -12,6 +12,11 @@ _PYPROJECT_FILE_NAME = "pyproject.toml"
 
 
 def root_dir(input: PathLike | str | None = None) -> pathlib.Path:
+    """Return the best-effort workspace or project root directory.
+
+    Resolution order prefers ``uv workspace dir`` then git top-level, then
+    nearest parent containing ``pyproject.toml``.
+    """
     if isinstance(input, str):
         return root_dir(pathlib.Path(input) if input else None)
     cwd = pathlib.Path.cwd().resolve()
@@ -24,6 +29,7 @@ def root_dir(input: PathLike | str | None = None) -> pathlib.Path:
 
 
 def _root_dir(path: pathlib.Path) -> pathlib.Path | None:
+    """Resolve root directory for a path using uv, git, then pyproject traversal."""
     if path.is_file():
         path = path.parent
     for proc_args in [
@@ -51,6 +57,7 @@ def _root_dir_cwd(path: pathlib.Path) -> pathlib.Path:
 def root_pyproject(
     path: PathLike | str | None = None,
 ) -> tuple[pathlib.Path | None, dict[str, Any]]:
+    """Return root ``pyproject.toml`` path and parsed data when available."""
     pyproject = root_dir(path) / _PYPROJECT_FILE_NAME
     if pyproject.exists():
         try:
@@ -63,6 +70,7 @@ def root_pyproject(
 
 
 def root_project_name(path: PathLike | str | None = None) -> str:
+    """Return root project name from ``pyproject.toml`` or directory name."""
     _, pdata = root_pyproject(path)
     if pdata:
         if project_name := pdata.get("project", {}).get("name", None):
@@ -73,6 +81,7 @@ def root_project_name(path: PathLike | str | None = None) -> str:
 def root_project_version(
     path: PathLike | str | None = None, git_fallback: bool = True
 ) -> str | None:
+    """Return root project version with optional git-based fallback metadata."""
     _, pdata = root_pyproject(path)
     if pdata:
         if project_version := pdata.get("project", {}).get("version", None):

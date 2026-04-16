@@ -5,9 +5,8 @@ Databricks-focused utilities for client creation, runtime detection, catalog res
 ## What It Provides
 
 - `clients.py`
-  - Builds `WorkspaceClient` instances with product metadata in the user agent on the local fallback path.
-  - Uses `databricks_tools_core.get_workspace_client` when available.
-  - Falls back to local auth resolution for host/token and Databricks Apps OAuth env vars.
+  - Builds `WorkspaceClient` instances with product metadata in the user agent.
+  - Supports host/token overrides and Databricks Apps OAuth env vars.
   - Selects a preferred SQL warehouse by serverless, size, then name preference.
   - Creates Spark sessions from notebook/runtime context and Databricks Connect when needed.
 - `configs.py`
@@ -21,6 +20,17 @@ Databricks-focused utilities for client creation, runtime detection, catalog res
   - Detects Databricks runtime and app environment metadata.
   - Exposes IPython namespace/context helpers.
   - Resolves notebook/job/pipeline execution context.
+- `experiments.py`
+  - Resolves MLflow experiments by id/name/path with optional create-on-miss behavior.
+  - Handles Databricks App creator permission repair for auto-created experiments.
+- `warehouses.py`
+  - Ranks warehouses, executes SQL statements, and parses table metadata.
+- `genie.py`
+  - Helpers for interacting with Databricks Genie conversations and responses.
+- `models.py`
+  - Model serving and endpoint utility helpers.
+- `funcs.py`
+  - Spark JSON helper functions for model-friendly payload handling.
 
 ## Usage
 
@@ -48,11 +58,12 @@ if runtimes.is_pipeline():
 3. `ConfigValueSource.SECRETS`
 4. `ConfigValueSource.OS_ENVIRON`
 
+When bundle context is available, `configs.value()` also attempts Databricks Bundle variable values from `databricks bundle validate --output json`.
+
 You can override order or exclude sources with `ConfigValueSource.without(...)`.
 
 ## Notes on Optional Integrations
 
-- `databricks-tools-core` is optional. When installed, client creation delegates to it.
 - Without notebook `dbutils`, secret lookup falls back to workspace API secret retrieval.
 
 ## Dependencies

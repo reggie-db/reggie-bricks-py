@@ -1,97 +1,40 @@
 # reggie-bricks
 
-A multimodule Python workspace managed with uv. This repository contains
-multiple related projects organized as workspace members, each with its own
-`pyproject.toml` and documentation.
-
-## Overview
-
-This repository breaks down different development needs into
-separate, focused subprojects. Each subproject addresses specific use cases
-with minimal code and minimal dependency sharing, allowing projects to remain
-lightweight and focused. By organizing functionality into discrete modules, we
-avoid unnecessary dependencies and keep each project's scope clear and
-maintainable.
+Multimodule Python workspace managed with `uv` and `uv_build`.
 
 ## Workspace Members
 
-The following projects are included in this workspace:
-
-### Core Modules
-
-* `dbx-core`: Lightweight shared utilities for logging, object serialization, path handling, and common parsing operations.
-* `dbx-tools`: Databricks specific utilities for Spark sessions, configuration management, catalog access, and Genie API integration.
-* `dbx-concurio`: Execution and caching logic using `diskcache` and file locking.
-
-### Applications and Orchestration
-
-* `dbx-app-runner`: Tools for orchestrating applications including Caddy, Docker, Conda, and Git management.
-* `dbx-reflex`: Web applications and components built with the Reflex framework.
-* `dbx-cv`: Computer vision utilities using OpenCV and image hashing.
-
-### Examples and Demos
-
-* `demo-iot`: An IoT demonstration project featuring FastAPI, Kafka integration, and reactive programming.
-
-## Repository Structure
-
-This is a uv workspace. The root `pyproject.toml` declares the workspace, and
-each member project has its own `pyproject.toml` that relies on the root for
-shared `tool.uv.sources` configuration, allowing workspace dependencies to
-resolve without duplicating configuration.
-
-Each subproject contains its own README with project specific documentation.
-See individual project directories for details.
+- `dbx-ai`: PydanticAI + Databricks model serving helpers.
+- `dbx-caddy`: Caddy binary install and process helpers.
+- `dbx-concurio`: Disk cache and executable install helpers.
+- `dbx-core`: Shared base utilities (objects, paths, parsing, project discovery).
+- `dbx-cv`: Computer-vision utilities for RTSP frame workflows.
+- `dbx-ip`: IP lookup helpers backed by `ipwho.is`.
+- `dbx-openapi`: OpenAPI code generation utilities used by workspace tooling.
+- `dbx-postgres`: Local and remote Postgres helpers on top of SQLAlchemy.
+- `dbx-reflex`: Reusable Reflex components and state/event helpers.
+- `dbx-tools`: Databricks-focused runtime, config, warehouse, Genie, and experiment helpers.
+- `demo-iot`: FastAPI and Kafka based IoT demo application.
 
 ## Prerequisites
 
-* Python 3.12+
-* [uv](https://github.com/astral-sh/uv)
+- Python `>=3.11,<3.13`
+- [uv](https://github.com/astral-sh/uv)
 
 ## Local Setup
-
-Synchronize the workspace to resolve all project dependencies:
 
 ```bash
 uv sync --workspace
 ```
 
-You can then execute any module script in place:
+Run package modules directly with workspace resolution:
 
 ```bash
 uv run --project <project-name> python -m <module>.<script>
 ```
 
-Because all modules live in the same uv workspace, local changes in one project
-are immediately visible to dependents without publishing wheels or editing
-`PYTHONPATH`.
+## Notes
 
-## Additional Notes
-
-* Use `uv run --project <member>` for ad-hoc commands inside a specific module.
-* See individual project READMEs for project specific documentation and usage.
-
-## Migration Utility
-
-Use `scripts/migrate_to_databricks_tools_core.py` to migrate repositories from
-`dbx-tools` patterns to `databricks-tools-core`.
-
-Dry-run (default):
-
-```bash
-python scripts/migrate_to_databricks_tools_core.py --root . --report migration-report.json
-```
-
-Apply changes:
-
-```bash
-python scripts/migrate_to_databricks_tools_core.py --root . --apply --report migration-report.json
-```
-
-Rollback strategy:
-
-```bash
-git restore .
-```
-
-The script also writes a report with changed files and manual review items.
+- Each package has its own `pyproject.toml`.
+- Workspace package references are managed with `tool.uv.sources` and local file dependencies.
+- See package-level READMEs for package-specific examples and behavior.

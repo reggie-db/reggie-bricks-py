@@ -33,7 +33,7 @@ Reliable real time data consumption:
 To run the IoT demo application:
 
 ```bash
-uv run --project tools-iot python -m demo_iot.app
+uv run --project demo-iot python -m demo_iot.app
 ```
 
 Note: Requires access to a Kafka cluster and Databricks workspace configuration.
@@ -48,4 +48,10 @@ Note: Requires access to a Kafka cluster and Databricks workspace configuration.
 * `humanize`
 * `aioreactive`
 * `websockets`
+* `pytimeparse`
+* `sqlalchemy`
+* `asyncpg`
+* `greenlet`
+* `psycopg2-binary`
+* `dateparser`
 

@@ -11,6 +11,8 @@ from lfp_logging import logs
 
 from dbx_concurio import caches
 
+"""Executable installation helpers with cache-backed local reuse."""
+
 LOG = logs.logger()
 
 type InstallSource = Callable[[], PathLike] | PathLike | str
@@ -19,6 +21,7 @@ _CACHE = caches.DiskCache(__file__)
 
 
 def executable(source: InstallSource, identifier: Any | None = None) -> "InstallPath":
+    """Resolve, install, and cache an executable from path, URL, or loader."""
     if identifier is None:
         identifier = source
     cache_key = objects.hash(identifier).hexdigest()
@@ -26,10 +29,11 @@ def executable(source: InstallSource, identifier: Any | None = None) -> "Install
 
 
 def _install(source: "InstallSource", eget: bool = True) -> "InstallPath":
+    """Install or materialize an executable from local path, URL, or loader."""
     if isinstance(source, (Path, str)):
         path = paths.path(source, exists=True)
         if path is None:
-            url = urlparse(source)
+            url = urlparse(str(source))
 
             def _download_source():
                 temp_path = paths.temp_dir() / uuid.uuid4().hex
@@ -49,7 +53,7 @@ def _install(source: "InstallSource", eget: bool = True) -> "InstallPath":
             result_source = _path_source
     else:
         result_source = source
-    result = objects.call(result_source)
+    result = objects.call(lambda: result_source())
     if not isinstance(result, InstallPath):
         result = InstallPath(path=result)
     if not os.access(result, os.X_OK):
@@ -62,6 +66,8 @@ def _eget():
 
 
 class InstallPath(Path):
+    """Path wrapper that supports optional completion callbacks."""
+
     def __init__(
         self,
         path: PathLike,
@@ -70,7 +76,8 @@ class InstallPath(Path):
         super().__init__(path)
         self._on_complete = on_complete
 
-    def complete(self):
+    def complete(self) -> None:
+        """Invoke optional completion callback for post-use cleanup."""
         if self._on_complete is not None:
             objects.call(self._on_complete, self)
 

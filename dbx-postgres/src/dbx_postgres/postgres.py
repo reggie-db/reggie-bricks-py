@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine as sql_create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
+"""SQLAlchemy engine helpers with database bootstrap and readiness checks."""
+
 LOG = logs.logger()
 
 _DEFAULT_ADMIN_DATABASE = "postgres"
@@ -22,6 +24,11 @@ def create_engine(
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
 ) -> Engine:
+    """Create a synchronous SQLAlchemy engine and initialize database objects.
+
+    Creates the target database when missing, waits for availability, and
+    optionally creates ORM tables and executes bootstrap SQL statements.
+    """
     return _create_engine(
         url,
         *tables,
@@ -40,6 +47,11 @@ def create_async_engine(
     database_timeout: float = _DEFAULT_DATABASE_TIMEOUT,
     **kwargs,
 ) -> AsyncEngine:
+    """Create an async SQLAlchemy engine after ensuring database readiness.
+
+    This uses the same bootstrap behavior as ``create_engine`` to ensure the
+    target database exists before returning an ``AsyncEngine``.
+    """
     _create_engine(
         url,
         *tables,
@@ -57,7 +69,7 @@ def _create_engine(
     admin_database: str,
     database_timeout: float,
     **kwargs,
-):
+) -> Engine:
     def _create(timeout: float | None = None) -> Engine | None:
         timeout_at = time.time() + timeout if timeout else None
         while True:

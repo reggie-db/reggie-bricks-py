@@ -84,7 +84,7 @@ def temp_dir() -> Path:
             if temp_dir:
                 break
     if not temp_dir:
-        temp_dir = home(temp_fallback=False) / ".tmp"
+        temp_dir = home(temp_dir_fallback=False) / ".tmp"
         temp_dir.mkdir(parents=True, exist_ok=True)
     return temp_dir
 

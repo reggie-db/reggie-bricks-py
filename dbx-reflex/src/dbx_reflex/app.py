@@ -5,26 +5,35 @@ from dbx_reflex import events, states
 
 
 class SortState(rx.State):
+    """State helper for sort query parameter synchronization."""
+
     @rx.var
     def sort(self) -> str:
+        """Return the current sort query parameter normalized to lowercase."""
         return self.router.url.query_parameters.get("sort", "asc").lower()
 
     def set_sort(self, value: str) -> EventSpec:
+        """Set or clear the ``sort`` query parameter."""
         return states.set_query_param(self, "sort", value)
 
 
 class SearchState(rx.State):
+    """State helper for search query parameter synchronization."""
+
     page: str = "1"
 
     @rx.var
     def q(self) -> str:
+        """Return the current ``q`` search query parameter."""
         return self.router.url.query_parameters.get("q", "")
 
     def set_q(self, value: str) -> EventSpec:
+        """Set or clear the ``q`` query parameter."""
         return states.set_query_param(self, "q", value)
 
 
-def index():
+def index() -> rx.Component:
+    """Render a demo page showing query-bound search and sort state."""
     search_input = rx.input(
         name="q",
         placeholder="Type query...",

@@ -4,17 +4,21 @@ import reflex as rx
 
 
 class IntersectionObserver(rx.el.Div):
+    """Reflex component wrapper for browser ``IntersectionObserver`` events."""
+
     root: rx.Var[str]
     root_margin: rx.Var[str]
     threshold: rx.Var[float]
 
     @classmethod
     def create(cls, *children, **props) -> rx.el.Div:
+        """Create component props and inject an id when one is not supplied."""
         if "id" not in props:
             props["id"] = rx.vars.get_unique_variable_name()
         return super().create(*children, **props)
 
     def get_event_triggers(self) -> dict[str, Any]:
+        """Register custom event trigger wiring for ``on_intersect``."""
         return {
             **super().get_event_triggers(),
             "on_intersect": lambda e0: [e0],
@@ -98,8 +102,8 @@ def react_markdown(
 
     Args:
         content: Markdown source text.
-        use_gfm: Enable GitHub-flavored markdown parsing (tables, task lists).
         **props: Props supported by `react-markdown` (for example `skip_html`).
+            If `remark_plugins` is omitted, GFM is enabled by default.
 
     Returns:
         A configured `ReactMarkdown` component instance.

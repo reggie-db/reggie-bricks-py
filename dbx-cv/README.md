@@ -40,3 +40,5 @@ from dbx_cv import cams
 * `imagehash`
 * `opencv-python-headless`
 
+For the canonical dependency list, see `dbx-cv/pyproject.toml`.
+

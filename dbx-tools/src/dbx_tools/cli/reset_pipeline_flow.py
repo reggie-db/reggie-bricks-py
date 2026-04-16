@@ -14,7 +14,7 @@ from dbx_tools import configs
 LOG = logs.logger()
 
 
-def _reset_checkpoint(config: Config, pipeline_id: str, flow: list[str]):
+def _reset_checkpoint(config: Config, pipeline_id: str, flow: list[str]) -> None:
     """Request a checkpoint reset for one or more DLT streaming flows.
 
     Args:
@@ -50,7 +50,7 @@ def _reset_checkpoint(config: Config, pipeline_id: str, flow: list[str]):
         sys.exit(2)
 
 
-def main():
+def main() -> None:
     """Parse CLI arguments and submit a checkpoint reset request."""
     parser = argparse.ArgumentParser(
         description="Reset DLT streaming checkpoint selection for specific flows"

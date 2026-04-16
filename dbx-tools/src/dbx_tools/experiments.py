@@ -19,7 +19,8 @@ from databricks.sdk.service.ml import (
     ExperimentAccessControlRequest,
     ExperimentPermissionLevel,
 )
-from dbx_ai.agents import projects, strs
+from dbx_ai.agents import  strs
+from dbx_core import projects
 from lfp_logging import logs
 
 from dbx_tools import clients, runtimes
@@ -237,11 +238,14 @@ def _grant_app_creator_permissions(
 ) -> None:
     """Grant CAN_MANAGE to the app creator when running inside a Databricks App.
 
-    When the process is detected as a Databricks App via ``runtimes.app_info()``,
-    the app's creator is fetched and added to the experiment's permission list so
-    they retain access even when the app runs under a service principal identity.
-    Fetches the current ACL, merges in the creator entry, then resets all permissions.
-    No-ops silently if the creator already has CAN_MANAGE.
+    Experiments auto-created by app code can land in a workspace location that is
+    not directly accessible to the human app owner because creation runs under the
+    app identity. The preferred pattern is to define experiments explicitly as
+    Databricks Bundle resources. This helper is the fallback for auto-created
+    experiments: when ``runtimes.app_info()`` indicates app runtime, it resolves
+    the app creator and ensures that user has ``CAN_MANAGE`` on the experiment.
+    The helper reads current ACLs, preserves existing entries, and no-ops silently
+    when the creator already has ``CAN_MANAGE``.
 
     Args:
         lookup_ctx: Shared lookup context used to reach the workspace client.

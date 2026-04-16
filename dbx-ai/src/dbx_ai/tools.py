@@ -7,6 +7,8 @@ from pydantic_ai import Agent, RunContext
 
 from dbx_ai import agents
 
+"""Utility prompt and summarization helpers backed by ``dbx_ai.agents``."""
+
 Instructions: TypeAlias = Iterable["Instructions"] | str | None
 
 
@@ -16,6 +18,18 @@ async def summarize(
     run_context: RunContext[Any] | None = None,
     agent: Agent | None = None,
 ) -> str:
+    """Summarize text with optional instructions.
+
+    Args:
+        text: Input text to summarize.
+        instructions: Optional additional instruction text or iterable of
+            instruction fragments applied before the default summarize instruction.
+        run_context: Optional run context used to pass usage metadata.
+        agent: Optional explicit agent to execute. Uses ``agents.small()`` when omitted.
+
+    Returns:
+        Summarized text string.
+    """
     return await run(
         text,
         [instructions, "Summarize the text without commentary"],
@@ -31,6 +45,18 @@ async def prompt(
     run_context: RunContext[Any] | None = None,
     agent: Agent | None = None,
 ) -> str:
+    """Convert arbitrary values into a normalized prompt string.
+
+    Args:
+        *values: Arbitrary values to serialize as JSON input for prompt generation.
+        instructions: Optional extra instructions appended before tool instructions.
+        run_context: Optional run context used to pass usage metadata.
+        agent: Optional explicit agent to execute. Uses ``agents.small()`` when omitted.
+
+    Returns:
+        Generated prompt text. Returns an empty string when no serializable values
+        were provided.
+    """
     if values:
         data_json = objects.to_json(values)
         if data_json:
@@ -196,6 +222,20 @@ async def run(
     agent: Agent | None = None,
     **kwargs,
 ) -> T | None:
+    """Execute an agent run for a user prompt plus normalized instructions.
+
+    Args:
+        user_prompt: Primary user prompt content.
+        instructions: Optional instruction text or iterable merged ahead of the user prompt.
+        output_type: Optional output type forwarded to ``agent.run``.
+        run_context: Optional run context used to pass usage metadata.
+        agent: Optional explicit agent. Uses ``agents.small()`` when omitted.
+        **kwargs: Additional keyword arguments forwarded to ``agent.run``.
+
+    Returns:
+        Agent output value. Returns an empty string when ``output_type is str`` and
+        no output is produced, otherwise ``None`` for empty output.
+    """
     run_prompt = _run_prompt(user_prompt, instructions)
     if not run_prompt:
         return None
@@ -212,6 +252,7 @@ async def run(
 
 
 def _run_prompt(user_prompt: str, instructions: Instructions) -> str:
+    """Build a normalized combined prompt from instructions and user input."""
     run_prompt = []
     for instruction in to_iterable(instructions, flatten=True):
         instruction = strs.trim(instruction)
@@ -227,7 +268,8 @@ def _run_prompt(user_prompt: str, instructions: Instructions) -> str:
     return "\n".join(run_prompt)
 
 
-async def main():
+async def main() -> None:
+    """Run local examples for prompt formatting and summarization helpers."""
     blob = """
     Here are my priorities for the year:
      1. Sell more gas

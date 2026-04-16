@@ -12,7 +12,7 @@ import httpx
 import mlflow
 import mlflow.pydantic_ai as pydantic_ai_mlflow
 from databricks.sdk import WorkspaceClient
-from dbx_core import objects, projects, strs
+from dbx_core import objects, strs
 from dbx_tools import clients, configs, experiments
 from lfp_logging import logs
 from openai import AsyncClient
@@ -79,7 +79,7 @@ def create(
 
 
 @functools.cache
-def _auto_instrument():
+def _auto_instrument() -> None:
     """Configure MLflow PydanticAI autologging once per process.
 
     The tracking URI is set to Databricks when not already configured. The
@@ -190,11 +190,13 @@ def _client_default() -> AsyncClient:
 
 @functools.cache
 def large() -> Agent[None, str]:
+    """Return a cached agent configured with the default large model."""
     return create(models.large())
 
 
 @functools.cache
 def small() -> Agent[None, str]:
+    """Return a cached agent configured with the default small model."""
     return create(models.small())
 
 
@@ -230,6 +232,7 @@ def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
             self._header_fn = header_fn
 
         async def async_auth_flow(self, request: httpx.Request):
+            """Inject Databricks bearer auth headers into outbound requests."""
             # Databricks SDK authentication is synchronous but returns the
             # authorization headers needed for each outgoing request.
             auth_headers = self._header_fn()
@@ -260,7 +263,8 @@ def _http_client_default() -> httpx.AsyncClient:
     return _http_client(clients.workspace_client())
 
 
-async def main():
+async def main() -> None:
+    """Run a local streaming tool-use example agent."""
     from pydantic_ai import RunContext
 
     calculator_agent = create(

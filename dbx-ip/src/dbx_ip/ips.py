@@ -82,6 +82,8 @@ def info(address: IPAddressLike = None, **kwargs: Any) -> IpInfo:
     Args:
         address: Optional IP address value (string or `ipaddress` object) or
             hostname. When omitted, ipwho.is resolves the caller's public IP.
+        **kwargs: Additional keyword arguments forwarded to ``urllib.request.urlopen``
+            (for example ``timeout``). A default timeout is applied when omitted.
 
     Returns:
         Parsed ``IpInfo``.

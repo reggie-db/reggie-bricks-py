@@ -1,9 +1,0 @@
-[build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"]
-build-backend = "uv_build"
-
-[project]
-name = "dbx-openapi"
-version = "0.0.1+revd5112ed"
-requires-python = ">=3.11,<3.13"
-dependencies = ["cyclopts"]

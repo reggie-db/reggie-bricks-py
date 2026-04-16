@@ -10,7 +10,12 @@ LOG = logs.logger()
 # noinspection PyTypeChecker
 def set_query_param(
     state: rx.State, name: str, value: str | None, replace: bool = True
-) -> EventSpec:
+) -> EventSpec | list:
+    """Return a redirect event when a query param change is needed.
+
+    Returns an empty list when no URL change is required so callers can use it
+    directly from event handlers without triggering a navigation.
+    """
     params = dict(state.router.url.query_parameters)
     modified = False
     if value:

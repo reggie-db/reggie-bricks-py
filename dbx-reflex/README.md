@@ -20,6 +20,7 @@ The main entry point for the Reflex application:
 Advanced UI components:
 
 * **IntersectionObserver**: A Reflex component wrapper for the browser Intersection Observer API, enabling scroll based triggers and lazy loading.
+* **ReactMarkdown / `react_markdown`**: Wrapper around `react-markdown` with default GFM support.
 
 ### State Management (`states.py`)
 
@@ -62,7 +63,7 @@ from dbx_reflex import states
 class SearchState(rx.State):
     @rx.var
     def q(self) -> str:
-        return self.router.page.params.get("q", "")
+        return self.router.url.query_parameters.get("q", "")
 
     def set_q(self, value: str):
         return states.set_query_param(self, "q", value)

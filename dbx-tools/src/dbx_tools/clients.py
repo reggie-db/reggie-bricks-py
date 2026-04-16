@@ -48,10 +48,9 @@ def _workspace_client_default() -> WorkspaceClient:
     """Create a Databricks ``WorkspaceClient`` with the current context and environment variables.
 
     This function implements a priority-based authentication flow for Databricks clients:
-    1.  Uses `databricks-tools-core` logic if available.
-    2.  Handles explicit host/token overrides (via ContextVars).
-    3.  Manages OAuth M2M authentication for Databricks Apps (using client ID/secret).
-    4.  Defaults to standard SDK authentication if no explicit configuration is provided.
+    1.  Handles explicit host/token overrides (via ContextVars).
+    2.  Manages OAuth M2M authentication for Databricks Apps (using client ID/secret).
+    3.  Defaults to standard SDK authentication when no explicit override is provided.
 
     The client is configured with product identity in the user-agent.
     """
