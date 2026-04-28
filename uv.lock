@@ -792,7 +792,7 @@ wheels = [
 
 [[package]]
 name = "dbx-ai"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-ai" }
 dependencies = [
     { name = "dbx-tools" },
@@ -821,7 +821,7 @@ dev = [
 
 [[package]]
 name = "dbx-caddy"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-caddy" }
 dependencies = [
     { name = "pygithub" },
@@ -832,7 +832,7 @@ requires-dist = [{ name = "pygithub" }]
 
 [[package]]
 name = "dbx-concurio"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-concurio" }
 dependencies = [
     { name = "dbx-core" },
@@ -849,7 +849,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-core"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-core" }
 dependencies = [
     { name = "lfp-logging" },
@@ -868,7 +868,7 @@ dev = [{ name = "pydantic", specifier = ">=2.12.5" }]
 
 [[package]]
 name = "dbx-cv"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-cv" }
 dependencies = [
     { name = "dbx-core" },
@@ -888,7 +888,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-ip"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-ip" }
 dependencies = [
     { name = "dbx-core" },
@@ -899,7 +899,7 @@ requires-dist = [{ name = "dbx-core", editable = "dbx-core" }]
 
 [[package]]
 name = "dbx-postgres"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-postgres" }
 dependencies = [
     { name = "dbx-core" },
@@ -920,7 +920,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-reflex"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-reflex" }
 dependencies = [
     { name = "reflex" },
@@ -931,7 +931,7 @@ requires-dist = [{ name = "reflex", specifier = ">=0.8.26" }]
 
 [[package]]
 name = "dbx-serpapi"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-serpapi" }
 dependencies = [
     { name = "dbx-tools" },
@@ -946,7 +946,7 @@ requires-dist = [
 
 [[package]]
 name = "dbx-tools"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "dbx-tools" }
 dependencies = [
     { name = "databricks-connect", version = "16.1.7", source = { registry = "https://pypi-proxy.dev.databricks.com/simple/" }, marker = "python_full_version < '3.12'" },
@@ -997,7 +997,7 @@ wheels = [
 
 [[package]]
 name = "demo-iot"
-version = "0.0.1+revdf33ae2"
+version = "0.0.1+revce67f3e"
 source = { editable = "demo-iot" }
 dependencies = [
     { name = "aioreactive" },
