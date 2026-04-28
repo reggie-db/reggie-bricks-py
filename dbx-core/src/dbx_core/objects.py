@@ -230,7 +230,7 @@ def dump(obj: Any, recursive: bool = True, member_properties: bool = True) -> Da
     return _to_data(obj)
 
 
-def to_list[T](obj: Iterable[T] | T, flatten: bool = False) -> list[T]:
+def to_list(obj: Iterable[T] | T, flatten: bool = False) -> list[T]:
     def _to_list(value: Iterable[T] | T) -> list:
         if isinstance(value, list):
             values = value
