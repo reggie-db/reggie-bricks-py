@@ -8,8 +8,9 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import urlopen
 
-from dbx_core.parsers import to_bool, to_float
+from dbx_core.parsers import to_float
 from dbx_core.strs import trim
+from lfp_types import to_bool
 
 """
 IP information service helpers.
@@ -25,6 +26,14 @@ from `ipwho.is`:
 IPAddressLike: TypeAlias = str | IPv4Address | IPv6Address | None
 _IPWHO_URL = "https://ipwho.is"
 _TIMEOUT_SECONDS_DEFAULT = 10.0
+
+
+def _to_bool_or_none(value: Any) -> bool | None:
+    """Parse bool-like values and return ``None`` when coercion is not possible."""
+    try:
+        return to_bool(value, default=None)
+    except ValueError:
+        return None
 
 
 @dataclass(slots=True)
@@ -55,7 +64,7 @@ class IpInfo:
         """Create an ``IpInfo`` from a JSON payload."""
         return cls(
             ip=trim(payload.get("ip"), default=None),
-            success=to_bool(payload.get("success"), default=None),
+            success=_to_bool_or_none(payload.get("success")),
             type=trim(payload.get("type"), default=None),
             continent=trim(payload.get("continent"), default=None),
             continent_code=trim(payload.get("continent_code"), default=None),
@@ -66,7 +75,7 @@ class IpInfo:
             city=trim(payload.get("city"), default=None),
             latitude=to_float(payload.get("latitude")),
             longitude=to_float(payload.get("longitude")),
-            is_eu=to_bool(payload.get("is_eu"), default=None),
+            is_eu=_to_bool_or_none(payload.get("is_eu")),
             postal=trim(payload.get("postal"), default=None),
             calling_code=trim(payload.get("calling_code"), default=None),
             capital=trim(payload.get("capital"), default=None),

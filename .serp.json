@@ -1,0 +1,2116 @@
+{
+  "search_metadata": {
+    "id": "69e25c6eafea45301c9e8d3f",
+    "status": "Success",
+    "json_endpoint": "https://serpapi.com/searches/cRcEYGhz-uV0bFd1zcRx1w/69e25c6eafea45301c9e8d3f.json",
+    "created_at": "2026-04-17 16:14:38 UTC",
+    "processed_at": "2026-04-17 16:14:38 UTC",
+    "google_maps_url": "https://www.google.com/maps/search/racetrac/@34.238148,-84.227853,14z/?hl=en",
+    "raw_html_file": "https://serpapi.com/searches/cRcEYGhz-uV0bFd1zcRx1w/69e25c6eafea45301c9e8d3f.html",
+    "prettify_html_file": "https://serpapi.com/searches/cRcEYGhz-uV0bFd1zcRx1w/69e25c6eafea45301c9e8d3f.prettify",
+    "total_time_taken": 1.4
+  },
+  "search_parameters": {
+    "engine": "google_maps",
+    "type": "search",
+    "q": "racetrac",
+    "ll": "@34.238148,-84.227853,14z",
+    "google_domain": "google.com",
+    "hl": "en"
+  },
+  "search_information": {
+    "local_results_state": "Results for exact spelling",
+    "query_displayed": "racetrac"
+  },
+  "local_results": [
+    {
+      "position": 1,
+      "title": "RaceTrac",
+      "place_id": "ChIJU_gARCqD9YgRr-_td0h-B9A",
+      "data_id": "0x88f5832a4400f853:0xd0077e4877edefaf",
+      "data_cid": "14990088734440812463",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f5832a4400f853%3A0xd0077e4877edefaf&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f5832a4400f853%3A0xd0077e4877edefaf&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.2377804,
+        "longitude": -84.22813169999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJU_gARCqD9YgRr-_td0h-B9A",
+      "provider_id": "/g/11fwbtc24x",
+      "rating": 3,
+      "reviews": 114,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "3615 Canton Hwy, Cumming, GA 30040, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5863",
+      "website": "https://www.racetrac.com/locations/georgia/cumming/hwy-20-~-post?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAHpT23H--s2h16ws34GnjCiWqbGXrqiVyYNBoDywMS-o4wlcSkwYYLt4GQWiDKWRVABYSRdEAuTfP6fJJzvgEGYfrIr9HCugSi7Yf98CeO1JygMPBNKk-8cJV2MrWzNx8PJs5I=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/ey2qcnicBcHtFoEwGADgK3qlD5Rz_Kg4ZZTIKftraqW0bMvk-tyEu_E8v28lZS-WmtZW5oQyRttiEAUnrJNFJyeEPTTaCyAChOYm8bFxw_5smCGAMCp9roRpBd3dr_PnNbjwZ52NOPbYelRRCsxSLUkbhfFeWsExr9e7_JS5Hk5Pt407nMtkXiL0edFNgEu-5U7oDzStF7h0bL846GikUeLFuwZsgjIj4vknftsJErPtStlTqHTdgQY69gdbREN1"
+    },
+    {
+      "position": 2,
+      "title": "RaceTrac",
+      "place_id": "ChIJvxIhDdCa9YgRfCjortsK90U",
+      "data_id": "0x88f59ad00d2112bf:0x45f70adbaee8287c",
+      "data_cid": "5041510246513125500",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f59ad00d2112bf%3A0x45f70adbaee8287c&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f59ad00d2112bf%3A0x45f70adbaee8287c&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.1807229,
+        "longitude": -84.13392809999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJvxIhDdCa9YgRfCjortsK90U",
+      "provider_id": "/g/1tmy5xbt",
+      "rating": 3.3,
+      "reviews": 182,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "888 Buford Rd, Cumming, GA 30041, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6300",
+      "website": "https://www.racetrac.com/locations/georgia/cumming/cumming?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Free air",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot",
+            "Paid parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEk26hgyrm5NWKMt1rv2o-us6yX50ESTQ7u0fzq8zo728wa_teYHPdfkMb_ErjjUaFJm-Hgp4Um7rpceRlK1-_VlhB1Wn6n6xh6b4aj7OnR_2UmuH1-mqnQOzM5GfFTORYTfc8=w122-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/ww2Fg3icBcFRboIwGADgE_1iqxRm4oMmKJlBhMHUJ4K1tAHaYlt0cr5dYrfZ9_39CucGu_K8XixmXGves9EyQ7VyTLkZ1dLjgwVqwXqb0zHrNlGHieBvI_3j-ZA4ZJ5Yw2jJ--LPo68iC8Z5Mz3CSQc4fNWVY9f4dG-65FZFpm3LevcpIebDspSBGSjL-wOC6rsXW3RWRJEfQW7Lug1SlVe4lGOMQD5Ulk6Jv292RZpfi4aG6xfCGMQHhg6U_gegIEQw"
+    },
+    {
+      "position": 3,
+      "title": "RaceTrac",
+      "place_id": "ChIJ87isn8id9YgRFWcmdT7821k",
+      "data_id": "0x88f59dc89facb8f3:0x59dbfc3e75266715",
+      "data_cid": "6475046234458842901",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f59dc89facb8f3%3A0x59dbfc3e75266715&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f59dc89facb8f3%3A0x59dbfc3e75266715&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.1578987,
+        "longitude": -84.23663379999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJ87isn8id9YgRFWcmdT7821k",
+      "provider_id": "/g/11ft8g0xgb",
+      "rating": 2.9,
+      "reviews": 77,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "4855 Atlanta Hwy, Alpharetta, GA 30004, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5859",
+      "website": "https://www.racetrac.com/locations/georgia/alpharetta/hwy-9-~-post?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.52/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAHD1ZNrNU26uxG1loFk8hC6SF1fWZBEl2f-m6jVL2Rf6GggkLfBNGVj6HyKSrmt8yhpFJek6z81cJl3ebPpKKzf3QB9FIZUloiU08OQJCDDbfxWZGqtHQexEHAVm_9SgLI8iVWi=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/MCW-KnicBcHbCoIwAADQL1o2hTGDHjRvqVgmKvgSJLvYpjO3yPq_PqK_6Zzflxsz651lSe5smFJMkqcmS68mQyaz6dVosVmDXgNteeeiFF4SwK5YitpGzzWGUkUC8wOqIkjbzg-lTcGI7k1uXyiKGRM59Yu4uaPknVXLaPCbz1FKBPpg2KfSIbfznGUf6pS-Gx27Wqqh3uJTmR6C4EbXtosfJinJGiZeM17diuVHPDTtsH_hLeAQukCASf0BS2dDXQ"
+    },
+    {
+      "position": 4,
+      "title": "RaceTrac",
+      "place_id": "ChIJ54pT2FR79YgRWn3Gdw5ZG0M",
+      "data_id": "0x88f57b54d8538ae7:0x431b590e77c67d5a",
+      "data_cid": "4835556543586270554",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f57b54d8538ae7%3A0x431b590e77c67d5a&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f57b54d8538ae7%3A0x431b590e77c67d5a&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.2528682,
+        "longitude": -84.3608313
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJ54pT2FR79YgRWn3Gdw5ZG0M",
+      "provider_id": "/g/11jng3lxwg",
+      "rating": 3.3,
+      "reviews": 68,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "7984 Cumming Hwy, Canton, GA 30115, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5872",
+      "website": "https://www.racetrac.com/locations/georgia/canton/macedonia?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.70/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAG_mFb3MnX0-qmN2myWTnfZOijnPbwI0yA6sIgicOeAvC1NTx_RLM0J13xzDl4PaL4pOPh3qzyN6BB7yr1i8A0sal2I1FCq4DI-vDKfb52ASSLAHcb0duFfcP3b06vIPvBuGqCMsw=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/sKFyFnicBcFZjoIwAADQExVairgk81EgYEeWzmii8cfYyjZCC5ZFvKBnmNv43v-77PtWb0yzLrFRKFXU2aCzh1Cyz2RvCNWYRauB0ECbhCU_dxJemoDjWJ4g6JrEaubjQebntPqTjE8UzsTRtKhEmpHRQ8nhefmNYviN8PPl1za7RnabshJ3rzlxXHc5P1C1IlBfa4uiwOtsn4LR3-V8YZH9PiJbweFtCHLBMIfOSNnoDmHnxXr6mlYQlAitwR1I9QEVqUPj"
+    },
+    {
+      "position": 5,
+      "title": "RaceTrac",
+      "place_id": "ChIJ9clbmneb9YgRhR5pfJwHKds",
+      "data_id": "0x88f59b779a5bc9f5:0xdb29079c7c691e85",
+      "data_cid": "15792161937034911365",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f59b779a5bc9f5%3A0xdb29079c7c691e85&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f59b779a5bc9f5%3A0xdb29079c7c691e85&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.1505983,
+        "longitude": -84.1747073
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJ9clbmneb9YgRhR5pfJwHKds",
+      "provider_id": "/g/1pzqv_b7r",
+      "rating": 3.5,
+      "reviews": 216,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "510 Peachtree Pkwy, Cumming, GA 30041, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5675",
+      "website": "https://www.racetrac.com/locations/georgia/cumming/ronald-regan?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.70/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEwHGZcEbSQNI4JGu9EP4-VhoBNkrQgqIQ7U9A1nIZuYIapYKK3HxG_WXJXGrXlW38cQX802f4idkUT0OVpeQ-1g01zo4UoGvGQ-V2STnWMsXpkWxmJhLXK7ZuwXIcWZn7EEw7N=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/vNGgpXicBcHhjoIgAADgJyIl3dS2fngbI7QsVgr5p3WcBzcMSDRb79dD9Db3fZ-3GkfnV0HQq2ghrZV9N_luENaMnRkXwt4C6TwQHvggP1RU52je4Fag7yOtSFzgKUOHGDTKflV6oPJOaFJnOTSknc7k6s5lGW2e-MJ4wfHAexalgvI0XP7Gfz-6PoX7xnUUQBnCl41rix-YgmZ5PBm289xp9rwVasvLpJ1mTgRrTYLQnFTrOQ2BgjADGhj7DzgbQxY"
+    },
+    {
+      "position": 6,
+      "title": "RaceTrac",
+      "place_id": "ChIJa9Ve2S2c9YgR46QjruYGh1o",
+      "data_id": "0x88f59c2dd95ed56b:0x5a8706e6ae23a4e3",
+      "data_cid": "6523190173103269091",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f59c2dd95ed56b%3A0x5a8706e6ae23a4e3&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f59c2dd95ed56b%3A0x5a8706e6ae23a4e3&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.1172928,
+        "longitude": -84.222109
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJa9Ve2S2c9YgR46QjruYGh1o",
+      "provider_id": "/g/11hf2f9m1d",
+      "rating": 3.5,
+      "reviews": 141,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "1385 McFarland Pkwy, Alpharetta, GA 30004, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5837",
+      "website": "https://www.racetrac.com/locations/georgia/alpharetta/mcfarland?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.50/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFilFM5Hcf-SWC8GDDUqJAvr6AqVC82inPJ1Y6XJofszMuFUFindOa-_Rcfdv9CBZArojUEkRNh44b7VKLZz510JHZI4rGxBajVWq5XDJl9DftTwQ_VG_iKXnv_Z5RT5DSDZ5vm=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/JdPvhnicBcHtFoEwAADQJ5pEo5zjxzTFyEcp2Z8O05eyqU0c7-chvI17f99CqYecaFpdDHu5EHmdPmXaMsFVylWPibuWPyRgEkgN7Tb7Cjll7XhwwTIQHG3TxThsCOraEWoi2xyUfEf00ygmIpMf7-mETsmv2zNIfJZdO8ueUdSKWziv_E1hGJdxtFrTD9T7ZEGXRuu-Z-dbdGxgjElt4UwdXvskcpNyFfMuodA_QBxgCrv79GX2QaHrFqgAF39ZpkNe"
+    },
+    {
+      "position": 7,
+      "title": "RaceTrac",
+      "place_id": "ChIJI8G1YsmZ9YgR1Z7cXPb53Uc",
+      "data_id": "0x88f599c962b5c123:0x47ddf9f65cdc9ed5",
+      "data_cid": "5178569983061171925",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f599c962b5c123%3A0x47ddf9f65cdc9ed5&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f599c962b5c123%3A0x47ddf9f65cdc9ed5&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.0949228,
+        "longitude": -84.1765607
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJI8G1YsmZ9YgR1Z7cXPb53Uc",
+      "provider_id": "/g/11tg73stwj",
+      "rating": 3.5,
+      "reviews": 160,
+      "type": "Gas station",
+      "types": [
+        "Gas station"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station"
+      ],
+      "address": "2610 Peachtree Pkwy, Cumming, GA 30041, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6103",
+      "website": "https://www.racetrac.com/locations/georgia/cumming/brookwood",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAG8NHzm5BVA724uF1hcdT0e79Q8gFmIkK85SYJl6sdtMViZG9N6TK6QRea1FW2obgA4dm_NPQE_RVchKIz5EQyxsB3wGhEwJrk7UGz2NbGU5zuEwJSITJQVSHGE9UG7m9gvxIlc=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/I1kCX3icDcjbDoIgAADQLyLTvNHWg21K6mKRl1YvrZBBU6QFZvl_fUR_U-fxfD_CmLteWlYnFjOuFO_YoNmDqt6w3syokha_a0A10Fa0w6SNUIg3k_TWdRQ47pDYgjblnAWQhDyRaZuHXnHMOl83ZlvfTghiv8x9smcXOzk46sojt5FnvCPxeV9TkaeTF5P3S68XIxLxmD3aoEKTg6-o8qbhH0VaZqQuNiiGFQok5M9X2tHVGM6BsG0IWtCrHwJHQsc"
+    },
+    {
+      "position": 8,
+      "title": "RaceTrac",
+      "place_id": "ChIJL69zIDyP9YgRuyjva5WX2No",
+      "data_id": "0x88f58f3c2073af2f:0xdad897956bef28bb",
+      "data_cid": "15769520763254548667",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f58f3c2073af2f%3A0xdad897956bef28bb&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f58f3c2073af2f%3A0xdad897956bef28bb&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.2588186,
+        "longitude": -84.0749183
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJL69zIDyP9YgRuyjva5WX2No",
+      "provider_id": "/g/11fn6k019v",
+      "rating": 3.2,
+      "reviews": 118,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "4265 Browns Bridge Rd, Cumming, GA 30041, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5827",
+      "website": "https://www.racetrac.com/locations/georgia/cumming/keith-bridge?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.53/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF9I3jVEFd1ALsDZpKfxZ63jsD-etGPVOkDkC4jabmoPhXtYptXvlX3Sp23xcNoBco5VoKvv7ObfTKETIKxejBf86ddbiCjDXlQvv1cS-sLO4ZhjEn_ZwVpfE9psEl5YbgU04Wx=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/E2KqRXicBcHRboIwFADQL6qIBSdLfECoxmAEo2PIyzJKoZbKbXZr5Qf3Ef6N57z-pbUGPz1PSzrrAXotHij-OIxWjHbG4e71BglHgl5cHE9DvI32VJVs2_rxAdPaZN1UL6nClAi7K8p8SIckUL_NHQpZ2auxldMVPZsFnfgRNhzCEjLnPvKmu2Tsss8moTbdatm2zS1RaaVPzvn8TPCQB7VUbPypn6XpWGSQ6fDa9F_z4HtaP1dzIn0_IgMZ4Q3o9kUz"
+    },
+    {
+      "position": 9,
+      "title": "RaceTrac",
+      "place_id": "ChIJJ5aN48iJ9YgR26kG_t20QC8",
+      "data_id": "0x88f589c8e38d9627:0x2f40b4ddfe06a9db",
+      "data_cid": "3404920183834716635",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f589c8e38d9627%3A0x2f40b4ddfe06a9db&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f589c8e38d9627%3A0x2f40b4ddfe06a9db&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.3445205,
+        "longitude": -84.05262979999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJJ5aN48iJ9YgR26kG_t20QC8",
+      "provider_id": "/g/126294k4t",
+      "rating": 3.9,
+      "reviews": 268,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "1554 GA-400, Dawsonville, GA 30534, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6233",
+      "website": "https://www.racetrac.com/locations/georgia/dawsonville/dawsonville?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.70/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFAkSmhfMU6r-BSOaipmfHMbm5hDLEtcAaH9uNEj96IgKzeOvRqI3j8g4Ak4Oja4v70iOHDa0vF5jMozSh1TZRpu9BnLyt3T3pPvI_09DPKxSWN0SG3Y75f9CD8QztkwN7CqhU=w163-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/ZY_RsnicBcFtE4EwAADgXzTFejF3PoxKHb0wzvHFpatNUxtbod_nT_g3nuf3ZVpLNTOMO4MjKgS9l50qn4VoddnqUSEag0oFCgWUgbNky3GAOWlYFR-cJ1iQNL_Jpgrja2Mzb-PrAuch6hK_Rk5E10OZ9rtHBOsptTC30jq3ete8paGXm31g17EYCBvvzzvZoUW7-Wi4hzLro4uJvGz9JsfEJCt4cu0KLb3pdtD8lbjLBzvMX2MHAoYmgINW_AFDiEL4"
+    },
+    {
+      "position": 10,
+      "title": "Racetrac",
+      "place_id": "ChIJt3RFWgBl9YgRJu_08OUAZ1Q",
+      "data_id": "0x88f565005a4574b7:0x546700e5f0f4ef26",
+      "data_cid": "6081830809377238822",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f565005a4574b7%3A0x546700e5f0f4ef26&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f565005a4574b7%3A0x546700e5f0f4ef26&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.248581,
+        "longitude": -84.47775519999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJt3RFWgBl9YgRJu_08OUAZ1Q",
+      "provider_id": "/g/11n9svnkg1",
+      "rating": 5,
+      "reviews": 1,
+      "unclaimed_listing": true,
+      "type": "Convenience store",
+      "types": [
+        "Convenience store"
+      ],
+      "type_id": "convenience_store",
+      "type_ids": [
+        "convenience_store"
+      ],
+      "address": "Riverstone Pkwy, Canton, GA 30114, United States",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-proxy/ALd4DhHGfWKyG52WJ_3P824tTeLVEhhzgx7YGgPI27qkLjjTfKkSf0sevUemlhubzFpygHUOHyl5zl0jZDY8e_mOWpDgrUMM1IO3WujzewIYWjtrjMt2YbIu6E1NJj8mfxcGiJaqhaapkMK_TLf4Ud6PutnjYXydnAzYK3X71z2Jha8htchyV_0oStCG=w163-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/lZqw1XicBcFLUoMwAADQE1G-BXTGRUcqf2GmUBo3DIWQGD5JIViSm3oR1773-4c5Z-urqo7YPCBK0Qi3FS4tnTmc-aGlk4rYqrCF7kI9JZ3l4cDvq1j4R6OKajN3DYsXMLmeMZZod4CP8tBwHkNCSNHHw6XXVvhTwmnE211-MIGCMgvEeJSjRr484MJ6yirmoaVMUz3MzGojEj5DUBG-kJQb4B5u9ln_jIg79Xvrf0fNAzcNG9K4LpLeKjs73_hMwE1080mC2Lw5ujQi3LiYt1hca41e-Lv_9tRtU8EvhjIoM_0H4lFXxA"
+    },
+    {
+      "position": 11,
+      "title": "RaceTrac",
+      "place_id": "ChIJcxZW0Vxs9YgRrQ98M_DuJ0w",
+      "data_id": "0x88f56c5cd1561673:0x4c27eef0337c0fad",
+      "data_cid": "5487617386397568941",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f56c5cd1561673%3A0x4c27eef0337c0fad&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f56c5cd1561673%3A0x4c27eef0337c0fad&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.0858366,
+        "longitude": -84.49823769999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJcxZW0Vxs9YgRrQ98M_DuJ0w",
+      "provider_id": "/g/1tht28zv",
+      "rating": 3.9,
+      "reviews": 178,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "155 Hames Rd, Woodstock, GA 30188, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6197",
+      "website": "https://www.racetrac.com/locations/georgia/woodstock/hames-road?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.60/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGPatTIvoVjPtHJX0k_ufo-0b3dVxQEhzHfMCzNSYtv4Yz59VfPfAzBS-OhihjgChJV6WWyohXautOSYD2hm1BHT0ArJSzfXbTiFkUhQXsqZWHxNwhOMRjP8tu_jV0gbRx74ZbY=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/-RRqMnicBcFBcoIwFADQE0WCWqud6QK1SpkRgmAAN44gyReUqPkg5n4eorfpe39vQLzpL8u6wGgglZKXstXlo1ANlg0OCnW15E2TQhNtOcwPa2fNjhj_dopXDF0vpfWhFYrQfHTiffgDxhWbhfGjDLtxZj5mXDDhmHlEAjhDJRfg8UmSvBSkxxaDKFsO4WrP3Zg6Dy8yIs3j86reQZjq-z5xe_8JwWZbsSm2h4pTmW_7z_E-z76fU0rAtmekJo36B0e7Rf4"
+    },
+    {
+      "position": 12,
+      "title": "RaceTrac",
+      "place_id": "ChIJ_-6krVZp9YgRg2nKos3E0C4",
+      "data_id": "0x88f56956ada4eeff:0x2ed0c4cda2ca6983",
+      "data_cid": "3373412508379015555",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f56956ada4eeff%3A0x2ed0c4cda2ca6983&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f56956ada4eeff%3A0x2ed0c4cda2ca6983&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.123142099999995,
+        "longitude": -84.5245357
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJ_-6krVZp9YgRg2nKos3E0C4",
+      "provider_id": "/g/11bwf6k063",
+      "rating": 3.7,
+      "reviews": 196,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "443 Olde Rope Mill Park Rd, Woodstock, GA 30188, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5707",
+      "website": "https://www.racetrac.com/locations/georgia/woodstock/ridgewalk?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEJLXoHZmIPYM_UaHMKE3jA-PLMzmMyYypTp0RnAKy0NMHPnD8eu9kiquOJwzmRs8VomdDaHoaXx0LWLOpad1SCLYCa4G_gmXJFhaORey0tReoE9Aie6rie34CbQqdZE58hJt7n=w122-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/Mzoww3icBcFbcoIwFADQFQUQbAud8SODtBQSQfoCf5wUMoRicqMJo7C_LsLd9Jz7n7BWm2fXPYnA6QH6E58Mv7SgLFfWaUG6vTaoNci4uNztR5xkpIb0IN_Khh4_WUrzJPjFqCR0kXRuZv2hvUrhfPZ2NC3VNuRTNA7nqciui6xM-AWy27IUWH3zyDcpNOtW7zFpYrZ-Pfayzl4EKyo-e7bikER44I-XgQfr-Gd_7g7JQygy-6Q215XvIxH5aEQK_gHjskSz"
+    },
+    {
+      "position": 13,
+      "title": "RaceTrac",
+      "place_id": "ChIJw5z1GE-R9YgR7KUhoGOezLI",
+      "data_id": "0x88f5914f18f59cc3:0xb2cc9e63a021a5ec",
+      "data_cid": "12883846784725657068",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f5914f18f59cc3%3A0xb2cc9e63a021a5ec&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f5914f18f59cc3%3A0xb2cc9e63a021a5ec&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.105573,
+        "longitude": -84.0313882
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJw5z1GE-R9YgR7KUhoGOezLI",
+      "provider_id": "/g/11gd0r_5cm",
+      "rating": 2.6,
+      "reviews": 260,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "4930 Nelson Brogdon Blvd, Sugar Hill, GA 30518, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5740",
+      "website": "https://www.racetrac.com/locations/georgia/sugar-hill/sugar-hill?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Free air",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot",
+            "Paid parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAE3Dy3EfyrpDJsNlkAL7pN4N-XiS70ko--ZqBXhr4qS95Mfr6Ao7X0ojQtBobXcwVZgNIgiXFF77g3AU-MLvpUgdGTHn65bf445EZPISmkMN25Yt3Jv8MQhat-o3BY4dlsnKGjk=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/gqr02HicBcFbjoIwFADQFV3BabFqMh8l4ptGwmgqf4rQarG30o7GBbqI2c2c8_fRITg_jaJOk4FCVF3z65u-RhsaGwY13iPlPNQefMR3ojA8I7M3ydp372ZrLzrDt8wJKkBeSxYbBKgeqdQ9fZSTJG_7EUcmY7wVIcWzrF-HSomVusr5nDFF-B7y7dPt1WXxs7Sj5NxSmmTVblXeTS6-kmMg6-c4L_QpAJL0SC-dt5vFzXy_xjHo4XACBiz-A05bQvk"
+    },
+    {
+      "position": 14,
+      "title": "RaceTrac",
+      "place_id": "ChIJiyFGdUKj9YgRRds5gdp3RkA",
+      "data_id": "0x88f5a3427546218b:0x404677da8139db45",
+      "data_cid": "4631521047151762245",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f5a3427546218b%3A0x404677da8139db45&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f5a3427546218b%3A0x404677da8139db45&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 33.9350209,
+        "longitude": -84.15682699999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJiyFGdUKj9YgRRds5gdp3RkA",
+      "provider_id": "/g/11fd_pnq15",
+      "rating": 3,
+      "reviews": 196,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "1800 Beaver Ruin Rd, Norcross, GA 30093, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5777",
+      "website": "https://www.racetrac.com/locations/georgia/norcross/beaver-ruin?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot",
+            "Paid parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGgb66itCcuu3mgRIS5-dP5ubX4Wxhndfq5PILMJ2igGLRxvuA5UP_wXrWJGez5AYlzmDXJ-ToDJ7ruT0fB6npow2IT2c6chHYsP24-2c6AsJaMNS26XCYNOJN9Ml5hAFvm5QSYBg=w201-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/3cV60nicDcZRDoIgAADQE5FGQautD6xlsjRKW_rVCg1aCiaQrQt2hm5T7-t9P9La1sw8r5ajgdBa1JUzVce1spWyA64bT7QGcAOMR1iyu5NQXDC-2QV3btSIfZQiUDLkLvn4-JKqvD4QizYxhTcRbvavpyPowE593h1pWL0RKep3s8wpyPSSTjqX-dcAq1b3MMogx1yuC8PgGPxPDD3HSQpxviiSLU2mcY0kWT0btEuLQMx76A-BnEJwB0r_ADRwQ-E"
+    },
+    {
+      "position": 15,
+      "title": "RaceTrac",
+      "place_id": "ChIJB_G5pqZ09YgRN9J5QT80Jc8",
+      "data_id": "0x88f574a6a6b9f107:0xcf25343f4179d237",
+      "data_cid": "14926393986275463735",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f574a6a6b9f107%3A0xcf25343f4179d237&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f574a6a6b9f107%3A0xcf25343f4179d237&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.0392909,
+        "longitude": -84.3476326
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJB_G5pqZ09YgRN9J5QT80Jc8",
+      "provider_id": "/g/1hjgky5zv",
+      "rating": 3.3,
+      "reviews": 225,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "420 E Crossville Rd, Roswell, GA 30075, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6439",
+      "website": "https://www.racetrac.com/locations/georgia/roswell/crossville?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.65/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEZtiP4cLY9C5KtFw6DIrRjIcn5S7cgtBgLjgYb-a9aSYA7EtDFZpERILF__IKqcBSJT7rqDMLJSpdm_BVNQEdIAQV-ak8MPqZKRbjIY4zQ9iqkkvlMKQ_mhDLqCEzXKqitE5ws=w80-h119-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/uvoJSHicBcFRboIwGADgE1U0kyEmPoCUpLYYCsYMXghWUqBAKf0niffbIXYbv-__rwWY7dFxhvZrI7WWQ_Nrm0XoCZoJNkKPjpwtEhZZJ0ivXAW4hC7dC1b4Z5dCvH5HZMl6IiY394SEULJeFg9U-3VeBB6GKC5nnBEWVxWhRoT55eYtJkrYJZ-fYxXerxw_ScDvqFaHJDUlzR49KfZv7ndGqdeQUF6NbcTMGb9_qOkAu6s9rYctanc7Hyk06Q-LwkRi"
+    },
+    {
+      "position": 16,
+      "title": "RaceTrac",
+      "place_id": "ChIJY7sK8Jx19YgRkJNJIyzfE5M",
+      "data_id": "0x88f5759cf00abb63:0x9313df2c23499390",
+      "data_cid": "10598059728796488592",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f5759cf00abb63%3A0x9313df2c23499390&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f5759cf00abb63%3A0x9313df2c23499390&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.0680705,
+        "longitude": -84.2825321
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJY7sK8Jx19YgRkJNJIyzfE5M",
+      "provider_id": "/g/1ptx9qgvx",
+      "rating": 3.4,
+      "reviews": 246,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "2645 Old Milton Pkwy, Alpharetta, GA 30004, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6442",
+      "website": "https://www.racetrac.com/locations/georgia/alpharetta/old-milton?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAHUxk4V2tjEbjXHWjeiMYW496wDiFamn_-1QXPBgC2OJeocy5zqLCN0MKk0Xke9pyYrlQ0q3oJ7oQeZIHhYG3HMO1JYwwqHg2VjPq1RSGaZwkygXYweFku--qqXVo7NUpF3cQg=w80-h106-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/NTn89HicBcHdboIwGADQJ6oU8HeJF06HlQ2kLmLrzaJNU6TIR21NxefzJfY2nvP_qpzr7EcQNFU8UACqkXcrbwJaJ1s3EHANVGeRsMgGiyKnekH2Dz0sI1d_nWtGDrW8ZPwwnI396pKcru0fCikrPtUy2qYSRD96mp9ljrNvjZmWs67nt4ZiE0M6ASqPG1LxdUyybZhy7w1RUVkXJtz9rk9Hr3vFuJeJviNkDCthku-7JBZUzf0UoyrEY6RRC2-AmURO"
+    },
+    {
+      "position": 17,
+      "title": "RaceTrac",
+      "place_id": "ChIJP1eiTPd09YgR0FWhttes9Gg",
+      "data_id": "0x88f574f74ca2573f:0x68f4acd7b6a155d0",
+      "data_cid": "7562859716743878096",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f574f74ca2573f%3A0x68f4acd7b6a155d0&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f574f74ca2573f%3A0x68f4acd7b6a155d0&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.061405199999996,
+        "longitude": -84.3232877
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJP1eiTPd09YgR0FWhttes9Gg",
+      "provider_id": "/g/11ptr5kfnh",
+      "rating": 3.7,
+      "reviews": 79,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "11515 Alpharetta Hwy, Roswell, GA 30076, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5886",
+      "website": "https://www.racetrac.com/locations/georgia/roswell/hembree?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.69/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAH1fHN_fIlS0JYHDAaRqO8IWtbn1St68coqvc_uMUdvacGA2DseLm3CeC1HSMZ3ZEpij5fmJqrzLYZTBv30Wkvy5wVcptNOkfqcE1juIh-Y-aVMZOTQj2OSrmkMJ1H5C6VSZqt0=w80-h106-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/OXdJKHicBcFRboIwAADQExVaCYQs2QeisRABsQ5Dfwx2BUaBUlowej8Psdv43v-7NWbSX7bdt47VSNn0fNF8ZnI0fDQWk4PdTBowDbQdnNJcBBjVOL3VUU9gXOJdUJ1V5kdXcx8RMZ7PpFrZbUl-fteKHYLNTvPj4IQ8RJgk1KH76a9z6yFW8-tY0st2deBVrE_3UbDJpJmoFdujbolaUIKqSGh2ybtNRuZBJDHCbugVhCoDvx8-BC2CHhBglB_D2kRS"
+    },
+    {
+      "position": 18,
+      "title": "Racetrac",
+      "place_id": "ChIJPYmvXShv9YgRT8K9hgF0V1U",
+      "data_id": "0x88f56f285daf893d:0x5557740186bdc24f",
+      "data_cid": "6149511366102073935",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f56f285daf893d%3A0x5557740186bdc24f&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f56f285daf893d%3A0x5557740186bdc24f&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.1497247,
+        "longitude": -84.5202559
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJPYmvXShv9YgRT8K9hgF0V1U",
+      "provider_id": "/g/11gvwn39n0",
+      "rating": 3.5,
+      "reviews": 101,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "901 Sixes Rd, Holly Springs, GA 30114, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5808",
+      "website": "https://www.racetrac.com/locations/georgia/holly-springs/sixes-rd?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAG8g6OI3qy2sywCg9uaelDUZYUu3yEk5g9pLzYyhIcWRFlreOuxnAAuvVdPuzFsdbGxVaeUOWqDgW5iW6HHzYbR_SBnp6kzU7FYvDoZx8T38tZ9BLOncGJRvsxPiEYOYWFB_AlgmA=w122-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/yGWuOHicBcFRDoIgAADQE5FLl2lbH5hptRZmKcOfVsSwSWABpl6wM3Sb3vt9a2NavXAcUXsTrhQXzGr2pkoaJs2EqqfDWw2oBtqB2eHYwDTgPtp6r8HVw2fFQ3tlIi4qUlhvWDczHrb7kQz1luI8EW-GbC8htF15z-yY6Pst7csrKxB-xRzPHtjfbEZyyy-nSLZ-MxbzhHSxqvrg7AWmCqM9kjTd5Z3us8eaIIKT6AIFf8LlZ-q6oA5d0ACp_govRvg"
+    },
+    {
+      "position": 19,
+      "title": "RaceTrac",
+      "place_id": "ChIJtQ8qEJ5s9YgR2_x6mRk_K3Y",
+      "data_id": "0x88f56c9e102a0fb5:0x762b3f19997afcdb",
+      "data_cid": "8514968899655761115",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f56c9e102a0fb5%3A0x762b3f19997afcdb&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f56c9e102a0fb5%3A0x762b3f19997afcdb&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 34.058372299999995,
+        "longitude": -84.52103989999999
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJtQ8qEJ5s9YgR2_x6mRk_K3Y",
+      "provider_id": "/g/11f04pc35q",
+      "rating": 3.6,
+      "reviews": 136,
+      "price": "$",
+      "extracted_price": null,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "4410 Canton Rd, Marietta, GA 30066, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 404-829-6100",
+      "website": "https://www.racetrac.com/locations/georgia/marietta/shallowford?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.67/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAHMwNmRHkRnv8rJLLDZz9-FfYg-fCMLq8Cu9iIbirU56sevHfYPYnWn2Xl8rYsdpJEGObxBL9BMT7Relt0hbiGzTMnStpuZ1kn-rfGWkj51nKPxnlyTPasRfgjWvY_Oks81z_ON4g=w239-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/TWAfqXicBcFbUoMwFADQFaUItUqc8aOtClZeIg6mPx3BJNCkN5gbaGWDrsHdeM7fb-fcgHeep7vlQhojNR-R29aA4-AWrTl5ckDSIkFvXWSvah2n5-xUxqqEKbS7JHnYz5Q8CSaJ2KbJd7gdaf_c9PZ9dYN8igUrGNQQfOjQMvwado9R3lw2Cd2k1W3Jtbvqmj6aqxTe3DDufQXEiqhWx5UPL8UF9E9VfGIp5LGe2CFXGPrzIc-u5f05WFLS0YAoAuYfo4JGmg"
+    },
+    {
+      "position": 20,
+      "title": "RaceTrac",
+      "place_id": "ChIJ57lwoMyh9YgRfWRcbZbXIFA",
+      "data_id": "0x88f5a1cca070b9e7:0x5020d7966d5c647d",
+      "data_cid": "5773851763368813693",
+      "reviews_link": "https://serpapi.com/search.json?data_id=0x88f5a1cca070b9e7%3A0x5020d7966d5c647d&engine=google_maps_reviews&hl=en",
+      "photos_link": "https://serpapi.com/search.json?data_id=0x88f5a1cca070b9e7%3A0x5020d7966d5c647d&engine=google_maps_photos&hl=en",
+      "gps_coordinates": {
+        "latitude": 33.9611752,
+        "longitude": -84.2261541
+      },
+      "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJ57lwoMyh9YgRfWRcbZbXIFA",
+      "provider_id": "/g/11frll9wg3",
+      "rating": 2.7,
+      "reviews": 139,
+      "type": "Gas station",
+      "types": [
+        "Gas station",
+        "Beer store",
+        "Coffee shop",
+        "Convenience store",
+        "Fast food restaurant",
+        "Frozen yogurt shop",
+        "Snack bar",
+        "Tobacco shop"
+      ],
+      "type_id": "gas_station",
+      "type_ids": [
+        "gas_station",
+        "beer_store",
+        "coffee_shop",
+        "convenience_store",
+        "fast_food_restaurant",
+        "frozen_yogurt_shop",
+        "snack_bar",
+        "tobacco_shop"
+      ],
+      "address": "5780 Peachtree Pkwy NW, Peachtree Corners, GA 30092, United States",
+      "open_state": "Open 24 hours",
+      "hours": "Open 24 hours",
+      "operating_hours": {
+        "friday": "Open 24 hours",
+        "saturday": "Open 24 hours",
+        "sunday": "Open 24 hours",
+        "monday": "Open 24 hours",
+        "tuesday": "Open 24 hours",
+        "wednesday": "Open 24 hours",
+        "thursday": "Open 24 hours"
+      },
+      "phone": "+1 470-323-5828",
+      "website": "https://www.racetrac.com/locations/georgia/peachtree-corners/peachtree-corners?utm_source=google&utm_medium=organic&utm_campaign=gmb-listing",
+      "extensions": [
+        {
+          "service_options": [
+            "On-site services"
+          ]
+        },
+        {
+          "accessibility": [
+            "Wheelchair-accessible car park",
+            "Wheelchair-accessible entrance",
+            "Wheelchair-accessible toilet"
+          ]
+        },
+        {
+          "offerings": [
+            "Diesel fuel",
+            "Ethanol-free petrol",
+            "Propane exchange"
+          ]
+        },
+        {
+          "amenities": [
+            "Air pump",
+            "Cashpoint",
+            "Corner shop",
+            "Toilet"
+          ]
+        },
+        {
+          "payments": [
+            "Credit cards",
+            "Debit cards",
+            "NFC mobile payments",
+            "SNAP/EBT"
+          ]
+        },
+        {
+          "parking": [
+            "Free of charge street parking",
+            "Free parking lot"
+          ]
+        }
+      ],
+      "unsupported_extensions": [
+        {
+          "accessibility": [
+            "Assistive hearing loop"
+          ]
+        }
+      ],
+      "service_options": {
+        "on_site_services": true
+      },
+      "user_review": "US$3.60/Regular ",
+      "thumbnail": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEbvGb8eYWGWcd5j-ekkAP1G72fgcYR0uz3aCoASMXTpRtESqTGrRbDjXMG6L3s42vm20XtrQuxsHcZJB1azWYggTSgqCznX7xF242Up5lJWUFzHpDU-uVlQskem-WRG3XZaxmm=w148-h92-k-no",
+      "serpapi_thumbnail": "https://serpapi.com/images/url/-Q6ZDHicBcFZEoIgAADQE5GKts70YRtNU01ugf0pEU6IkGA53q9DdJve-30ra7VZOE5d-SOuFK9ZZ1hLVWNZY0dUSYdrA6gBxgkv50iE2_KNyhnLMcL0Pn4CJkR48dAUPjjNY7cb_GKtwuREUh3bbfJKURuXmyc5ocnRNwF8S-gS20Zdb_b0dlh5xYBzztOEv9ZDQ6b9DgYw0-P6gLPdsNebDHTXOjKCSYBj5JNb0Uu5_HjBDFRzCARo1B-4ykSo"
+    }
+  ],
+  "serpapi_pagination": {
+    "next": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&ll=%4034.238148%2C-84.227853%2C14z&q=racetrac&start=20&type=search"
+  }
+}

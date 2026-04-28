@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+revd5112ed"
+version = "0.0.1+revdf33ae2"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
@@ -13,10 +13,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "ddgs>=9.12.0",
-    "unitycatalog-ai[databricks]",
-]
+dev = ["ddgs>=9.12.0", "unitycatalog-ai[databricks]"]
 
 [tool.uv.sources.dbx-tools]
 workspace = true

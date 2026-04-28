@@ -19,7 +19,7 @@ from databricks.sdk.service.ml import (
     ExperimentAccessControlRequest,
     ExperimentPermissionLevel,
 )
-from dbx_ai.agents import  strs
+from dbx_ai.agents import strs
 from dbx_core import projects
 from lfp_logging import logs
 
@@ -137,16 +137,18 @@ def get(
                 )
                 continue
             if create_experiment_response and create_experiment_response.experiment_id:
-                result_experiment = lookup_ctx.workspace_client.experiments.get_experiment(
-                    experiment_id=create_experiment_response.experiment_id
-                ).experiment
+                result_experiment = (
+                    lookup_ctx.workspace_client.experiments.get_experiment(
+                        experiment_id=create_experiment_response.experiment_id
+                    ).experiment
+                )
                 break
 
     if result_experiment is None or not result_experiment.experiment_id:
         raise ResourceDoesNotExist(f"Experiment not found: {experiment_lookup}")
 
     _grant_app_creator_permissions(lookup_ctx, result_experiment.experiment_id)
-        
+
     return result_experiment
 
 
@@ -278,7 +280,11 @@ def _grant_app_creator_permissions(
             if acl.user_name != creator
         ]
         creator_acl = next(
-            (acl for acl in (current.access_control_list or []) if acl.user_name == creator),
+            (
+                acl
+                for acl in (current.access_control_list or [])
+                if acl.user_name == creator
+            ),
             None,
         )
         if creator_acl and any(

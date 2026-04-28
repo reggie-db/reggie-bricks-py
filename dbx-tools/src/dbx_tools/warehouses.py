@@ -319,7 +319,9 @@ def describe_table_extended(
             payload = None
         if payload:
             return TableDescription(name=fqname, data=payload)
-    raise RuntimeError(f"Table '{fqname}' describe extended failed - response: {response}")
+    raise RuntimeError(
+        f"Table '{fqname}' describe extended failed - response: {response}"
+    )
 
 
 def _warehouse_size_rank(cluster_size: str | None) -> int:

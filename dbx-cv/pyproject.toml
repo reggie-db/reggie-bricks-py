@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-cv"
-version = "0.0.1+revd5112ed"
+version = "0.0.1+revdf33ae2"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "imagehash",

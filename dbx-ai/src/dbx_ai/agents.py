@@ -5,9 +5,10 @@ clients, and optional MLflow autologging setup for PydanticAI.
 """
 
 import functools
+import json
 import os
 from typing import Any, Literal
-import json
+
 import httpx
 import mlflow
 import mlflow.pydantic_ai as pydantic_ai_mlflow
@@ -102,7 +103,7 @@ def _auto_instrument() -> None:
         if experiment_name:
             log_message += f" experiment_name:{experiment_name}"
         else:
-            experiment=experiments.get()
+            experiment = experiments.get()
             log_message += f" experiment:{json.dumps(experiment.as_dict())}"
             mlflow.set_experiment(experiment_id=experiment.experiment_id)
     LOG.info(log_message)

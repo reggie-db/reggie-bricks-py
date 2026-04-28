@@ -3,7 +3,10 @@ requires = ["uv_build>=0.9.6,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
-name = "dbx-caddy"
+name = "dbx-serpapi"
 version = "0.0.1+revdf33ae2"
 requires-python = ">=3.11,<3.13"
-dependencies = ["PyGithub"]
+dependencies = ["dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools", "serpapi"]
+
+[tool.uv.sources.dbx-tools]
+workspace = true
