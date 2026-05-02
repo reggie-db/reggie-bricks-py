@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 from enum import Enum
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping, overload
 
 import lfp_types
 from databricks.sdk import WorkspaceClient
@@ -19,6 +19,7 @@ from dbx_tools import catalogs, clients, runtimes
 
 LOG = logs.logger()
 
+_UNSET: Any = object()
 _DEFAULT_PROFILE_NAME = "DEFAULT"
 
 
@@ -135,13 +136,43 @@ def token(config: Config | None = None) -> str | None:
     raise ValueError(f"Config token not found - config:{config}")
 
 
+@overload
 def value(
     name: str,
-    default_value: str | None = None,
+    *,
     bundle_path: str | None = None,
     workspace_client: WorkspaceClient | None = None,
     config_value_sources: Iterable[ConfigValueSource] | None = None,
-) -> str:
+) -> str: ...
+
+
+@overload
+def value(
+    name: str,
+    default_value: str,
+    bundle_path: str | None = None,
+    workspace_client: WorkspaceClient | None = None,
+    config_value_sources: Iterable[ConfigValueSource] | None = None,
+) -> str: ...
+
+
+@overload
+def value(
+    name: str,
+    default_value: None,
+    bundle_path: str | None = None,
+    workspace_client: WorkspaceClient | None = None,
+    config_value_sources: Iterable[ConfigValueSource] | None = None,
+) -> str | None: ...
+
+
+def value(
+    name: str,
+    default_value: str | None = _UNSET,
+    bundle_path: str | None = None,
+    workspace_client: WorkspaceClient | None = None,
+    config_value_sources: Iterable[ConfigValueSource] | None = None,
+) -> str | None:
     """Fetch a configuration value by checking the configured sources in order.
 
     Every supported source (widgets, Spark conf, secrets, environment, bundle
@@ -193,7 +224,7 @@ def value(
                 f"Value loader failed for {config_value_source}: {name}", exc_info=True
             )
             pass
-    if default_value is None:
+    if default_value is _UNSET:
         raise ValueError(f"Config value not found: {name}")
     return default_value
 
