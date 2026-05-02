@@ -1,33 +1,27 @@
 """Helpers for building PydanticAI agents backed by Databricks endpoints.
 
 This module centralizes agent creation, OpenAI-compatible Databricks serving
-clients, and OTLP-based tracing setup for PydanticAI via Logfire.
+clients, and MLflow autologging setup for PydanticAI.
 
-Tracing is sent to the workspace's MLflow OTLP traces endpoint
-(``/api/2.0/mlflow/otlp/v1/traces``) so agent runs land alongside other MLflow
-experiments. Authentication headers are refreshed on every export so OAuth
-tokens that rotate (e.g. inside a Databricks App) stay valid for long-running
-agents.
-
-The authenticated httpx transport that backs the OpenAI-compatible clients
-lives in ``dbx_tools.clients.api``. The :func:`http_client` helper below
-remains as a deprecated shim for backwards compatibility.
+The authenticated httpx transport that backs these clients lives in
+``dbx_tools.clients.api``. The :func:`http_client` helper below remains
+as a deprecated shim for backwards compatibility.
 """
 
 import functools
+import json
 import os
 import warnings
 from typing import Any, Literal
 
 import httpx
-import logfire
+import mlflow
+import mlflow.pydantic_ai as pydantic_ai_mlflow
 from databricks.sdk import WorkspaceClient
-from dbx_core import objects, projects, strs
+from dbx_core import objects, strs
 from dbx_tools import clients, configs, experiments
 from lfp_logging import logs
 from openai import AsyncClient
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -52,17 +46,14 @@ def create(
     """Create a configured PydanticAI agent.
 
     The created agent always includes baseline response instructions. When
-    ``instrument="auto"``, this helper configures :func:`_auto_instrument`
-    (Logfire-backed OTLP tracing to the workspace's MLflow OTLP endpoint) and
-    turns on PydanticAI instrumentation unless an explicit ``output_type`` was
-    supplied (which disables tracing because structured-output agents are not
-    compatible with PydanticAI's OTEL instrumentation).
+    ``instrument="auto"``, this helper enables MLflow autologging and turns on
+    PydanticAI instrumentation unless an explicit ``output_type`` was supplied.
 
     Args:
         model_name: Optional Databricks model serving endpoint name. When
             omitted, the default large model is used.
         instrument: Instrumentation configuration. When set to ``"auto"``, this
-            helper enables OTLP tracing and uses ``instrument=True`` unless an
+            helper enables autologging and uses ``instrument=True`` unless an
             explicit ``output_type`` disables that default path.
         workspace_client: Optional Databricks workspace client used for serving
             requests. When omitted, cached default clients are used.
@@ -95,102 +86,86 @@ def create(
 
 @functools.cache
 def _auto_instrument() -> None:
-    """Configure Logfire-backed OTLP tracing for PydanticAI agents (once per process).
+    """Configure MLflow PydanticAI autologging once per process.
 
-    Spans produced by PydanticAI's built-in OTEL instrumentation are exported
-    to the workspace's MLflow OTLP traces endpoint
-    (``/api/2.0/mlflow/otlp/v1/traces``) so agent runs, tool invocations, and
-    model calls show up alongside other MLflow experiments.
-
-    The target experiment is sourced from ``MLFLOW_EXPERIMENT_ID`` first, then
+    The tracking URI is set to Databricks when not already configured. The
+    target experiment is sourced from ``MLFLOW_EXPERIMENT_ID`` first, then
     ``MLFLOW_EXPERIMENT_NAME``, and finally :func:`dbx_tools.experiments.get`'s
-    project default. Bearer auth headers are re-resolved per export via
-    :class:`_DatabricksMlflowOtlpExporter` so OAuth tokens that rotate
-    (e.g. inside Databricks Apps) stay valid for long-running agents.
+    project default.
+
+    pydantic-ai is pinned (see pyproject.toml) to stay within the range
+    MLflow's autologger supports. The circular-reference patch below is
+    still required because Tool closures capture the agent object.
     """
-    workspace_client = clients.workspace_client()
-    host = workspace_client.config.host
-    if not host:
-        raise RuntimeError(
-            "WorkspaceClient has no host configured; OTLP tracing requires a host"
-        )
-    experiment_id = _resolve_experiment_id(workspace_client)
-    endpoint = f"{host.rstrip('/')}/api/2.0/mlflow/otlp/v1/traces"
-    exporter = _DatabricksMlflowOtlpExporter(
-        endpoint=endpoint,
-        workspace_client=workspace_client,
-        experiment_id=experiment_id,
+    config_profile = configs.profile()
+    if not mlflow.is_tracking_uri_set():
+        mlflow.set_tracking_uri("databricks")
+    log_message = (
+        f"MLflow auto instrument - config_profile:{config_profile} "
+        f"tracking_uri:{mlflow.get_tracking_uri()}"
     )
-    logfire.configure(
-        send_to_logfire=False,
-        service_name=projects.root_project_name(),
-        additional_span_processors=[BatchSpanProcessor(exporter)],
-    )
-    # PydanticAI's Agent(instrument=True) already emits OTEL spans; this adds
-    # logfire's pydantic-ai-specific instrumentation (tool args, prompt args,
-    # etc.) on top of them.
-    logfire.instrument_pydantic_ai()
-    LOG.info(
-        f"Logfire OTLP tracing configured - "
-        f"config_profile:{configs.profile()} endpoint:{endpoint} experiment_id:{experiment_id}"
-    )
-
-
-def _resolve_experiment_id(workspace_client: WorkspaceClient) -> str:
-    """Resolve the MLflow experiment id used as the OTLP trace destination.
-
-    Priority order:
-
-    1. ``MLFLOW_EXPERIMENT_ID`` env var (raw id, used as-is).
-    2. ``MLFLOW_EXPERIMENT_NAME`` env var (looked up / created via
-       :func:`dbx_tools.experiments.get`).
-    3. :func:`dbx_tools.experiments.get` with no lookup, which falls back to
-       the running app name or the root project name.
-    """
-    if experiment_id := os.environ.get("MLFLOW_EXPERIMENT_ID"):
-        return experiment_id
-    experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME")
-    if experiment_name:
-        experiment = experiments.get(
-            experiment_lookup=experiment_name,
-            workspace_client=workspace_client,
-        )
+    experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID", None)
+    if experiment_id:
+        log_message += f" experiment_id:{experiment_id}"
     else:
-        experiment = experiments.get(workspace_client=workspace_client)
-    if not experiment.experiment_id:
-        raise RuntimeError(
-            f"Could not resolve an MLflow experiment id for OTLP tracing: {experiment}"
-        )
-    return experiment.experiment_id
+        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", None)
+        if experiment_name:
+            log_message += f" experiment_name:{experiment_name}"
+        else:
+            experiment = experiments.get()
+            log_message += f" experiment:{json.dumps(experiment.as_dict())}"
+            mlflow.set_experiment(experiment_id=experiment.experiment_id)
+    LOG.info(log_message)
+    pydantic_ai_mlflow.autolog()
+    _patch_mlflow_circular_ref()
 
 
-class _DatabricksMlflowOtlpExporter(OTLPSpanExporter):
-    """OTLP/HTTP span exporter that re-authenticates per batch against Databricks.
+def _patch_mlflow_circular_ref() -> None:
+    """Patch MLflow's span serializer to handle circular references.
 
-    The base ``OTLPSpanExporter`` accepts headers only at construction time,
-    which prevents OAuth token refresh from being picked up. Overriding
-    :meth:`_export` lets us refresh the bearer token (and re-stamp the
-    ``x-mlflow-experiment-id`` header MLflow uses to route the spans) on
-    every batch.
+    ``mlflow.pydantic_ai.autolog()`` wraps every model request and calls
+    ``json.dumps`` on the ``ModelRequest`` inputs. Tool closures registered on
+    an agent capture the agent itself, creating a circular reference that
+    raises ``ValueError`` at serialization time.
+
+    ``mlflow.entities.span`` imports ``dump_span_attribute_value`` by name at
+    module load time, so patching ``mlflow.tracing.utils`` alone is
+    insufficient; the already-bound reference in ``span.py`` must also be
+    replaced.
     """
+    import json as _json
 
-    def __init__(
-        self,
-        endpoint: str,
-        workspace_client: WorkspaceClient,
-        experiment_id: str,
-    ):
-        super().__init__(endpoint=endpoint)
-        self._workspace_client = workspace_client
-        self._experiment_id = experiment_id
+    try:
+        import mlflow.entities.span as _span_mod
+        import mlflow.tracing.utils as _utils_mod
+        from mlflow.tracing.utils import TraceJSONEncoder
 
-    def _export(self, serialized_data: bytes, timeout_sec: float | None = None):
-        # ``config.authenticate()`` returns {"Authorization": "Bearer ..."}; calling
-        # it on every export rides through OAuth rotation transparently.
-        auth_headers = self._workspace_client.config.authenticate()
-        self._session.headers["Authorization"] = auth_headers["Authorization"]
-        self._session.headers["x-mlflow-experiment-id"] = self._experiment_id
-        return super()._export(serialized_data, timeout_sec)
+        _orig = _utils_mod.dump_span_attribute_value
+
+        def _safe_dump(value, **kw):  # type: ignore[override]
+            try:
+                return _orig(value, **kw)
+            except (ValueError, TypeError):
+                try:
+                    return _json.dumps(
+                        value,
+                        cls=TraceJSONEncoder,
+                        ensure_ascii=False,
+                        check_circular=False,
+                    )
+                except Exception:
+                    return '"[unserializable span input]"'
+
+        # Patch the canonical module so future imports get the safe version.
+        _utils_mod.dump_span_attribute_value = _safe_dump
+        # Patch the already-bound name inside span.py's module namespace.
+        # setattr used intentionally - patching an external untyped module namespace.
+        if hasattr(_span_mod, "dump_span_attribute_value"):
+            setattr(_span_mod, "dump_span_attribute_value", _safe_dump)
+
+        LOG.debug("MLflow circular-reference guard installed")
+    except Exception:
+        LOG.warning("MLflow circular-reference guard could not be installed")
 
 
 def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:

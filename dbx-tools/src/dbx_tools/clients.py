@@ -271,17 +271,14 @@ class _AsyncBearerAuth(httpx.Auth):
 
     async def async_auth_flow(self, request: httpx.Request):
         if self._hostname:
-            request_headers = request.headers
-            if not request_headers.get(_AUTHORIZATION_HEADER_NAME):
-                if request_hostname := request.url.host:
-                    request_hostname = request_hostname.lower()
-                    if request_hostname == self._hostname or request_hostname.endswith(
-                        "." + self._hostname
-                    ):
-                        if token := self._token_fn():
-                            request.headers[_AUTHORIZATION_HEADER_NAME] = (
-                                "Bearer " + token
-                            )
+            if request_hostname := request.url.host:
+                request_hostname = request_hostname.lower()
+                if request_hostname == self._hostname or request_hostname.endswith(
+                    "." + self._hostname
+                ):
+                    if token := self._token_fn():
+                        request.headers[_AUTHORIZATION_HEADER_NAME] = "Bearer " + token
+
         yield request
 
 
