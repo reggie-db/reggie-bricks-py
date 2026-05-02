@@ -1,15 +1,20 @@
 """Client factory helpers shared across Databricks command-line tools.
 
-This module provides functions to create and manage Databricks ``WorkspaceClient`` and ``SparkSession`` objects.
-It also includes logic for finding preferred SQL warehouses and retrieving project metadata for user-agent strings.
+This module provides functions to create and manage Databricks ``WorkspaceClient``,
+``SparkSession`` and authenticated ``httpx.AsyncClient`` objects for direct REST
+API calls. It also includes logic for finding preferred SQL warehouses and
+retrieving project metadata for user-agent strings.
 """
 
+import asyncio
 import functools
 import os
-import re
+import signal
 from contextvars import ContextVar
 from datetime import datetime
+from urllib.parse import urlparse
 
+import httpx
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.config import Config
@@ -21,10 +26,11 @@ from dbx_tools import configs, runtimes
 
 LOG = logs.logger(__name__)
 
-_WAREHOUSE_SIZE_PATTERN = re.compile(r"((?:\d+x|x))?(.+)")
 _HOST_CONTEXT: ContextVar[str | None] = ContextVar("databricks_host", default=None)
 _TOKEN_CONTEXT: ContextVar[str | None] = ContextVar("databricks_token", default=None)
 _FORCE_TOKEN_CONTEXT: ContextVar[bool] = ContextVar("force_token", default=False)
+_DEFAULT_API_TIMEOUT = httpx.Timeout(connect=10.0, read=300.0, write=30.0, pool=30.0)
+_AUTHORIZATION_HEADER_NAME = "Authorization"
 
 
 def workspace_client(config: Config | None = None) -> WorkspaceClient:
@@ -137,6 +143,94 @@ def _spark() -> SparkSession:
         return _load()
 
 
+def api(
+    workspace_client: WorkspaceClient | None = None,
+    timeout: httpx.Timeout | None = None,
+) -> httpx.AsyncClient:
+    """Return an authenticated ``httpx.AsyncClient`` for Databricks REST APIs.
+
+    The returned client uses the workspace's host as its ``base_url`` so callers
+    can write absolute REST paths like ``/api/2.0/genie/spaces/...``. A
+    Databricks bearer token is injected on every outbound request via the SDK's
+    authenticate header factory, re-resolving per call so OAuth refresh and
+    rotation are handled transparently. HTTP/2 is enabled when the optional
+    ``h2`` package is importable.
+    """
+    if workspace_client is None and timeout is None:
+        return _api_default()
+    return _api(workspace_client or _workspace_client_default(), timeout)
+
+
+def _api(
+    workspace_client: WorkspaceClient,
+    timeout: httpx.Timeout | None = None,
+) -> httpx.AsyncClient:
+    """Return an authenticated ``httpx.AsyncClient`` for Databricks REST APIs.
+
+    The returned client uses the workspace's host as its ``base_url`` so callers
+    can write absolute REST paths like ``/api/2.0/genie/spaces/...``. A
+    Databricks bearer token is injected on every outbound request via the SDK's
+    authenticate header factory, re-resolving per call so OAuth refresh and
+    rotation are handled transparently. HTTP/2 is enabled when the optional
+    ``h2`` package is importable.
+
+    The caller owns the client's lifecycle and should close it (preferably via
+    ``async with``) to release the underlying connection pool.
+
+    Args:
+        workspace_client: Optional Databricks ``WorkspaceClient``. When omitted,
+            the cached default workspace client (and therefore its host and
+            credentials) is used.
+        timeout: Optional ``httpx.Timeout`` override. Defaults to a long-read
+            timeout suitable for Databricks polling endpoints.
+
+    Returns:
+        An authenticated ``httpx.AsyncClient`` ready to call Databricks REST APIs.
+    """
+    # ``workspace_client()`` with no config routes through the cached default; call
+    # the cache directly here to avoid the parameter shadowing the function name.
+    config = workspace_client.config if workspace_client else configs.get()
+    return httpx.AsyncClient(
+        base_url=config.host,
+        auth=_AsyncBearerAuth(config),
+        timeout=timeout if timeout is not None else _DEFAULT_API_TIMEOUT,
+        http2=_http2_supported(),
+    )
+
+
+@functools.cache
+def _api_default() -> httpx.AsyncClient:
+    """Return the cached default authenticated httpx.AsyncClient."""
+    api_client = _api(workspace_client=_workspace_client_default(), timeout=None)
+
+    aclose_orig = api_client.aclose
+
+    def _handle_exit(sig, frame):
+        LOG.debug("Shutting down api client")
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # Schedule the real closure on the running loop
+                loop.create_task(aclose_orig())
+            else:
+                # Loop is idle/stopped, run it to completion
+                loop.run_until_complete(aclose_orig())
+        except Exception as e:
+            LOG.warning("Error during api client shutdown", exc_info=True)
+
+        raise SystemExit
+
+    signal.signal(signal.SIGINT, _handle_exit)
+    signal.signal(signal.SIGTERM, _handle_exit)
+
+    async def aclose_noop():
+        pass
+
+    api_client.aclose = aclose_noop
+
+    return api_client
+
+
 @functools.cache
 def _product_name() -> str:
     """Return the name of the root project."""
@@ -147,3 +241,61 @@ def _product_name() -> str:
 def _product_version() -> str:
     """Return the version of the root project."""
     return projects.root_project_version()
+
+
+@functools.cache
+def _http2_supported() -> bool:
+    """Return ``True`` when the optional ``h2`` package is installed."""
+    try:
+        import h2  # noqa: F401  # pyright: ignore[reportMissingImports]
+
+        return True
+    except ImportError:
+        return False
+
+
+class _AsyncBearerAuth(httpx.Auth):
+    """Inject Databricks bearer auth headers on every outbound httpx request.
+
+    The Databricks SDK's authenticate function is synchronous but cheap to call
+    and returns the headers needed for each request. Calling it per-request
+    ensures OAuth token rotation is observed without manual refresh handling.
+    """
+
+    def __init__(self, config: Config):
+        if config_hostname := urlparse(config.host).hostname:
+            self._hostname = config_hostname.lower()
+        else:
+            self._hostname = None
+        self._token_fn = lambda: configs.token(config)
+
+    async def async_auth_flow(self, request: httpx.Request):
+        if self._hostname:
+            request_headers = request.headers
+            if not request_headers.get(_AUTHORIZATION_HEADER_NAME):
+                if request_hostname := request.url.host:
+                    request_hostname = request_hostname.lower()
+                    if request_hostname == self._hostname or request_hostname.endswith(
+                        "." + self._hostname
+                    ):
+                        if token := self._token_fn():
+                            request.headers[_AUTHORIZATION_HEADER_NAME] = (
+                                "Bearer " + token
+                            )
+        yield request
+
+
+async def main() -> None:
+    api_client = api()
+    async with api_client as client:
+        print(client.base_url)
+    print("Done")
+    # --- Triggering SIGTERM on yourself ---
+    print("Sending SIGTERM to myself...")
+    os.kill(os.getpid(), signal.SIGTERM)
+    await asyncio.sleep(10)
+    print("Done 2")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

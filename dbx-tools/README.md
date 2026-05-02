@@ -60,7 +60,7 @@ if runtimes.is_pipeline():
 
 When bundle context is available, `configs.value()` also attempts Databricks Bundle variable values from `databricks bundle validate --output json`.
 
-You can override order or exclude sources with `ConfigValueSource.without(...)`.
+You can restrict the sources consulted with `ConfigValueSource.default(exclude=...)`.
 
 ## Notes on Optional Integrations
 

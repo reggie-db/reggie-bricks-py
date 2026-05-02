@@ -104,18 +104,21 @@ def _of(
 
 def _catalog_schema_config() -> CatalogSchema | None:
     """Attempt to resolve catalog and schema from config and pipeline context."""
-    config_value_sources = configs.ConfigValueSource.without(
-        configs.ConfigValueSource.SECRETS
+    config_value_sources = configs.ConfigValueSource.default(
+        exclude=[configs.ConfigValueSource.SECRETS]
     )
-    catalog_name = configs.value(
-        "catalog_name", None, config_value_sources=config_value_sources
-    )
-    if catalog_name:
-        schema_name = configs.value(
-            "schema_name", None, config_value_sources=config_value_sources
+    # configs.value() now raises when no value resolves; treat that as "absent"
+    # and fall through to the pipeline-context discovery paths below.
+    try:
+        catalog_name = configs.value(
+            "catalog_name", config_value_sources=config_value_sources
         )
-        if schema_name:
-            return CatalogSchema(catalog_name, schema_name)
+        schema_name = configs.value(
+            "schema_name", config_value_sources=config_value_sources
+        )
+        return CatalogSchema(catalog_name, schema_name)
+    except ValueError:
+        pass
     if runtimes.is_pipeline():
         catalog_schemas: set[CatalogSchema] = set()
         if spark := clients.spark(connect=False):

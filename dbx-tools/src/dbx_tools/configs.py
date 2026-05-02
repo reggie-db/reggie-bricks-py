@@ -8,18 +8,42 @@ import subprocess
 from enum import Enum
 from typing import Any, Callable, Iterable, Mapping
 
+import lfp_types
+from databricks.sdk import WorkspaceClient
 from databricks.sdk.core import Config
 from databricks.sdk.credentials_provider import OAuthCredentialsProvider
 from dbx_core import imports, projects, strs
 from lfp_logging import logs
-from lfp_types import T
 
 from dbx_tools import catalogs, clients, runtimes
 
 LOG = logs.logger()
 
-_UNSET = object()
 _DEFAULT_PROFILE_NAME = "DEFAULT"
+
+
+class ConfigValueSource(Enum):
+    """Enumerates supported config sources in order of discovery precedence."""
+
+    WIDGETS = 1
+    SPARK_CONF = 2
+    SECRETS = 3
+    OS_ENVIRON = 4
+    BUNDLE = 5
+    CLI = 6
+
+    @classmethod
+    def default(
+        cls, exclude: Iterable["ConfigValueSource"] | None = None
+    ) -> list["ConfigValueSource"]:
+        """Return the default config value sources."""
+        if exclude:
+            exclude = lfp_types.to_container(exclude)
+        return [
+            member
+            for member in cls
+            if ((not exclude) or (member not in exclude) and member != cls.CLI)
+        ]
 
 
 def get(profile_name: str | None = None) -> Config:
@@ -104,116 +128,143 @@ def token(config: Config | None = None) -> str | None:
     # Some auth modes can still expose `oauth_token()` without the header factory type.
     oauth_token = getattr(config, "oauth_token", None)
     if callable(oauth_token):
-        return oauth_token().access_token
+        if oauth_token_value := oauth_token():
+            if access_token := getattr(oauth_token_value, "access_token", None):
+                return access_token
 
     raise ValueError(f"Config token not found - config:{config}")
 
 
 def value(
     name: str,
-    default_value: T | None = _UNSET,
+    default_value: str | None = None,
     bundle_path: str | None = None,
-    config_value_sources: list["ConfigValueSource"] | None = None,
-) -> T:
+    workspace_client: WorkspaceClient | None = None,
+    config_value_sources: Iterable[ConfigValueSource] | None = None,
+) -> str:
     """Fetch a configuration value by checking the configured sources in order.
-    The first loader that returns a truthy value wins. Callers can pass a subset of sources to control resolution order.
+
+    Every supported source (widgets, Spark conf, secrets, environment, bundle
+    variables) returns strings, so the resolved value is always a ``str``. The
+    first loader that yields a truthy value wins. Callers can restrict the
+    resolution order by passing a subset of sources.
+
+    Args:
+        name: Config key to look up.
+        default_value: Fallback string returned when no source resolves a value.
+            When ``None`` (the parameter default), a missing value raises
+            ``ValueError`` instead of returning silently.
+        bundle_path: Override path used to look up the value in bundle data
+            (defaults to ``variables.{name}``).
+        config_value_sources: Ordered subset of sources to consult.
+
+    Returns:
+        The resolved configuration string, or ``default_value`` when no source
+        produced one and a non-``None`` default was supplied.
+
+    Raises:
+        ValueError: When ``name`` is empty, or when no source resolves a value
+            and ``default_value`` is ``None``.
     """
     if not name:
         raise ValueError("Name required")
     if not config_value_sources:
-        config_value_sources = tuple(ConfigValueSource)
+        config_value_sources = ConfigValueSource.default()
+    elif not isinstance(config_value_sources, set):
+        config_value_sources = list(dict.fromkeys(config_value_sources))
 
-    for loader in _value_loaders(config_value_sources):
-        # noinspection PyBroadException
+    for config_value_source in config_value_sources:
         try:
-            if value := loader(name):
-                return value
+            for loader in _value_loaders(
+                config_value_source,
+                name,
+                default_value=default_value,
+                bundle_path=bundle_path,
+                workspace_client=workspace_client,
+            ):
+                try:
+                    value = loader()
+                    if isinstance(value, str) and value:
+                        return value
+                except Exception:
+                    pass
         except Exception:
+            LOG.warning(
+                f"Value loader failed for {config_value_source}: {name}", exc_info=True
+            )
             pass
-    if _cli_version():
-        if data := _bundle_data():
-            if not bundle_path:
-                bundle_path = f"variables.{name}"
-            parts = bundle_path.split(".")
-            for idx, part in enumerate(parts):
-                if isinstance(data, Mapping):
-                    value = data.get(part, None)
-                    last = idx == len(parts) - 1
-                    if not last:
-                        data = value
-                    else:
-                        is_variable = "variables" == parts[0]
-                        if is_variable:
-                            if isinstance(value, Mapping):
-                                value = value.get("value", None)
-                            else:
-                                value = None
-                        if isinstance(value, str) and value:
-                            return value
-
-    if default_value is not _UNSET:
-        return default_value
-    raise ValueError(f"Config value not found: {name}")
+    if default_value is None:
+        raise ValueError(f"Config value not found: {name}")
+    return default_value
 
 
 def _value_loaders(
-    config_value_sources: Iterable["ConfigValueSource"],
-) -> Iterable[Callable[[str], Any]]:
-    """Yield callables that resolve keys from each configured source.
-
-    Args:
-        config_value_sources: Ordered collection of sources to inspect.
-
-    Yields:
-        Callables that accept a key and return a resolved value when available.
-    """
-    for config_value_source in config_value_sources:
-        if config_value_source is ConfigValueSource.WIDGETS:
+    config_value_source: ConfigValueSource,
+    name: str,
+    default_value: str | None,
+    bundle_path: str | None,
+    workspace_client: WorkspaceClient | None = None,
+) -> Iterable[Callable[[], Any]]:
+    if config_value_source is ConfigValueSource.WIDGETS:
+        if dbutils := runtimes.dbutils(spark=False):
+            if widgets := getattr(dbutils, "widgets", None):
+                yield lambda: _get_all(widgets).get(name)
+    elif config_value_source is ConfigValueSource.SPARK_CONF:
+        if spark := clients.spark(connect=False):
+            yield lambda: spark.conf.get(name)
+            # Provide a dict like fallback when Spark conf is present.
+            yield lambda: _get_all(spark, "conf").get(name)
+    elif config_value_source is ConfigValueSource.SECRETS:
+        if catalog_schema := catalogs.catalog_schema():
             if dbutils := runtimes.dbutils(spark=False):
-                widgets = getattr(dbutils, "widgets", None) if dbutils else None
-                if widgets:
-                    if (widgets_get := getattr(widgets, "get", None)) and callable(
-                        widgets_get
-                    ):
-                        yield widgets_get
-                    # Provide a dict like fallback when widgets is present
-                    yield _get_all(widgets).get
-        elif config_value_source is ConfigValueSource.SPARK_CONF:
-            if spark := clients.spark(connect=False):
-                yield spark.conf.get
-                # Provide a dict like fallback when Spark conf is present.
-                yield _get_all(spark, "conf").get
-        elif config_value_source is ConfigValueSource.SECRETS:
-            if catalog_schema := catalogs.catalog_schema():
-                if dbutils := runtimes.dbutils(spark=False):
-                    if secrets := getattr(dbutils, "secrets", None):
+                if hasattr(dbutils, "secrets"):
+                    return lambda: dbutils.secrets.get(
+                        scope=str(catalog_schema), key=name
+                    )
 
-                        def _load_secret(key: str) -> str:
-                            return secrets.get(scope=str(catalog_schema), key=key)
+            def _load_workspace_client_secret_value() -> Any:
+                secret = (
+                    workspace_client or clients.workspace_client()
+                ).secrets.get_secret(scope=str(catalog_schema), key=name)
+                if secret and secret.value:
+                    return base64.b64decode(secret.value).decode("utf-8")
+                return None
 
-                        yield _load_secret
-                else:
-                    wc = clients.workspace_client()
+            yield _load_workspace_client_secret_value
+    elif config_value_source is ConfigValueSource.OS_ENVIRON:
+        yield lambda: os.getenv(name)
+        yield lambda: os.getenv(name.upper())
+        yield lambda: os.getenv("_".join(strs.tokenize(name)).upper())
+    elif config_value_source is ConfigValueSource.BUNDLE:
 
-                    def _load_secret(key: str) -> str | None:
-                        secret = wc.secrets.get_secret(
-                            scope=str(catalog_schema), key=key
-                        )
-                        if secret and secret.value:
-                            return base64.b64decode(secret.value).decode("utf-8")
-                        return None
+        def _load_bundle_value() -> Any:
+            if _cli_version() and (data := _bundle_data()):
+                parts = (bundle_path or f"variables.{name}").split(".")
+                current: Any = data
+                for idx, part in enumerate(parts):
+                    if isinstance(current, Mapping):
+                        bundle_value = current.get(part, None)
+                        last = idx == len(parts) - 1
+                        if not last:
+                            current = bundle_value
+                        else:
+                            is_variable = "variables" == parts[0]
+                            if is_variable:
+                                if isinstance(bundle_value, Mapping):
+                                    return bundle_value.get("value", None)
+                                else:
+                                    return None
+                            else:
+                                return bundle_value
 
-                    yield _load_secret
+        yield _load_bundle_value
+    elif config_value_source is ConfigValueSource.CLI:
 
-        elif config_value_source is ConfigValueSource.OS_ENVIRON:
-            yield os.getenv
-            yield lambda k: os.getenv(k.upper())
-            yield lambda k: os.getenv("_".join(strs.tokenize(k)).upper())
+        def _load_cli_value() -> Any:
+            if default_value is None:
+                return input(f"Enter value for {name}: ")
 
-        else:
-            raise ValueError(
-                f"Unknown ConfigValueSource - config_value_source:{config_value_source}"
-            )
+        yield _load_cli_value
 
 
 def _cli_run(*args, profile=None, stdout=subprocess.PIPE) -> dict[str, Any]:
@@ -306,15 +357,5 @@ def _bundle_data() -> dict[str, Any]:
     return {}
 
 
-class ConfigValueSource(Enum):
-    """Enumerates supported config sources in order of discovery precedence."""
-
-    WIDGETS = 1
-    SPARK_CONF = 2
-    SECRETS = 3
-    OS_ENVIRON = 4
-
-    @classmethod
-    def without(cls, *excluded) -> list["ConfigValueSource"]:
-        """Return members excluding any provided in ``excluded`` while preserving order."""
-        return [member for member in cls if member not in excluded]
+# if __name__ == "__main__":
+#     print(value("username", config_value_sources=ConfigValueSource.default()+[ConfigValueSource.CLI]))

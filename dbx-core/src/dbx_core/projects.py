@@ -80,7 +80,7 @@ def root_project_name(path: PathLike | str | None = None) -> str:
 
 def root_project_version(
     path: PathLike | str | None = None, git_fallback: bool = True
-) -> str | None:
+) -> str:
     """Return root project version with optional git-based fallback metadata."""
     _, pdata = root_pyproject(path)
     if pdata:

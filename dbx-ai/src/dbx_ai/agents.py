@@ -2,11 +2,16 @@
 
 This module centralizes agent creation, OpenAI-compatible Databricks serving
 clients, and optional MLflow autologging setup for PydanticAI.
+
+The authenticated httpx transport that backs these clients now lives in
+``dbx_tools.clients.api``. The :func:`http_client` helper below remains
+as a deprecated shim for backwards compatibility.
 """
 
 import functools
 import json
 import os
+import warnings
 from typing import Any, Literal
 
 import httpx
@@ -162,31 +167,41 @@ def client(workspace_client: WorkspaceClient | None = None) -> AsyncClient:
     """Return an OpenAI-compatible async client backed by Databricks serving.
 
     Passing ``workspace_client`` creates a client bound to that workspace.
-    Omitting it reuses the cached default client stack.
+    Omitting it reuses the cached default client stack. The underlying httpx
+    transport is built via :func:`dbx_tools.clients.api`.
     """
     return _client(workspace_client) if workspace_client else _client_default()
 
 
-def _client(workspace_client: WorkspaceClient) -> AsyncClient:
-    """Build an async OpenAI client for an explicit Databricks workspace."""
-    hclient = http_client(workspace_client)
-    client_params = {
-        "base_url": workspace_client.config.host + "/serving-endpoints",
-        "api_key": "no-token",  # Passing in a placeholder to pass validations, this will not be used
-        "http_client": hclient,
-    }
-    return AsyncClient(**client_params)
+def http_client(workspace_client: WorkspaceClient | None = None) -> httpx.AsyncClient:
+    """Return an authenticated HTTP client for Databricks REST endpoints.
+
+    .. deprecated::
+        Use :func:`dbx_tools.clients.api` directly. This shim is kept to
+        avoid breaking existing imports.
+    """
+    _http_client_warning()
+    return clients.api(workspace_client)
 
 
 @functools.cache
-def _client_default() -> AsyncClient:
-    """Return the cached default OpenAI-compatible Databricks client."""
-    client_params = {
-        "base_url": configs.get().host + "/serving-endpoints",
-        "api_key": "no-token",  # Passing in a placeholder to pass validations, this will not be used
-        "http_client": _http_client_default(),
-    }
-    return AsyncClient(**client_params)
+def _http_client_warning():
+    warnings.warn(
+        "dbx_ai.agents.http_client is deprecated; use dbx_tools.clients.api(...) instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+
+def model(
+    model_name: str | None = None, workspace_client: WorkspaceClient | None = None
+) -> Model:
+    """Return a PydanticAI model wrapper for a Databricks serving endpoint."""
+    if not model_name:
+        model_name = models.large()
+    provider = OpenAIProvider(openai_client=client(workspace_client))
+    # noinspection PyTypeChecker
+    return OpenAIChatModel(model_name=model_name, provider=provider)
 
 
 @functools.cache
@@ -201,67 +216,23 @@ def small() -> Agent[None, str]:
     return create(models.small())
 
 
-def model(
-    model_name: str | None = None, workspace_client: WorkspaceClient | None = None
-) -> Model:
-    """Return a PydanticAI model wrapper for a Databricks serving endpoint."""
-    if not model_name:
-        model_name = models.large()
-    provider = OpenAIProvider(openai_client=client(workspace_client))
-    # noinspection PyTypeChecker
-    return OpenAIChatModel(model_name=model_name, provider=provider)
-
-
-def http_client(workspace_client: WorkspaceClient | None = None) -> httpx.AsyncClient:
-    """Return an authenticated HTTP client for Databricks serving requests.
-
-    Passing ``workspace_client`` creates a client bound to that workspace.
-    Omitting it reuses the cached default HTTP client.
-    """
-    return (
-        _http_client_default()
-        if workspace_client is None
-        else _http_client(workspace_client)
-    )
-
-
-def _http_client(workspace_client: WorkspaceClient) -> httpx.AsyncClient:
-    """Create an authenticated HTTP client for Databricks serving endpoints."""
-
-    class AsyncBearerAuth(httpx.Auth):
-        def __init__(self, header_fn):
-            self._header_fn = header_fn
-
-        async def async_auth_flow(self, request: httpx.Request):
-            """Inject Databricks bearer auth headers into outbound requests."""
-            # Databricks SDK authentication is synchronous but returns the
-            # authorization headers needed for each outgoing request.
-            auth_headers = self._header_fn()
-            request.headers["Authorization"] = auth_headers["Authorization"]
-            yield request
-
-    # noinspection PyProtectedMember
-    bearer_auth = AsyncBearerAuth(
-        workspace_client.serving_endpoints._api._cfg.authenticate
-    )
-    timeout = httpx.Timeout(connect=10.0, read=300.0, write=30.0, pool=30.0)
-    try:
-        import h2  # noqa: F401  # pyright: ignore[reportMissingImports]
-
-        http2 = True
-    except Exception:
-        http2 = False
-    return httpx.AsyncClient(
-        auth=bearer_auth,
-        timeout=timeout,
-        http2=http2,
+def _client(workspace_client: WorkspaceClient) -> AsyncClient:
+    """Build an async OpenAI client for an explicit Databricks workspace."""
+    return AsyncClient(
+        base_url=workspace_client.config.host + "/serving-endpoints",
+        api_key="no-token",  # placeholder to pass openai-python validation; auth happens via http_client
+        http_client=clients.api(workspace_client),
     )
 
 
 @functools.cache
-def _http_client_default() -> httpx.AsyncClient:
-    """Return the cached default authenticated HTTP client."""
-    return _http_client(clients.workspace_client())
+def _client_default() -> AsyncClient:
+    """Return the cached default OpenAI-compatible Databricks client."""
+    return AsyncClient(
+        base_url=configs.get().host + "/serving-endpoints",
+        api_key="no-token",  # placeholder to pass openai-python validation; auth happens via http_client
+        http_client=clients.api(),
+    )
 
 
 async def main() -> None:

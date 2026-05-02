@@ -126,7 +126,12 @@ def _model_cache(config_key: str, model_csv: str) -> str:
     :return: The name of the selected model.
     :raises ValueError: If no model is found in the configuration or the provided CSV.
     """
-    model_name = configs.value(config_key, None)
+    # configs.value() now raises when no value resolves; treat that as "absent"
+    # and fall through to the model_csv readiness scan below.
+    try:
+        model_name = configs.value(config_key)
+    except ValueError:
+        model_name = None
     if not model_name and model_csv:
         model_name = model((m.strip() for m in model_csv.split(",")))
     if not model_name:
