@@ -4,12 +4,13 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ai"
-version = "0.0.1+revcdb267f"
+version = "0.0.1+revda5b477"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools",
-    "pydantic_ai>=1.60,<1.69",
-    "mlflow[databricks]>=3.10.1",
+    "pydantic_ai>=1.60,<2.0",
+    "logfire>=4.16,<5.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.27,<2.0",
 ]
 
 [dependency-groups]
