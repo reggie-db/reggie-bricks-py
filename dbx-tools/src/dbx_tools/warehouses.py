@@ -1,5 +1,6 @@
 import enum
 import json
+import re
 import time
 from typing import Any
 
@@ -15,8 +16,9 @@ from dbx_core import strs
 from pydantic import BaseModel, Field, computed_field
 
 from dbx_tools.catalogs import CatalogSchemaTable, CatalogSchemaTableLike
-from dbx_tools.clients import _WAREHOUSE_SIZE_PATTERN
 from dbx_tools.clients import workspace_client as default_workspace_client
+
+_WAREHOUSE_SIZE_PATTERN = re.compile(r"((?:\d+x|x))?(.+)")
 
 
 class WarehouseSort(enum.Enum):
@@ -73,11 +75,6 @@ class TableType(str, enum.Enum):
         "GLOBAL_TEMP_VIEW",
         "Global temporary view",
     )
-
-
-from typing import Any
-
-from pydantic import BaseModel, Field, computed_field
 
 
 class TableDescription(BaseModel):
