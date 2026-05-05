@@ -6,7 +6,7 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
-from dbx_core import objects, paths
+from dbx_core import funcs, objects, paths
 from lfp_logging import logs
 
 from dbx_concurio import caches
@@ -53,7 +53,7 @@ def _install(source: "InstallSource", eget: bool = True) -> "InstallPath":
             result_source = _path_source
     else:
         result_source = source
-    result = objects.call(lambda: result_source())
+    result = funcs.call(lambda: result_source())
     if not isinstance(result, InstallPath):
         result = InstallPath(path=result)
     if not os.access(result, os.X_OK):
@@ -79,7 +79,7 @@ class InstallPath(Path):
     def complete(self) -> None:
         """Invoke optional completion callback for post-use cleanup."""
         if self._on_complete is not None:
-            objects.call(self._on_complete, self)
+            funcs.call(self._on_complete, self)
 
 
 if __name__ == "__main__":

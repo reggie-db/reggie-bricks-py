@@ -17,7 +17,7 @@ if __name__ == "__main__":
     os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "FIELD-ENG-EAST")
     genie_space_id = "01f0cfa53c571bbb9b36f0e14a4e408d"
     wc = clients.workspace_client()
-    genie_service = genie.Service(wc, genie_space_id)
+    genie_service = genie.GenieService(wc, genie_space_id)
     conv = genie_service.create_conversation("Answer questions about invoices")
     resps = genie_service.chat(conv.conversation_id, "sum all invoice totals")
     attachment_id_map = {}
@@ -25,10 +25,9 @@ if __name__ == "__main__":
     for resp in resps:
         print(resp)
 
-        queries = list(resp.queries())
-        if queries:
-            for query in queries:
-                print(query)
+        queries = [qa.query for qa in resp.query_attachments() if qa.query]
+        for query in queries:
+            print(query)
         if resp.message:
             attachment_ids = attachment_id_map.setdefault(resp.message.message_id, [])
             for attachment_id in _attachment_ids(resp):

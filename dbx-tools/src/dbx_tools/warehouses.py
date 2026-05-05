@@ -1,9 +1,12 @@
+import asyncio
 import enum
 import json
 import re
 import time
+from builtins import list as py_list
 from typing import Any
 
+import httpx
 import yaml
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import (
@@ -15,9 +18,11 @@ from databricks.sdk.service.sql import (
 from dbx_core import strs
 from pydantic import BaseModel, Field, computed_field
 
+from dbx_tools import clients
 from dbx_tools.catalogs import CatalogSchemaTable, CatalogSchemaTableLike
-from dbx_tools.clients import workspace_client as default_workspace_client
 
+_DEFAULT_WAIT_TIMEOUT_SECONDS = 50
+_DEFAULT_POLL_INTERVAL_SECONDS = 0.1
 _WAREHOUSE_SIZE_PATTERN = re.compile(r"((?:\d+x|x))?(.+)")
 
 
@@ -36,6 +41,11 @@ class TableType(str, enum.Enum):
     This enum represents the object type returned by Databricks SQL metadata
     such as `DESCRIBE TABLE EXTENDED` or `information_schema.tables.table_type`.
     """
+
+    # Class-level annotation (no value) so Pyright knows every member has a
+    # ``description`` attribute. Python's enum machinery ignores annotation-only
+    # entries, so this does NOT become an enum member.
+    description: str
 
     def __new__(cls, value: str, description: str):
         obj = str.__new__(cls, value)
@@ -147,6 +157,21 @@ class TableDescription(BaseModel):
         return None
 
 
+class StatementExecutionError(Exception):
+    def __init__(
+        self,
+        statement_id: str | None,
+        state,
+        message: str | None = None,
+    ):
+        self.statement_id = statement_id
+        self.state = state
+        self.message = message or "Statement execution failed"
+        super().__init__(
+            f"Statement failed (id={statement_id}, state={state}): {self.message}"
+        )
+
+
 def get(
     *args,
     **kwargs,
@@ -169,12 +194,19 @@ def get(
     return ranked_warehouses[0]
 
 
+def _get_id(*args, **kwargs) -> str:
+    warehouse_id = get(*args, **kwargs).id
+    if not warehouse_id:
+        raise ValueError("No warehouse ID selected")
+    return warehouse_id
+
+
 def execute_statement(
     statement: str,
     warehouse_id: str | None = None,
     workspace_client: WorkspaceClient | None = None,
-    wait_timeout: str = "50s",
-    poll_interval_seconds: float = 0.25,
+    wait_timeout: str | float = _DEFAULT_POLL_INTERVAL_SECONDS,
+    poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
     **kwargs,
 ) -> StatementResponse:
     """Execute SQL on a warehouse and poll until completion.
@@ -191,38 +223,201 @@ def execute_statement(
         Final `StatementResponse` once the statement reaches `SUCCEEDED`.
 
     Raises:
-        RuntimeError: If execution reaches a terminal non-success state.
+        StatementExecutionError: If execution reaches a terminal non-success state.
+        ValueError: When no warehouse can be selected.
     """
-    wc = workspace_client or default_workspace_client()
-    selected_warehouse_id = warehouse_id or get(workspace_client=wc).id
-    response = wc.statement_execution.execute_statement(
+    wc = workspace_client or clients.workspace_client()
+    selected_warehouse_id = warehouse_id or _get_id(workspace_client=wc)
+    statement_resp = wc.statement_execution.execute_statement(
         warehouse_id=selected_warehouse_id,
         statement=statement,
-        wait_timeout=wait_timeout,
+        wait_timeout=_wait_timeout(wait_timeout),
         on_wait_timeout=ExecuteStatementRequestOnWaitTimeout.CONTINUE,
         **kwargs,
     )
-    statement_id = response.statement_id
-    status_response = response
+    return _statement_response(
+        statement_resp, workspace_client=wc, poll_interval_seconds=poll_interval_seconds
+    )
 
+
+def statement_response(
+    statement_id: str,
+    workspace_client: WorkspaceClient | None = None,
+    poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
+) -> StatementResponse:
+    wc = workspace_client or clients.workspace_client()
+    return _statement_response(
+        statement_id, workspace_client=wc, poll_interval_seconds=poll_interval_seconds
+    )
+
+
+def _statement_response(
+    current_statement: StatementResponse | str,
+    workspace_client: WorkspaceClient,
+    poll_interval_seconds: float,
+) -> StatementResponse:
+    statement_resp: StatementResponse | None = None
     while True:
-        status = getattr(status_response, "status", None)
-        state = status.state if status else None
-        if state == StatementState.SUCCEEDED:
-            return status_response
-        if state in {
-            StatementState.FAILED,
-            StatementState.CANCELED,
-            StatementState.CLOSED,
-        }:
-            message = (
-                status.error.message if status and status.error else "query failed"
+        if statement_resp is None:
+            if isinstance(current_statement, str):
+                next_id = current_statement
+            else:
+                next_id = _check_terminal_state(current_statement)
+        else:
+            next_id = _check_terminal_state(statement_resp)
+        if next_id is None:
+            if statement_resp:
+                return statement_resp
+            raise StatementExecutionError(
+                next_id, StatementState.FAILED, "Statement execution failed"
             )
-            raise RuntimeError(message)
-        if not statement_id:
-            raise RuntimeError("query did not return a statement id")
-        time.sleep(max(poll_interval_seconds, 0))
-        status_response = wc.statement_execution.get_statement(statement_id)
+        if statement_resp is not None:
+            time.sleep(max(poll_interval_seconds, 0))
+        statement_resp = workspace_client.statement_execution.get_statement(next_id)
+
+
+async def execute_statement_async(
+    statement: str,
+    warehouse_id: str | None = None,
+    workspace_client: WorkspaceClient | None = None,
+    wait_timeout: str | float | int = _DEFAULT_WAIT_TIMEOUT_SECONDS,
+    poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
+    **kwargs: Any,
+) -> StatementResponse:
+    """Async equivalent of :func:`execute_statement`.
+
+    Talks to the SQL Statement Execution REST API directly via
+    :func:`dbx_tools.clients.api` (mirroring the pattern used by
+    :class:`dbx_tools.genie.GenieConversation`) so the call slots cleanly into
+    an ``asyncio`` event loop without occupying a thread for the duration of a
+    long-running query.
+
+    Same return type and error semantics as the sync version:
+
+    * Returns :class:`StatementResponse` once the statement reaches
+      :attr:`StatementState.SUCCEEDED`.
+    * Raises :class:`StatementExecutionError` when the statement enters
+      ``FAILED``, ``CANCELED``, or ``CLOSED``.
+    * Raises ``ValueError`` when no warehouse can be selected.
+    * Non-2xx HTTP responses propagate as :class:`httpx.HTTPStatusError`.
+
+    Args:
+        statement: SQL statement to execute.
+        warehouse_id: Optional warehouse id. The top-ranked warehouse from
+            :func:`get` is used when omitted.
+        api_client: Optional pre-built authenticated ``httpx.AsyncClient``.
+            When omitted, the cached default client returned by
+            :func:`dbx_tools.clients.api` is used.
+        workspace_client: Optional ``WorkspaceClient`` consulted only when
+            ``warehouse_id`` is omitted (used by :func:`get` to resolve the
+            ranked default).
+        wait_timeout: Initial execution wait timeout passed to the SQL API.
+        poll_interval_seconds: Delay between status polls while the query is
+            still running.
+        **kwargs: Extra body fields forwarded verbatim to the
+            ``POST /api/2.0/sql/statements`` request (eg. ``catalog``,
+            ``schema``, ``parameters``, ``row_limit``). Callers are
+            responsible for serialising any enum values to their ``.value``
+            form ahead of time.
+
+    Returns:
+        Final :class:`StatementResponse` once the statement reaches
+        ``SUCCEEDED``.
+    """
+    selected_warehouse_id = warehouse_id or _get_id(workspace_client=workspace_client)
+    api_client = clients.api(workspace_client=workspace_client)
+
+    # Mirror the SDK's body shape; ``on_wait_timeout`` is enum-serialised so
+    # callers don't need to know the API string spelling.
+    body: dict[str, Any] = {
+        "warehouse_id": selected_warehouse_id,
+        "statement": statement,
+        "wait_timeout": _wait_timeout(wait_timeout),
+        "on_wait_timeout": ExecuteStatementRequestOnWaitTimeout.CONTINUE.value,
+        **kwargs,
+    }
+
+    resp = await api_client.post("/api/2.0/sql/statements", json=body)
+    resp.raise_for_status()
+    statement_resp = StatementResponse.from_dict(resp.json())
+    return await _statement_response_async(
+        statement_resp, api_client, poll_interval_seconds
+    )
+
+
+async def statement_response_async(
+    statement_id: str,
+    client: WorkspaceClient | httpx.AsyncClient | None = None,
+    poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
+) -> StatementResponse:
+    if isinstance(client, WorkspaceClient):
+        api_client = clients.api(workspace_client=client)
+    elif client is None:
+        api_client = clients.api()
+    else:
+        api_client = client
+    return await _statement_response_async(
+        statement_id, api_client=api_client, poll_interval_seconds=poll_interval_seconds
+    )
+
+
+async def _statement_response_async(
+    current_statement: StatementResponse | str,
+    api_client: httpx.AsyncClient,
+    poll_interval_seconds: float,
+) -> StatementResponse:
+    statement_resp: StatementResponse | None = None
+    while True:
+        if statement_resp is None:
+            if isinstance(current_statement, str):
+                next_id = current_statement
+            else:
+                next_id = _check_terminal_state(current_statement)
+        else:
+            next_id = _check_terminal_state(statement_resp)
+        if next_id is None:
+            if statement_resp:
+                return statement_resp
+            raise StatementExecutionError(
+                next_id, StatementState.FAILED, "Statement execution failed"
+            )
+        if statement_resp is not None:
+            await asyncio.sleep(max(poll_interval_seconds, 0))
+        poll_resp = await api_client.get(f"/api/2.0/sql/statements/{next_id}")
+        poll_resp.raise_for_status()
+        statement_resp = StatementResponse.from_dict(poll_resp.json())
+
+
+def _check_terminal_state(statement_resp: StatementResponse) -> str | None:
+    """Decide what the polling loop should do next based on the latest status.
+
+    Returns ``None`` to signal the caller can return ``statement_resp``
+    directly (status is :attr:`StatementState.SUCCEEDED`). Returns the
+    ``statement_id`` the caller should fetch next when the statement is still
+    in progress. Raises :class:`StatementExecutionError` when the statement
+    has reached a terminal failure state (``FAILED`` / ``CANCELED`` /
+    ``CLOSED``) or when no ``statement_id`` is available to keep polling
+    against (Databricks usually reports this as a transport-level failure).
+
+    Returning the next id (rather than just a "keep polling" boolean) lets
+    the caller skip a separate ``statement_resp.statement_id`` lookup +
+    None-narrowing dance.
+    """
+    statement_id = statement_resp.statement_id
+    status = getattr(statement_resp, "status", None)
+    state = status.state if status else None
+    if state == StatementState.SUCCEEDED:
+        return None
+    if state in {
+        StatementState.FAILED,
+        StatementState.CANCELED,
+        StatementState.CLOSED,
+    }:
+        message = status.error.message if status and status.error else None
+        raise StatementExecutionError(statement_id, state, message)
+    if not statement_id:
+        raise StatementExecutionError(statement_id, state, "Missing statement id")
+    return statement_id
 
 
 def list(
@@ -248,26 +443,28 @@ def list(
         preference.lower() for preference in name_preference if preference
     ]
 
-    wc = workspace_client or default_workspace_client()
+    wc = workspace_client or clients.workspace_client()
     candidates = [w for w in wc.warehouses.list() if w.id]
     if not candidates:
         return []
 
-    name_tokens_by_id: dict[str, list[str]] = {}
+    name_tokens_by_id: dict[str, py_list[str]] = {}
     for candidate in candidates:
+        if not candidate.id:
+            continue
         name_tokens_by_id[candidate.id] = [*strs.tokenize(candidate.name)]
 
     def _name_rank(w: EndpointInfo) -> int:
-        name_tokens = name_tokens_by_id.get(w.id, [])
-        if not normalized_name_preference:
-            return 0
-        for idx, preference in enumerate(normalized_name_preference):
-            if preference in name_tokens:
-                return len(normalized_name_preference) - idx
+        if w.id:
+            name_tokens = name_tokens_by_id.get(w.id, [])
+            if normalized_name_preference:
+                for idx, preference in enumerate(normalized_name_preference):
+                    if preference in name_tokens:
+                        return len(normalized_name_preference) - idx
         return 0
 
     def _key(w: EndpointInfo) -> tuple[int, ...]:
-        rank: list[int] = []
+        rank: py_list[int] = []
         for current_sort in sort:
             if current_sort is WarehouseSort.SERVERLESS:
                 rank.append(1 if bool(w.enable_serverless_compute) else 0)
@@ -341,6 +538,12 @@ def _warehouse_size_rank(cluster_size: str | None) -> int:
                     rank = rank * (multiplier + 1)
                 return rank
     return 0
+
+
+def _wait_timeout(value: str | float | int) -> str:
+    if isinstance(value, str):
+        return value
+    return f"{int(value)}s"
 
 
 if "__main__" == __name__:

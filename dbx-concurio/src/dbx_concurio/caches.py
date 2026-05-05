@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Generic
 
 import dbx_core.paths as paths
-from dbx_core import objects, strs
+from dbx_core import funcs, objects, strs
 from diskcache import Cache
 from fasteners import InterProcessLock
 from lfp_logging import logs
@@ -76,7 +76,7 @@ class DiskCache(Cache):
                 cache_value = super().get(key, default=DiskCache._SENTINEL)
                 if not DiskCache._is_valid(cache_value, expire):
                     # Load fresh value using the provided loader
-                    value = objects.call(loader, key)
+                    value = funcs.call(loader, key)
                     # Wrap with timestamp for later staleness checks
                     cache_value = DiskCacheValue(value=value)
                     # Persist with expiry so future calls can reuse it

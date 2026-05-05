@@ -1,7 +1,7 @@
 from typing import Any, Callable
 
 import reflex as rx
-from dbx_core import objects
+from dbx_core import funcs
 from reflex.event import EventSpec
 
 
@@ -12,7 +12,7 @@ def on_key_down_event(
     def _handler(_, modifiers: rx.Var[dict]) -> EventSpec:
         return rx.call_script(
             "window['event']",
-            lambda window_event: objects.call(handler, window_event, modifiers),
+            lambda window_event: funcs.call(handler, window_event, modifiers),
         )
 
     if not condition:
@@ -32,7 +32,7 @@ def on_key_down_event(
             return []
 
         return rx.cond(
-            objects.call(condition, key, modifiers),
+            funcs.call(condition, key, modifiers),
             _handler(key, modifiers),
             [],
         )
@@ -45,7 +45,7 @@ def on_key_down_value(
     condition: Callable[..., Any] | str | None = None,
 ) -> Callable[[rx.Var[str], rx.Var[dict]], EventSpec]:
     def _handler(event: rx.Var, modifiers: rx.Var[dict]) -> EventSpec:
-        return objects.call(handler, event.target.value, modifiers)
+        return funcs.call(handler, event.target.value, modifiers)
 
     return on_key_down_event(
         _handler,

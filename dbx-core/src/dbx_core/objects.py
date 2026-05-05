@@ -72,42 +72,6 @@ _DUMP_ATTRS = _generate_attr_names(
 _ENUM_ATTRS = ["name", "value"]
 
 
-def call(fn: Callable, *args: Any) -> Any:
-    """
-    Call a function with the provided arguments, padding with None if needed.
-
-    If the function accepts *args (VAR_POSITIONAL), all arguments are passed through.
-    Otherwise, only the number of fixed positional parameters are passed, with None
-    used to pad if fewer arguments are provided than required.
-
-    Args:
-        fn: Callable function to invoke
-        *args: Arguments to pass to the function
-
-    Returns:
-        Result of calling fn with the adjusted arguments
-    """
-    sig = inspect.signature(fn)
-    params = list(sig.parameters.values())
-
-    if any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params):
-        return fn(*args)
-
-    fixed = [
-        p
-        for p in params
-        if p.kind
-        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    ]
-    needed = len(fixed)
-
-    adj = list(args[:needed])
-    if len(adj) < needed:
-        adj = adj + [None] * (needed - len(adj))
-
-    return fn(*adj)
-
-
 def attribute(obj: Any, *attrs: str, default: Any = None) -> Any:
     """
     Safely traverse a chain of attributes on an object.
@@ -406,6 +370,4 @@ if __name__ == "__main__":
     LOG.info(hash(1).hexdigest())
     LOG.info(hash("1").hexdigest())
     LOG.info(hash(datetime.datetime.now()).hexdigest())
-    call(lambda x: LOG.info(f"suh {x}"), "wow", "cool", "neat")
-    call(lambda x, y: LOG.info(f"suh {x} {y}"), "wow")
     print(list(_generate_attr_names(("to", "data"), ["as", "dict"])))

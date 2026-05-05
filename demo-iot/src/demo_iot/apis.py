@@ -63,7 +63,7 @@ class APIImplementation(APIContract):
         self.config = config
         self.current_request = current_request
         self.spark = clients.spark()
-        self.genie_service = genie.Service(
+        self.genie_service = genie.GenieService(
             clients.workspace_client(),
             os.getenv("GENIE_SPACE_ID", "01f0f874d8721992b9d02f8f03487924"),
         )
@@ -164,12 +164,17 @@ class APIImplementation(APIContract):
 
             for msg in self.genie_service.chat(conv_id, q):
                 LOG.info("genie msg: %s", msg)
-                for msg_query in msg.queries():
-                    sql_query = re.sub(r"\s*;\s*$", "", msg_query).strip() or sql_query
-                    if sql_query and not sql_query_found:
-                        sql_query_found = time.time()
-                for msg_description in msg.descriptions():
-                    description = msg_description
+                # Single pass over the typed query attachments; pull both the SQL
+                # and the description off each one instead of doing two iterations.
+                for query_attachment in msg.query_attachments():
+                    if msg_query := query_attachment.query:
+                        sql_query = (
+                            re.sub(r"\s*;\s*$", "", msg_query).strip() or sql_query
+                        )
+                        if sql_query and not sql_query_found:
+                            sql_query_found = time.time()
+                    if msg_description := query_attachment.description:
+                        description = msg_description
                 if (sql_query and description) or (
                     sql_query_found and (time.time() - sql_query_found > 3)
                 ):

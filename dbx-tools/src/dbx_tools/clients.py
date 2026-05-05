@@ -12,6 +12,7 @@ import os
 import signal
 from contextvars import ContextVar
 from datetime import datetime
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -69,7 +70,7 @@ def _workspace_client_default() -> WorkspaceClient:
     client_secret = os.environ.get("DATABRICKS_CLIENT_SECRET", "")
 
     # Common kwargs for product identification in user-agent
-    product_kwargs = {
+    product_kwargs: dict[str, Any] = {
         "product": _product_name(),
         "product_version": _product_version(),
     }
@@ -135,7 +136,7 @@ def _spark() -> SparkSession:
         return sess
 
     try:
-        from wrapt import LazyObjectProxy
+        from wrapt import LazyObjectProxy  # pyright: ignore[reportAttributeAccessIssue]
 
         # noinspection PyTypeChecker
         return LazyObjectProxy(_load, interface=SparkSession)
@@ -268,6 +269,10 @@ class _AsyncBearerAuth(httpx.Auth):
         else:
             self._hostname = None
         self._token_fn = lambda: configs.token(config)
+        # org_id may not always be present
+        self._org_id = getattr(config, "account_id", None) or getattr(
+            config, "org_id", None
+        )
 
     async def async_auth_flow(self, request: httpx.Request):
         if self._hostname:
@@ -280,19 +285,3 @@ class _AsyncBearerAuth(httpx.Auth):
                         request.headers[_AUTHORIZATION_HEADER_NAME] = "Bearer " + token
 
         yield request
-
-
-async def main() -> None:
-    api_client = api()
-    async with api_client as client:
-        print(client.base_url)
-    print("Done")
-    # --- Triggering SIGTERM on yourself ---
-    print("Sending SIGTERM to myself...")
-    os.kill(os.getpid(), signal.SIGTERM)
-    await asyncio.sleep(10)
-    print("Done 2")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -16,7 +16,7 @@ Run with::
 import asyncio
 import json
 
-from dbx_tools import clients
+from dbx_tools import clients, warehouses
 from dbx_tools.genie import GenieConversation
 
 
@@ -39,7 +39,6 @@ async def main() -> None:
             message = input("Enter a message: ").strip()
             if not message:
                 break
-            queries = set()
             statement_ids = set()
             message_id, responses = await conv.chat(message)
             print(f"message_id: {message_id}")
@@ -47,17 +46,16 @@ async def main() -> None:
             async for response in responses:
                 print(f"status: {response.status_display}")
                 print(json.dumps(response.message.as_dict(), indent=2))
-                queries = list(response.queries())
-                if queries:
-                    for query in queries:
-                        if query not in queries:
-                            queries.append(query)
-                            print(query)
-                if query_result := response.message.query_result:
-                    if statement_id := query_result.statement_id:
-                        if statement_id not in statement_ids:
-                            statement_ids.add(statement_id)
-                            print(f"statement_id: {statement_id}")
+                for query_attachment in response.query_attachments():
+                    if (
+                        statement_id := query_attachment.statement_id
+                    ) and statement_id not in statement_ids:
+                        statement_ids.add(statement_id)
+                        print(f"statement_id: {statement_id}")
+                        statement_resp = await warehouses.statement_response_async(
+                            statement_id, client=conv.api_client
+                        )
+                        print(statement_resp)
 
             print("--------------------------------")
 

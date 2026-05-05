@@ -1,5 +1,10 @@
 import asyncio
-from typing import Any, Iterable, TypeAlias
+from typing import (
+    Any,
+    Iterable,
+    TypeAlias,
+    cast,
+)
 
 from dbx_core import objects, strs
 from lfp_types import T, to_iterable
@@ -30,12 +35,17 @@ async def summarize(
     Returns:
         Summarized text string.
     """
-    return await run(
-        text,
-        [instructions, "Summarize the text without commentary"],
-        agent=agent,
-        run_context=run_context,
-        output_type=str,
+    # ``run`` may return ``None`` when the assembled prompt is empty; coerce to
+    # "" to honour this function's ``-> str`` contract.
+    return (
+        await run(
+            text,
+            [instructions, "Summarize the text without commentary"],
+            agent=agent,
+            run_context=run_context,
+            output_type=str,
+        )
+        or ""
     )
 
 
@@ -204,12 +214,17 @@ async def prompt(
             Input JSON will be provided below.
             Transform it into the formatted prompt following all rules above.
             """
-            return await run(
-                data_json,
-                [instructions, tool_instructions],
-                agent=agent,
-                run_context=run_context,
-                output_type=str,
+            # ``run`` may return ``None`` when the assembled prompt is empty;
+            # coerce to "" to honour this function's ``-> str`` contract.
+            return (
+                await run(
+                    data_json,
+                    [instructions, tool_instructions],
+                    agent=agent,
+                    run_context=run_context,
+                    output_type=str,
+                )
+                or ""
             )
     return ""
 
@@ -247,8 +262,12 @@ async def run(
         output = result.output
         if isinstance(output, str):
             output = strs.trim(output)
-        return output
-    return "" if output_type is str else None
+        # Pyright can't propagate ``output_type=type[T]`` to ``result.output``,
+        # so it sees ``output`` as a loose union; cast to T | None explicitly.
+        return cast(T | None, output)
+    # Same TypeVar narrowing limitation: when ``output_type is str`` we know
+    # T == str at runtime but pyright cannot bridge that link.
+    return cast(T | None, "" if output_type is str else None)
 
 
 def _run_prompt(user_prompt: str, instructions: Instructions) -> str:
