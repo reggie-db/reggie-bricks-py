@@ -12,7 +12,7 @@ import os
 import signal
 from contextvars import ContextVar
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, overload
 from urllib.parse import urlparse
 
 import httpx
@@ -101,6 +101,14 @@ def _workspace_client_default() -> WorkspaceClient:
     return client
 
 
+@overload
+def spark(connect: Literal[True] = True) -> SparkSession: ...
+
+
+@overload
+def spark(connect: bool) -> SparkSession | None: ...
+
+
 def spark(connect: bool = True) -> SparkSession | None:
     """Return a Spark session sourced from runtime context or Databricks Connect.
 
@@ -110,7 +118,8 @@ def spark(connect: bool = True) -> SparkSession | None:
             creating a new connect-backed session.
 
     Returns:
-        The active ``SparkSession`` when found or created, otherwise ``None``.
+        The active ``SparkSession`` when found or created, otherwise ``None``
+        (only possible when ``connect=False``).
     """
     if instance := runtimes.ipython_user_ns("spark", None):
         return instance
