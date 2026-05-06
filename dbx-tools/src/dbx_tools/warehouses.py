@@ -160,16 +160,22 @@ class TableDescription(BaseModel):
 class StatementExecutionError(Exception):
     def __init__(
         self,
-        statement_id: str | None,
-        state,
         message: str | None = None,
+        statement_id: str | None = None,
+        statement_response: StatementResponse | None = None,
     ):
-        self.statement_id = statement_id
-        self.state = state
-        self.message = message or "Statement execution failed"
-        super().__init__(
-            f"Statement failed (id={statement_id}, state={state}): {self.message}"
-        )
+        self.message = message or ""
+
+        statement_response_data = None
+        if self.statement_response:
+            try:
+                statement_response_data = self.statement_response.as_dict()
+            except Exception:
+                pass
+        exception_message = f"Statement failed (statement_id={self.statement_id} statement_response={statement_response_data})"
+        if self.message:
+            exception_message += f": {self.message}"
+        super().__init__(exception_message)
 
 
 def get(
@@ -235,8 +241,12 @@ def execute_statement(
         on_wait_timeout=ExecuteStatementRequestOnWaitTimeout.CONTINUE,
         **kwargs,
     )
-    return _statement_response(
-        statement_resp, workspace_client=wc, poll_interval_seconds=poll_interval_seconds
+    if _statement_response_terminal(statement_resp):
+        return statement_resp
+    return _statement_response_wait(
+        statement_resp.statement_id,
+        workspace_client=wc,
+        poll_interval_seconds=poll_interval_seconds,
     )
 
 
@@ -246,34 +256,27 @@ def statement_response(
     poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
 ) -> StatementResponse:
     wc = workspace_client or clients.workspace_client()
-    return _statement_response(
+    return _statement_response_wait(
         statement_id, workspace_client=wc, poll_interval_seconds=poll_interval_seconds
     )
 
 
-def _statement_response(
-    current_statement: StatementResponse | str,
+def _statement_response_wait(
+    statement_id: str | None,
     workspace_client: WorkspaceClient,
     poll_interval_seconds: float,
 ) -> StatementResponse:
-    statement_resp: StatementResponse | None = None
     while True:
-        if statement_resp is None:
-            if isinstance(current_statement, str):
-                next_id = current_statement
-            else:
-                next_id = _check_terminal_state(current_statement)
-        else:
-            next_id = _check_terminal_state(statement_resp)
-        if next_id is None:
-            if statement_resp:
-                return statement_resp
-            raise StatementExecutionError(
-                next_id, StatementState.FAILED, "Statement execution failed"
+        if statement_id:
+            statement_resp = workspace_client.statement_execution.get_statement(
+                statement_id=statement_id
             )
-        if statement_resp is not None:
+            if _statement_response_terminal(statement_resp):
+                return statement_resp
+            statement_id = statement_resp.statement_id
             time.sleep(max(poll_interval_seconds, 0))
-        statement_resp = workspace_client.statement_execution.get_statement(next_id)
+        else:
+            raise StatementExecutionError("statement_id not found")
 
 
 async def execute_statement_async(
@@ -337,11 +340,13 @@ async def execute_statement_async(
         **kwargs,
     }
 
-    resp = await api_client.post("/api/2.0/sql/statements", json=body)
-    resp.raise_for_status()
-    statement_resp = StatementResponse.from_dict(resp.json())
-    return await _statement_response_async(
-        statement_resp, api_client, poll_interval_seconds
+    exec_resp = await api_client.post("/api/2.0/sql/statements", json=body)
+    exec_resp.raise_for_status()
+    statement_resp = StatementResponse.from_dict(exec_resp.json())
+    if _statement_response_terminal(statement_resp):
+        return statement_resp
+    return await _statement_response_wait_async(
+        statement_resp.statement_id, api_client, poll_interval_seconds
     )
 
 
@@ -356,68 +361,43 @@ async def statement_response_async(
         api_client = clients.api()
     else:
         api_client = client
-    return await _statement_response_async(
+    return await _statement_response_wait_async(
         statement_id, api_client=api_client, poll_interval_seconds=poll_interval_seconds
     )
 
 
-async def _statement_response_async(
-    current_statement: StatementResponse | str,
+async def _statement_response_wait_async(
+    statement_id: str | None,
     api_client: httpx.AsyncClient,
     poll_interval_seconds: float,
 ) -> StatementResponse:
-    statement_resp: StatementResponse | None = None
     while True:
-        if statement_resp is None:
-            if isinstance(current_statement, str):
-                next_id = current_statement
-            else:
-                next_id = _check_terminal_state(current_statement)
-        else:
-            next_id = _check_terminal_state(statement_resp)
-        if next_id is None:
-            if statement_resp:
+        if statement_id:
+            poll_resp = await api_client.get(f"/api/2.0/sql/statements/{statement_id}")
+            poll_resp.raise_for_status()
+            statement_resp = StatementResponse.from_dict(poll_resp.json())
+            if _statement_response_terminal(statement_resp):
                 return statement_resp
-            raise StatementExecutionError(
-                next_id, StatementState.FAILED, "Statement execution failed"
-            )
-        if statement_resp is not None:
+            statement_id = statement_resp.statement_id
             await asyncio.sleep(max(poll_interval_seconds, 0))
-        poll_resp = await api_client.get(f"/api/2.0/sql/statements/{next_id}")
-        poll_resp.raise_for_status()
-        statement_resp = StatementResponse.from_dict(poll_resp.json())
+        else:
+            raise StatementExecutionError("statement_id not found")
 
 
-def _check_terminal_state(statement_resp: StatementResponse) -> str | None:
-    """Decide what the polling loop should do next based on the latest status.
-
-    Returns ``None`` to signal the caller can return ``statement_resp``
-    directly (status is :attr:`StatementState.SUCCEEDED`). Returns the
-    ``statement_id`` the caller should fetch next when the statement is still
-    in progress. Raises :class:`StatementExecutionError` when the statement
-    has reached a terminal failure state (``FAILED`` / ``CANCELED`` /
-    ``CLOSED``) or when no ``statement_id`` is available to keep polling
-    against (Databricks usually reports this as a transport-level failure).
-
-    Returning the next id (rather than just a "keep polling" boolean) lets
-    the caller skip a separate ``statement_resp.statement_id`` lookup +
-    None-narrowing dance.
-    """
-    statement_id = statement_resp.statement_id
-    status = getattr(statement_resp, "status", None)
-    state = status.state if status else None
-    if state == StatementState.SUCCEEDED:
-        return None
-    if state in {
-        StatementState.FAILED,
-        StatementState.CANCELED,
-        StatementState.CLOSED,
-    }:
-        message = status.error.message if status and status.error else None
-        raise StatementExecutionError(statement_id, state, message)
-    if not statement_id:
-        raise StatementExecutionError(statement_id, state, "Missing statement id")
-    return statement_id
+def _statement_response_terminal(statement_resp: StatementResponse | None) -> bool:
+    if statement_resp:
+        if status := statement_resp.status:
+            if state := status.state:
+                if state == StatementState.SUCCEEDED:
+                    return True
+                elif statement_resp.statement_id and state in {
+                    StatementState.PENDING,
+                    StatementState.RUNNING,
+                }:
+                    return False
+    raise StatementExecutionError(
+        "Invalid statement response", statement_response=statement_resp
+    )
 
 
 def list(
