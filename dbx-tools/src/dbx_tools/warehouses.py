@@ -158,13 +158,30 @@ class TableDescription(BaseModel):
 
 
 class StatementExecutionError(Exception):
+    """Raised when a Databricks SQL statement fails or its response is unusable.
+
+    Surfaced from :func:`execute_statement`, :func:`execute_statement_async`,
+    :func:`statement_response`, :func:`statement_response_async`, and the
+    private polling helpers (via :func:`_statement_response_terminal`). Carries
+    the optional human-readable ``message`` and the last observed
+    :class:`StatementResponse` (when available) so callers can inspect
+    ``status.error`` / ``state`` for granular failure detail rather than
+    parsing the formatted exception string.
+
+    Attributes:
+        message: Caller-supplied summary; empty string when omitted.
+        statement_response: Last observed :class:`StatementResponse`, or
+            ``None`` when not available (e.g. raised before any response was
+            received).
+    """
+
     def __init__(
         self,
         message: str | None = None,
-        statement_id: str | None = None,
         statement_response: StatementResponse | None = None,
     ):
         self.message = message or ""
+        self.statement_response = statement_response
 
         statement_response_data = None
         if self.statement_response:
@@ -172,7 +189,9 @@ class StatementExecutionError(Exception):
                 statement_response_data = self.statement_response.as_dict()
             except Exception:
                 pass
-        exception_message = f"Statement failed (statement_id={self.statement_id} statement_response={statement_response_data})"
+        exception_message = (
+            f"Statement failed (statement_response={statement_response_data})"
+        )
         if self.message:
             exception_message += f": {self.message}"
         super().__init__(exception_message)
@@ -211,7 +230,7 @@ def execute_statement(
     statement: str,
     warehouse_id: str | None = None,
     workspace_client: WorkspaceClient | None = None,
-    wait_timeout: str | float = _DEFAULT_POLL_INTERVAL_SECONDS,
+    wait_timeout: str | float = _DEFAULT_WAIT_TIMEOUT_SECONDS,
     poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
     **kwargs,
 ) -> StatementResponse:
@@ -219,18 +238,30 @@ def execute_statement(
 
     Args:
         statement: SQL statement to execute.
-        warehouse_id: Optional warehouse id. Top-ranked warehouse is used when omitted.
-        workspace_client: Optional `WorkspaceClient`; default client is used when omitted.
-        wait_timeout: Initial execution wait timeout passed to Databricks SQL API.
-        poll_interval_seconds: Delay between polling calls while query is running.
-        **kwargs: Additional keyword arguments forwarded to `execute_statement`.
+        warehouse_id: Optional warehouse id. Top-ranked warehouse (via
+            :func:`get`) is used when omitted.
+        workspace_client: Optional `WorkspaceClient`; the cached default
+            client is used when omitted.
+        wait_timeout: Initial execution wait timeout passed to the Databricks
+            SQL API. Numeric values (``int`` / ``float``) are coerced to
+            ``"<int>s"``; pass a string to control the unit yourself.
+        poll_interval_seconds: Delay between polling calls while the query is
+            still running.
+        **kwargs: Additional keyword arguments forwarded verbatim to the SDK's
+            ``WorkspaceClient.statement_execution.execute_statement`` (eg.
+            ``catalog``, ``schema``, ``parameters``, ``row_limit``,
+            ``disposition``).
 
     Returns:
         Final `StatementResponse` once the statement reaches `SUCCEEDED`.
 
     Raises:
-        StatementExecutionError: If execution reaches a terminal non-success state.
-        ValueError: When no warehouse can be selected.
+        StatementExecutionError: When the statement reaches ``FAILED``,
+            ``CANCELED``, or ``CLOSED``; when the response shape is
+            unrecognised (no ``status.state``); or when polling cannot
+            continue because the response is missing a ``statement_id``.
+        ValueError: When no warehouse can be selected (none accessible, or
+            the top-ranked one has no id).
     """
     wc = workspace_client or clients.workspace_client()
     selected_warehouse_id = warehouse_id or _get_id(workspace_client=wc)
@@ -255,6 +286,28 @@ def statement_response(
     workspace_client: WorkspaceClient | None = None,
     poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
 ) -> StatementResponse:
+    """Block until an already-submitted statement reaches a terminal state.
+
+    Use when the statement was started elsewhere (e.g. via the Databricks UI
+    or the SDK directly) and you only have the ``statement_id``. Internally
+    polls ``statement_execution.get_statement`` on the workspace SDK client.
+
+    Args:
+        statement_id: Existing Databricks SQL statement id to wait on.
+        workspace_client: Optional ``WorkspaceClient``. When omitted, the
+            cached default client is used.
+        poll_interval_seconds: Delay between status polls while the query is
+            still running.
+
+    Returns:
+        Final :class:`StatementResponse` once the statement reaches
+        ``SUCCEEDED``.
+
+    Raises:
+        StatementExecutionError: Same conditions as :func:`execute_statement`
+            (terminal failure state, unrecognised response shape, or missing
+            ``statement_id`` mid-poll).
+    """
     wc = workspace_client or clients.workspace_client()
     return _statement_response_wait(
         statement_id, workspace_client=wc, poll_interval_seconds=poll_interval_seconds
@@ -308,20 +361,23 @@ async def execute_statement_async(
         statement: SQL statement to execute.
         warehouse_id: Optional warehouse id. The top-ranked warehouse from
             :func:`get` is used when omitted.
-        api_client: Optional pre-built authenticated ``httpx.AsyncClient``.
-            When omitted, the cached default client returned by
-            :func:`dbx_tools.clients.api` is used.
-        workspace_client: Optional ``WorkspaceClient`` consulted only when
-            ``warehouse_id`` is omitted (used by :func:`get` to resolve the
-            ranked default).
+        workspace_client: Optional ``WorkspaceClient`` used both to resolve
+            the ranked default warehouse (when ``warehouse_id`` is omitted)
+            and to mint the authenticated httpx client via
+            :func:`dbx_tools.clients.api`. When omitted, the cached defaults
+            from those helpers are used.
         wait_timeout: Initial execution wait timeout passed to the SQL API.
+            Numeric values (``int`` / ``float``) are coerced to ``"<int>s"``;
+            pass a string to control the unit yourself.
         poll_interval_seconds: Delay between status polls while the query is
             still running.
         **kwargs: Extra body fields forwarded verbatim to the
             ``POST /api/2.0/sql/statements`` request (eg. ``catalog``,
             ``schema``, ``parameters``, ``row_limit``). Callers are
             responsible for serialising any enum values to their ``.value``
-            form ahead of time.
+            form ahead of time (this function does NOT do the SDK-style
+            kwarg-to-body translation that :func:`execute_statement` gets
+            for free).
 
     Returns:
         Final :class:`StatementResponse` once the statement reaches
@@ -355,6 +411,33 @@ async def statement_response_async(
     client: WorkspaceClient | httpx.AsyncClient | None = None,
     poll_interval_seconds: float = _DEFAULT_POLL_INTERVAL_SECONDS,
 ) -> StatementResponse:
+    """Async equivalent of :func:`statement_response`.
+
+    Polls the SQL Statement Execution REST API directly via
+    :func:`dbx_tools.clients.api` until ``statement_id`` reaches a terminal
+    state, without occupying a thread for the duration of a long-running
+    query.
+
+    Args:
+        statement_id: Existing Databricks SQL statement id to wait on.
+        client: Either a :class:`WorkspaceClient` (used to mint the
+            authenticated httpx client), an already-built
+            :class:`httpx.AsyncClient` (used directly), or ``None`` to fall
+            back to :func:`dbx_tools.clients.api`'s cached default.
+        poll_interval_seconds: Delay between status polls while the query is
+            still running.
+
+    Returns:
+        Final :class:`StatementResponse` once the statement reaches
+        ``SUCCEEDED``.
+
+    Raises:
+        StatementExecutionError: When the statement reaches a terminal
+            failure state, the response shape is unrecognised, or polling
+            cannot continue because the response is missing a
+            ``statement_id``.
+        httpx.HTTPStatusError: For non-2xx HTTP responses from the SQL API.
+    """
     if isinstance(client, WorkspaceClient):
         api_client = clients.api(workspace_client=client)
     elif client is None:
@@ -385,6 +468,20 @@ async def _statement_response_wait_async(
 
 
 def _statement_response_terminal(statement_resp: StatementResponse | None) -> bool:
+    """Tell the polling loop whether to return, keep polling, or fail.
+
+    Tri-state behaviour packed into a ``bool`` return + raise:
+
+    * Returns ``True`` when ``state == SUCCEEDED`` (caller should return the
+      ``statement_resp`` as the final result).
+    * Returns ``False`` when the statement is still in progress (``PENDING``
+      / ``RUNNING``) **and** the response carries a ``statement_id`` for the
+      caller to keep polling against.
+    * **Raises** :class:`StatementExecutionError` for everything else: any
+      terminal failure state (``FAILED`` / ``CANCELED`` / ``CLOSED``), an
+      unparseable response (no ``status`` / no ``state``), or an in-progress
+      response with no ``statement_id`` to poll against next.
+    """
     if statement_resp:
         if status := statement_resp.status:
             if state := status.state:
@@ -476,7 +573,13 @@ def describe_table_extended(
         Parsed table metadata wrapped in ``TableDescription``.
 
     Raises:
-        RuntimeError: When statement execution fails or JSON output is missing.
+        RuntimeError: When the response is missing or the JSON payload cannot
+            be parsed into a non-empty :class:`TableDescription`.
+        StatementExecutionError: Propagated from :func:`execute_statement`
+            when the underlying ``DESCRIBE TABLE EXTENDED`` query reaches a
+            terminal failure state.
+        ValueError: Propagated from :func:`execute_statement` when no
+            warehouse can be selected.
     """
     fqname = CatalogSchemaTable.of(name)
     response = execute_statement(
@@ -521,6 +624,13 @@ def _warehouse_size_rank(cluster_size: str | None) -> int:
 
 
 def _wait_timeout(value: str | float | int) -> str:
+    """Coerce a timeout to the ``"<seconds>s"`` string the SQL API expects.
+
+    String inputs pass through verbatim (so callers can specify other units,
+    e.g. ``"500ms"``, when supported). Numeric inputs are floor-truncated to
+    whole seconds via ``int()``: passing ``0.5`` yields ``"0s"`` (a no-wait),
+    not ``"500ms"``. Use a string when sub-second precision matters.
+    """
     if isinstance(value, str):
         return value
     return f"{int(value)}s"
