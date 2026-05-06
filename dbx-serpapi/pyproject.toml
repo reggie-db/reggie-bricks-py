@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-serpapi"
-version = "0.0.1"
+version = "0.0.1+rev5c4d56b"
 requires-python = ">=3.11,<3.13"
 dependencies = ["dbx-tools @ file://${PROJECT_ROOT}/../dbx-tools", "serpapi"]
 
