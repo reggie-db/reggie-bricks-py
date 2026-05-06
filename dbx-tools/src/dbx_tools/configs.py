@@ -377,8 +377,12 @@ def _bundle_data() -> dict[str, Any]:
     if bundle_file.is_file():
         # noinspection PyBroadException
         try:
+            proc_args = ["databricks"]
+            if profile_name := profile():
+                proc_args.extend(["--profile", profile_name])
+            proc_args.extend(["bundle", "--output", "json", "validate"])
             proc = subprocess.run(
-                ["databricks", "bundle", "--output", "json", "validate"],
+                proc_args,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
