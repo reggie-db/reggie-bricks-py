@@ -11,7 +11,6 @@ from typing import Any, Callable, Iterable, Mapping, overload
 import lfp_types
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.core import Config
-from databricks.sdk.credentials_provider import OAuthCredentialsProvider
 from dbx_core import imports, projects, strs
 from lfp_logging import logs
 
@@ -119,9 +118,12 @@ def token(config: Config | None = None) -> str | None:
     if config is None:
         config = get()
 
-    header_factory = getattr(config, "_header_factory", None)
-    if isinstance(header_factory, OAuthCredentialsProvider):
-        return config.oauth_token().access_token
+    if getattr(config, "_header_factory", None):
+        oauth_token_fn = getattr(config, "oauth_token", None)
+        if callable(oauth_token_fn):
+            if oauth_token := oauth_token_fn():
+                if access_token := getattr(oauth_token, "access_token", None):
+                    return access_token
 
     if token := config.token:
         return token
