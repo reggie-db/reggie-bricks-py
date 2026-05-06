@@ -4,8 +4,8 @@ build-backend = "uv_build"
 
 [project]
 name = "dbx-ip"
-version = "0.0.1+revb682eca"
-requires-python = ">=3.11,<3.13"
+version = "0.0.1+rev524e3e1"
+requires-python = ">=3.10.12,<3.13"
 dependencies = ["dbx-core @ file://${PROJECT_ROOT}/../dbx-core"]
 
 [tool.uv.sources.dbx-core]

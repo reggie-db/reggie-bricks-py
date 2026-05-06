@@ -2,7 +2,7 @@ import os
 import uuid
 from os import PathLike
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, TypeAlias
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
@@ -15,7 +15,7 @@ from dbx_concurio import caches
 
 LOG = logs.logger()
 
-type InstallSource = Callable[[], PathLike] | PathLike | str
+InstallSource: TypeAlias = Callable[[], PathLike] | PathLike | str
 
 _CACHE = caches.DiskCache(__file__)
 
